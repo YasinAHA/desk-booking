@@ -1,0 +1,7 @@
+# Secrets
+app/config.js
+
+# Node (si luego metemos tooling)
+node_modules
+.env
+.DS_Store
