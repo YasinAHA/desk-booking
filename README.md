@@ -1,116 +1,175 @@
-# Desk Booking (Desk Booking MVP)
+# Desk Booking Platform
 
-Aplicación web ligera para **reservas internas de escritorios** (hot desk).  
-Objetivo: permitir que empleados reserven un puesto por día, consultar ocupación y gestionar sus reservas.
+Plataforma de reservas internas de escritorios orientada a uso empresarial y concebida como
+**Trabajo de Fin de Máster (TFM)**, con un enfoque profesional, escalable y alineado con
+buenas prácticas de arquitectura, backend moderno y despliegue real.
 
-> Estado actual: **MVP (pre-1.0)** en iteración. Este repositorio prioriza claridad, buenas prácticas y evolución hacia un producto estable.
-
----
-
-## Demo / Deploy
-- **URL (si existe):** _pendiente_
+El proyecto evoluciona desde una primera versión funcional hacia una solución completa,
+lista para ser utilizada en un entorno corporativo.
 
 ---
 
-## Funcionalidades principales
-- Login por **Magic Link** (Supabase Auth).
-- Selección de **fecha** y visualización de ocupación por puesto.
-- **Reservar** un escritorio libre.
-- **Cancelar** una reserva propia.
-- Sección **“Mis reservas”** (activas y futuras).
-- Reglas básicas: no fechas pasadas, límite de días vista y (opcional) bloqueo de fines de semana.
+## 🎯 Objetivo del proyecto
+
+Desarrollar una aplicación real que demuestre:
+
+- Dominio de **arquitectura de software**
+- Uso de **principios SOLID**
+- Diseño de **backend desacoplado y escalable**
+- Persistencia con **PostgreSQL**
+- Autenticación segura
+- Preparación para **TDD**
+- Uso de **IA como apoyo al desarrollo** (no como feature artificial)
+- Despliegue realista (Docker / cloud / entorno empresarial)
+
+El objetivo no es solo que funcione, sino que esté **bien diseñada, documentada y mantenible**.
 
 ---
 
-## Stack tecnológico
-- **Frontend:** HTML + CSS + JavaScript (vanilla)
-- **Backend-as-a-Service:** Supabase
-  - Auth (OTP / Magic Link)
-  - PostgreSQL + RLS (Row Level Security)
-  - RPC (funciones SQL) para lógica de reserva
+## 🧠 Enfoque TFM
 
-> En versiones posteriores puede migrarse a una arquitectura más escalable (p.ej. Vite/TypeScript/React) manteniendo el core de negocio en SQL/RPC y RLS.
-
----
-
-## Requisitos previos
-- Tener un proyecto en **Supabase** (URL + anon key).
-- Haber aplicado las migraciones SQL del directorio `supabase/migrations/`.
+- Proyecto **original y con aplicación real**
+- Backend propio (sin dependencia de BaaS como Supabase)
+- Arquitectura pensada para crecer y mantenerse
+- Documentación clara y razonada
+- Control de versiones desde el inicio
+- Evolución planificada por versiones
 
 ---
 
-## Instalación y ejecución en local
-1. Copia el fichero de configuración:
-   - `app/config.example.js` → `app/config.js`
-2. Rellena en `app/config.js`:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `ALLOWED_EMAIL_DOMAINS`
-   - `MAX_DAYS_AHEAD`
-   - `ALLOW_WEEKENDS`
-3. Levanta un servidor estático para `app/`:
+## 🗂️ Estructura del proyecto (Monorepo)
 
-**Opción A (Python):**
-```bash
-cd app
-python -m http.server 5500
-```
-Abrir: `http://localhost:5500`
-
-**Opción B (VS Code Live Server):**
-- Abrir `app/index.html` con Live Server.
-
-> Importante: Supabase Auth con Magic Link necesita una URL consistente. Si cambias host/puerto, actualiza el redirect en Supabase y/o el `emailRedirectTo`.
-
----
-
-## Estructura del proyecto
 ```
 yasinaha-desk-booking/
 ├── README.md
+├── CHANGELOG.md
 ├── LICENSE
-├── app/
+├── .editorconfig
+├── backend/
+│   ├── package.json
+│   ├── .env.example
+│   └── src/
+│       ├── app.ts
+│       ├── server.ts
+│       ├── config/
+│       ├── lib/
+│       ├── modules/
+│       └── plugins/
+├── frontend/
 │   ├── index.html
 │   ├── styles.css
-│   ├── app.js
-│   ├── supabaseClient.js
-│   ├── config.example.js
-│   └── config.js                 # (no versionar)
+│   └── src/
+│       ├── apiClient.js
+│       ├── app.js
+│       └── state.js
+├── docker/
+│   ├── docker-compose.yml
+│   └── postgres/
+│       └── init/
+│           └── 001_init.sql
 ├── docs/
-│   ├── SCOPE.md
-│   └── DECISIONS.md
-└── supabase/
-    ├── README.md
-    └── migrations/
-        ├── 001_init.sql
-        └── 002_rpc.sql
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── DECISIONS.md
+│   ├── KNOWN-ISSUES.md
+│   └── SCOPE.md
 ```
 
 ---
 
-## Supabase
-Lee `supabase/README.md` para:
-- Esquema de tablas
-- Configuración de **RLS**
-- Funciones **RPC** (`get_desk_occupancy`, `create_reservation`, `cancel_my_reservation`)
+## 🧱 Stack tecnológico
+
+### Backend
+- Node.js
+- Fastify
+- TypeScript
+- PostgreSQL
+- JWT
+- Zod
+- Swagger / OpenAPI
+- Docker
+
+### Frontend
+- HTML, CSS, JavaScript
+- Migración a TypeScript planificada
 
 ---
 
-## Buenas prácticas del repo (enfoque TFM)
-- **Control de versiones**: commits frecuentes, tags semver para hitos (pre-1.0).
-- **Docs**: decisiones técnicas y alcance en `docs/`.
-- **Calidad**: se prioriza arquitectura limpia, SOLID, pruebas (TDD) y evolución controlada.
-- **IA**: se documentará el uso de IA como apoyo (no como sustituto) en decisiones/diseño.
+## 🤖 Uso de IA
+
+La IA se utiliza como **apoyo al desarrollo**.
+Guia de trabajo: ver [docs/AI-GUIDE.md](docs/AI-GUIDE.md).
 
 ---
 
-## Roadmap (orientativo)
-- **0.2.x**: estabilización del MVP (sesión, refrescos, UX, bugs).
-- **0.3.x**: arquitectura modular (separación UI / dominio / infra) y base para tests.
-- **0.4.x**: observabilidad (logs), hardening RLS, rate limits, manejo offline/tab focus.
-- **1.0.0**: versión estable (despliegue, docs completas, slides, checklist TFM).
+## ✅ Requisitos
+- Node.js (LTS recomendado)
+- Docker (para Postgres local)
 
 ---
 
-## Licencia
-Ver `LICENSE`.
+## ▶️ Arranque rapido (dev)
+
+1) Instala dependencias:
+```bash
+npm install
+```
+
+2) Levanta la base de datos:
+```bash
+npm run dev:db
+```
+
+3) Configura el backend:
+- Copia `backend/.env.example` a `backend/.env`
+- Ajusta `DATABASE_URL`, `JWT_SECRET` y `ALLOWED_EMAIL_DOMAINS`
+
+4) Arranca la API:
+```bash
+npm run dev:api
+```
+
+5) Healthcheck:
+- `GET http://localhost:3001/health`
+
+---
+
+## 📌 Estado actual
+- Backend base (Fastify + Postgres) funcional.
+- Frontend minimo conectado a API.
+- Schema inicial en [docker/postgres/init/001_init.sql](docker/postgres/init/001_init.sql).
+
+---
+
+## ✅ Tareas v0.3.0
+Ver checklist en [docs/TASKS.md](docs/TASKS.md).
+
+## 🧭 Backlog v0.4.0
+Ver propuestas en [docs/BACKLOG.md](docs/BACKLOG.md).
+
+---
+
+## 🏷️ Versiones
+- v0.1.0: base UI + skeleton magic link ([tag](https://github.com/YasinAHA/desk-booking/releases/tag/v0.1.0), ver [CHANGELOG.md](CHANGELOG.md)).
+- v0.2.0: piloto estable con flujo de reservas ([tag](https://github.com/YasinAHA/desk-booking/releases/tag/v0.2.0), ver [CHANGELOG.md](CHANGELOG.md)).
+- v0.3.0: backend propio + frontend minimo (ver [CHANGELOG.md](CHANGELOG.md)).
+
+---
+
+## 🚀 Roadmap
+- 0.2.x: estabilización del MVP (sesión, refrescos, UX, bugs).
+- v0.3.0 → Backend propio y arquitectura base
+- v0.4.0 → Frontend TypeScript
+- v1.0.0 → Versión final TFM
+
+---
+
+## 👤 Autor
+
+Yassine Ait El Hadj Ahajtan
+
+---
+
+## 📜 Licencia
+
+MIT

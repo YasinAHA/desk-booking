@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.3.0] - 2026-02-07
+
+### Added
+- Backend propio con Fastify + TypeScript
+- Auth JWT con login y verificacion de token
+- Endpoints base: health, auth, desks, reservations
+- Postgres local via Docker y schema inicial
+- Frontend minimo para login, reservas y cancelaciones
+- Tests unitarios base para reservations y auth
+
+### Changed
+- Migracion de Supabase a backend propio
+- Contrato API documentado con schemas y errores
+
+### Fixed
+- Correccion de fechas en reservas (sin desfase por zona horaria)
+
 ## [0.2.0] - 2026-02-07
+
+Release tag: `v0.2.0` ("Stable pilot: desk reservations flow").
 
 ### Added
 - Desk reservation and cancellation via Supabase RPC functions
@@ -33,7 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.1.0] - 2026-01-01
 
+Release tag: `v0.1.0` ("base UI + magic link skeleton").
+
 ### Added
 - Initial desk reservation pilot
 - Supabase project setup
 - Basic UI layout and date selection
+- Initial Supabase migrations and seed desks

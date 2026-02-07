@@ -1,0 +1,11 @@
+{
+    "name": "desk-booking",
+    "private": true,
+    "workspaces": [
+        "backend"
+    ],
+    "scripts": {
+        "dev:db": "docker compose -f docker/docker-compose.yml up -d",
+        "dev:api": "npm -w backend run dev"
+    }
+}

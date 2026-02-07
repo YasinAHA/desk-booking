@@ -1,6 +1,22 @@
-# Known issues
+# Known issues / Deuda tecnica
 
-## UI freeze al cambiar de pestaña (investigación)
-- Síntoma: el grid deja de responder tras blur/focus/visibilitychange.
-- Estado: en investigación (workarounds temporales).
-- Próximo paso: consolidar estrategia única de refresh + evitar aborts/locks.
+Backlog propuesto para v0.4.0: ver [docs/BACKLOG.md](docs/BACKLOG.md).
+
+## Backend
+- Registro con confirmacion de email pendiente.
+- Tests de rutas y errores HTTP pendientes.
+- Rate limiting pendiente.
+
+## Frontend
+- UX de errores limitada (mensajes genericos).
+- Sesion persistente sin refresh/verify automatico.
+
+## Seguridad y despliegue
+- CORS restringido a origen real pendiente.
+- Observabilidad basica (logs estructurados, trazas) pendiente.
+
+## Base de datos
+- Migraciones versionadas mas alla del init pendientes.
+
+## Docs
+- Backlog v0.4.0 creado en docs/BACKLOG.md.

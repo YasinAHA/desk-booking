@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: deskbooking_pg
+    environment:
+      POSTGRES_DB: deskbooking
+      POSTGRES_USER: deskbooking
+      POSTGRES_PASSWORD: deskbooking
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: deskbooking_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+  pgadmin_data:

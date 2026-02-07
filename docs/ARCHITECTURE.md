@@ -1,20 +1,44 @@
 # Arquitectura
 
-## Visión general
-App estática (vanilla JS) servida desde `app/` que consume Supabase (Auth + Postgres + RPC).
+## Vision general
+Monorepo con backend propio y frontend ligero:
+- Backend: Fastify + TypeScript + Postgres.
+- Frontend: HTML/CSS/JS (con migracion a TypeScript planificada).
 
-## Módulos
-- `app/app.js`: UI + estado + acciones (reserve/cancel/refresh)
-- `app/supabaseClient.js`: creación del cliente Supabase + helpers de config
+## Componentes
+
+### Backend (`backend/`)
+- `src/server.ts`: bootstrap del servidor HTTP.
+- `src/app.ts`: construye la app Fastify, registra plugins y rutas.
+- `src/plugins/db.ts`: pool de Postgres y decorador `app.db`.
+- `src/config/env.ts`: lectura y validacion de variables de entorno.
+- `src/modules/*`: modulos por dominio (auth, desks, reservations).
+
+### Frontend (`frontend/`)
+- `index.html`, `styles.css`: UI base.
+- `src/*`: login, listado de desks y reservas/cancelaciones.
+
+### Base de datos
+- Postgres local via Docker.
+- SQL de inicializacion en `docker/postgres/init/001_init.sql`.
 
 ## Datos (alto nivel)
+- `users`
 - `desks`
 - `reservations`
-- RPC: `get_desk_occupancy`, `create_reservation`, `cancel_my_reservation`
 
 ## Seguridad
-- RLS: reservas aisladas por usuario
-- Dominios permitidos en cliente (y recomendado reforzar en backend/policies)
+- Auth con JWT (backend).
+- Dominio permitido por email (`ALLOWED_EMAIL_DOMAINS`).
+- Restricciones de integridad en DB (indices unicos por dia).
 
-## Flujo de refresh
-- (describir la estrategia acordada cuando cerremos el bug de pestañas)
+## API (contrato base)
+- Auth con `Authorization: Bearer <token>`.
+- Endpoints principales: `POST /auth/login`, `POST /auth/verify`, `POST /auth/logout`.
+- Desks: `GET /desks?date=YYYY-MM-DD`.
+- Reservations: `POST /reservations`, `DELETE /reservations/:id`, `GET /reservations/me`.
+- Errores con formato comun `{ error: { code, message } }`.
+
+## Notas de evolucion
+- Rutas y servicios base implementados.
+- Migracion a TypeScript en frontend queda para v0.4.0.
