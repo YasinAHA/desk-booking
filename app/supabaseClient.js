@@ -18,5 +18,20 @@ export async function createSupabaseClient() {
     // eslint-disable-next-line no-undef
     const supabaseJs = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = getConfig();
-    return supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const originalFetch = window.fetch.bind(window);
+
+    function debugFetch(...args) {
+        console.log("[FETCH]", args[0]);
+        return originalFetch(...args);
+    }
+
+    return supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { fetch: debugFetch },
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+        },
+    });
+
 }
