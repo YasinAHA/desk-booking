@@ -1,8 +1,11 @@
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyInstance } from "fastify";
+import { randomUUID } from "node:crypto";
 
 import { ZodError } from "zod";
 
+import { env } from "./config/env.js";
 import { sendError } from "./lib/httpErrors.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { desksRoutes } from "./modules/desks/desks.routes.js";
@@ -19,13 +22,57 @@ import { registerDbPlugin } from "./plugins/db.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({
-        logger: true,
+        logger: env.NODE_ENV !== "test",
+        genReqId: () => randomUUID(),
+    });
+
+    app.addHook("onRequest", (req, reply, done) => {
+        (req as { startTime?: number }).startTime = Date.now();
+        reply.header("x-request-id", req.id);
+        req.log.info(
+            { event: "request.start", method: req.method, url: req.url },
+            "Request started"
+        );
+        done();
+    });
+
+    app.addHook("onResponse", (req, reply, done) => {
+        const startTime = (req as { startTime?: number }).startTime ?? Date.now();
+        const durationMs = Date.now() - startTime;
+        req.log.info(
+            {
+                event: "request.end",
+                statusCode: reply.statusCode,
+                duration_ms: durationMs,
+            },
+            "Request completed"
+        );
+        done();
     });
 
     // --- CORS (ajusta origin cuando haya frontend real) ---
     await app.register(cors, {
-        origin: true,
+        origin: (origin, cb) => {
+            if (!origin) {
+                cb(null, true);
+                return;
+            }
+
+            if (env.CORS_ORIGINS.length === 0) {
+                cb(new Error("CORS origin not allowed"), false);
+                return;
+            }
+
+            const allowed = env.CORS_ORIGINS.includes(origin);
+            cb(allowed ? null : new Error("CORS origin not allowed"), allowed);
+        },
         credentials: true,
+    });
+
+    // --- Rate limit (global) ---
+    await app.register(rateLimit, {
+        max: 100,
+        timeWindow: "1 minute",
     });
 
     // --- Healthcheck ---

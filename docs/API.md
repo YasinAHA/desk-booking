@@ -28,7 +28,22 @@ Respuesta:
 ## Endpoints actuales (v0.3.x)
 
 ### Auth
-Nota: el login solo valida usuarios existentes. Registro explicito con confirmacion por email queda pendiente.
+Nota: el login solo permite usuarios confirmados por email.
+
+#### `POST /auth/register`
+Request:
+```json
+{
+	"email": "user@company.com",
+	"password": "string",
+	"display_name": "User"
+}
+```
+Response 200:
+```json
+{ "ok": true }
+```
+Errores: 400, 403, 409
 
 #### `POST /auth/login`
 Request:
@@ -50,6 +65,13 @@ Response 200:
 }
 ```
 Errores: 400, 401
+
+#### `GET /auth/confirm?token=...`
+Response 200:
+```json
+{ "ok": true }
+```
+Errores: 400
 
 #### `POST /auth/verify`
 Request:
@@ -89,7 +111,8 @@ Response 200:
 			"is_active": true,
 			"is_reserved": false,
 			"is_mine": false,
-			"reservation_id": null
+			"reservation_id": null,
+			"occupant_name": null
 		}
 	]
 }
@@ -121,7 +144,7 @@ Response 200:
 	"ok": true
 }
 ```
-Errores: 401, 403, 404
+Errores: 400, 401, 403, 404
 
 #### `GET /reservations/me`
 Response 200:

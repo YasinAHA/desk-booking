@@ -49,7 +49,12 @@ test("createReservation inserts and returns id", async () => {
 
 test("cancelReservation returns true when row updated", async () => {
     const app = mockApp({
-        query: async () => ({ rowCount: 1 }),
+        query: async text => {
+            if (text.startsWith("select reserved_date")) {
+                return { rows: [{ reserved_date: "2099-01-01" }] };
+            }
+            return { rowCount: 1 };
+        },
     });
 
     const ok = await cancelReservation(app, "user", "res-1");
@@ -58,7 +63,12 @@ test("cancelReservation returns true when row updated", async () => {
 
 test("cancelReservation returns false when nothing updated", async () => {
     const app = mockApp({
-        query: async () => ({ rowCount: 0 }),
+        query: async text => {
+            if (text.startsWith("select reserved_date")) {
+                return { rows: [{ reserved_date: "2099-01-01" }] };
+            }
+            return { rowCount: 0 };
+        },
     });
 
     const ok = await cancelReservation(app, "user", "res-2");

@@ -23,6 +23,12 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: deskbooking_mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   pgdata:

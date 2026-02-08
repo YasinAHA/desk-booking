@@ -53,6 +53,22 @@ export async function cancelReservation(
 	userId: string,
 	reservationId: string
 ): Promise<boolean> {
+	const found = await app.db.query(
+		"select reserved_date::text as reserved_date " +
+			"from reservations " +
+			"where id = $1 and user_id = $2 and cancelled_at is null",
+		[reservationId, userId]
+	);
+
+	const row = found.rows[0] as { reserved_date?: string } | undefined;
+	if (!row?.reserved_date) {
+		return false;
+	}
+
+	if (isPastDate(row.reserved_date)) {
+		throw new Error("DATE_IN_PAST");
+	}
+
 	const result = await app.db.query(
 		"update reservations set cancelled_at = now() " +
 			"where id = $1 and user_id = $2 and cancelled_at is null " +

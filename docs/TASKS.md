@@ -1,32 +1,27 @@
-# Tasks v0.3.0
+# Tasks v0.4.0
 
-Checklist operativo para cerrar la version 0.3.0 (backend base).
+## 1) Auth y seguridad
+- [x] Registro con confirmacion por email.
+- [x] Servicio SMTP y plantilla de email de confirmacion.
+- [x] Endpoint de registro (crear usuario + enviar confirmacion).
+- [x] Refresh/verify token en frontend (session persistente real).
+- [x] Rate limiting en endpoints sensibles.
+- [x] CORS restringido al dominio real.
 
-## 1) Contrato y docs
-- [x] Definir endpoints minimos en docs/API.md (auth, desks, reservations).
-- [x] Especificar schemas de request/response y codigos de error.
-- [x] Actualizar docs/ARCHITECTURE.md si cambia el flujo.
+## 2) Calidad
+- [x] Tests de rutas (auth, desks, reservations).
+- [x] Tests de errores HTTP (401, 403, 404, 409).
+- [x] Setup de CI basico (test + build).
 
-## 2) Backend base
-- [x] Crear middleware de auth JWT.
-- [x] Implementar rutas y handlers (auth, desks, reservations).
-- [x] Validacion de entrada con Zod.
-- [x] Manejo de errores consistente (errores tipados + logging).
+## 3) Observabilidad
+- [x] Logs estructurados por request (request id).
+- [x] Trazas basicas en operaciones criticas.
 
-## 3) Capa de datos
-- [x] Repositorios/queries para users, desks y reservations.
-- [x] Regla: 1 reserva por usuario y dia.
-- [x] Regla: 1 reserva por desk y dia.
+## 4) Base de datos
+- [x] Migraciones versionadas (mas alla del init).
+- [x] Seeds controlados por entorno.
 
-## 4) Frontend minimo
-- [x] Conexion a API (login, listar desks por fecha).
-- [x] Reservar y cancelar.
-- [x] Estado basico y feedback de errores.
-
-## 5) Calidad minima
-- [x] Tests base para servicios de reservations.
-
-## 6) Release
-- [x] Actualizar CHANGELOG.md.
-- [x] Revisar README (estado y arranque).
-- [ ] Tag v0.3.0.
+## 5) Frontend
+- [x] Mensajes de error mas claros y guiados.
+- [x] Pantalla de estado / loading global.
+- [x] Pulido UX (feedback de reserva/cancelacion).

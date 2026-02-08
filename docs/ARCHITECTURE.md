@@ -30,7 +30,12 @@ Monorepo con backend propio y frontend ligero:
 ## Seguridad
 - Auth con JWT (backend).
 - Dominio permitido por email (`ALLOWED_EMAIL_DOMAINS`).
+- Confirmacion por email en registro.
 - Restricciones de integridad en DB (indices unicos por dia).
+
+## Observabilidad
+- Logs estructurados por request con `request id`.
+- Trazas basicas en operaciones criticas (auth y reservas).
 
 ## API (contrato base)
 - Auth con `Authorization: Bearer <token>`.

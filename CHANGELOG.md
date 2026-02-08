@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.0] - 2026-02-08
+
+### Added
+- Registro con confirmacion por email y verificacion de sesion en frontend
+- Mailpit para SMTP local
+- Rate limiting en endpoints sensibles
+- CORS restringido por origen
+- CI basico con GitHub Actions (test + build)
+- Observabilidad basica con request id y trazas en auth/reservas
+- Migraciones versionadas y seeds por entorno
+- Guia de tooling y despliegue
+
+### Changed
+- Frontend con registro, estado global de carga y mensajes de error guiados
+- Estado de desks con nombre del ocupante cuando aplica
+
+### Fixed
+- Bloqueo de cancelacion de reservas pasadas
+
+### Known Issues
+- Tokens en localStorage sin refresh token ni cookie httpOnly (riesgo XSS)
+
 ## [0.3.0] - 2026-02-07
 
 ### Added

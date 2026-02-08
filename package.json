@@ -6,6 +6,10 @@
     ],
     "scripts": {
         "dev:db": "docker compose -f docker/docker-compose.yml up -d",
-        "dev:api": "npm -w backend run dev"
+        "dev:api": "npm -w backend run dev",
+        "db:migrate": "npm -w backend run db:migrate",
+        "db:seed:dev": "npm -w backend run db:seed -- dev",
+        "db:seed:test": "npm -w backend run db:seed -- test",
+        "db:seed:correction": "npm -w backend run db:seed -- correction"
     }
 }

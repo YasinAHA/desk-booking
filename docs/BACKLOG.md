@@ -1,25 +1,37 @@
-# Backlog v0.4.0 (propuesto)
+# Backlog v0.5.0 (propuesto)
 
-## 1) Auth y seguridad
-- [ ] Registro con confirmacion por email.
-- [ ] Refresh/verify token en frontend (session persistente real).
-- [ ] Rate limiting en endpoints sensibles.
-- [ ] CORS restringido al dominio real.
+Objetivo: reducir deuda tecnica y reorganizar la arquitectura con SOLID, Clean Architecture, DRY, KISS y patrones de diseno.
 
-## 2) Calidad
-- [ ] Tests de rutas (auth, desks, reservations).
-- [ ] Tests de errores HTTP (401, 403, 404, 409).
-- [ ] Setup de CI basico (test + build).
+Nota: estas propuestas se moveran a `docs/TASKS.md` una vez tagueada y cerrada la v0.4.0.
 
-## 3) Observabilidad
-- [ ] Logs estructurados por request (request id).
-- [ ] Trazas basicas en operaciones criticas.
+## 1) Capas y contratos
+- [ ] Definir capas (domain, application, infrastructure, interfaces).
+- [ ] Crear interfaces de repositorios (Users, Desks, Reservations).
+- [ ] Crear interfaz de notificaciones (Notifier).
 
-## 4) Base de datos
-- [ ] Migraciones versionadas (mas alla del init).
-- [ ] Seeds controlados por entorno.
+## 2) Repositorios
+- [ ] Implementar repositorios Postgres (PgUserRepository, PgDeskRepository, PgReservationRepository).
+- [ ] Eliminar acceso directo a `app.db` desde servicios.
+- [ ] Tests unitarios de repositorios con mocks.
 
-## 5) Frontend
-- [ ] Mensajes de error mas claros y guiados.
-- [ ] Pantalla de estado / loading global.
-- [ ] Pulido UX (feedback de reserva/cancelacion).
+## 3) Servicios de dominio
+- [ ] AuthService desacoplado de Fastify.
+- [ ] ReservationService con reglas de negocio en dominio.
+- [ ] EmailConfirmationService en capa de aplicacion.
+
+## 4) Infraestructura
+- [ ] Mailer como adaptador de infraestructura.
+- [ ] Config centralizada con esquema.
+- [ ] Logger con contexto (request id) y adaptadores.
+
+## 5) API / Interfaces
+- [ ] Rutas delgadas (HTTP -> DTO -> use case).
+- [ ] Manejo de errores estandarizado en un middleware.
+
+## 6) Observabilidad
+- [ ] Logging estructurado por request.
+- [ ] Metricas basicas (opcional).
+
+## 7) Testing
+- [ ] Tests unitarios de use cases.
+- [ ] Tests de integracion minimos (repos + API).

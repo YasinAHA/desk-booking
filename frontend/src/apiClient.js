@@ -40,10 +40,28 @@ export async function login(email, password) {
 	});
 }
 
+export async function register(email, password, displayName) {
+	return request("/auth/register", {
+		method: "POST",
+		body: JSON.stringify({
+			email,
+			password,
+			display_name: displayName || undefined,
+		}),
+	});
+}
+
 export async function logout(token) {
 	return request("/auth/logout", {
 		method: "POST",
 		headers: authHeaders(token),
+	});
+}
+
+export async function verifyToken(token) {
+	return request("/auth/verify", {
+		method: "POST",
+		body: JSON.stringify({ token }),
 	});
 }
 

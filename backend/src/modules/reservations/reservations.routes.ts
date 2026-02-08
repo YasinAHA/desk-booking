@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import { sendError } from "../../lib/httpErrors.js";
 import {
-    cancelReservation,
-    createReservation,
-    listMyReservations,
+	cancelReservation,
+	createReservation,
+	listMyReservations,
 } from "./reservations.service.js";
 
 const createSchema = z.object({
@@ -44,6 +44,17 @@ export const reservationsRoutes: FastifyPluginAsync = async app => {
 					parse.data.desk_id
 				);
 
+				req.log.info(
+					{
+						event: "reservation.create",
+						userId: req.user.id,
+						deskId: parse.data.desk_id,
+						date: parse.data.date,
+						reservationId,
+					},
+					"Reservation created"
+				);
+
 				return reply.send({
 					ok: true,
 					reservation_id: reservationId,
@@ -75,10 +86,31 @@ export const reservationsRoutes: FastifyPluginAsync = async app => {
 				return sendError(reply, 400, "BAD_REQUEST", "Invalid id");
 			}
 
-			const ok = await cancelReservation(app, req.user.id, parse.data.id);
-			if (!ok) {
-				return sendError(reply, 404, "NOT_FOUND", "Reservation not found");
+			try {
+				const ok = await cancelReservation(app, req.user.id, parse.data.id);
+				if (!ok) {
+					return sendError(reply, 404, "NOT_FOUND", "Reservation not found");
+				}
+			} catch (err) {
+				if (err instanceof Error && err.message === "DATE_IN_PAST") {
+					return sendError(
+						reply,
+						400,
+						"CANNOT_CANCEL_PAST",
+						"Cannot cancel past reservation"
+					);
+				}
+				throw err;
 			}
+
+			req.log.info(
+				{
+					event: "reservation.cancel",
+					userId: req.user.id,
+					reservationId: parse.data.id,
+				},
+				"Reservation cancelled"
+			);
 
 			return reply.send({ ok: true });
 		}

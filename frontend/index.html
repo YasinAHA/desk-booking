@@ -14,18 +14,29 @@
 	</head>
 	<body>
 		<div class="bg"></div>
+		<div id="loadingOverlay" class="loading-overlay hidden" aria-live="polite">
+			<div class="loading-card">
+				<div class="spinner"></div>
+				<p id="loadingText">Cargando...</p>
+			</div>
+		</div>
 		<main class="app">
 			<header class="header">
 				<div>
 					<h1>Desk Booking</h1>
-					<p class="subtitle">Frontend minimo para v0.3.0</p>
+					<p class="subtitle">Frontend minimo para v0.4.0</p>
 				</div>
 				<button id="logoutBtn" class="btn btn-ghost" disabled>Logout</button>
 			</header>
 
 			<section class="card" id="authSection">
-				<h2>Login</h2>
-				<form id="loginForm" class="form">
+				<h2>Auth</h2>
+				<div class="tabs">
+					<button id="tabLogin" class="tab active" type="button">Login</button>
+					<button id="tabRegister" class="tab" type="button">Registro</button>
+				</div>
+
+				<form id="loginForm" class="form" data-panel="login">
 					<label>
 						Email
 						<input type="email" id="emailInput" required placeholder="user@company.com" />
@@ -35,6 +46,22 @@
 						<input type="password" id="passwordInput" required placeholder="******" />
 					</label>
 					<button type="submit" class="btn">Entrar</button>
+				</form>
+
+				<form id="registerForm" class="form hidden" data-panel="register">
+					<label>
+						Email
+						<input type="email" id="registerEmail" required placeholder="user@company.com" />
+					</label>
+					<label>
+						Nombre
+						<input type="text" id="registerName" placeholder="Tu nombre" />
+					</label>
+					<label>
+						Password
+						<input type="password" id="registerPassword" required placeholder="Min 6 caracteres" />
+					</label>
+					<button type="submit" class="btn">Registrarse</button>
 				</form>
 			</section>
 

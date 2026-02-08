@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "next"]
+  pull_request:
+    branches: ["main", "next"]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm -w backend run test
+
+      - name: Build backend
+        run: npm -w backend run build

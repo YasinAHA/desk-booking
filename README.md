@@ -72,7 +72,9 @@ yasinaha-desk-booking/
 │   ├── API.md
 │   ├── DECISIONS.md
 │   ├── KNOWN-ISSUES.md
-│   └── SCOPE.md
+│   ├── SCOPE.md
+│   ├── TOOLING.md
+│   └── DEPLOYMENT.md
 ```
 
 ---
@@ -100,6 +102,9 @@ yasinaha-desk-booking/
 La IA se utiliza como **apoyo al desarrollo**.
 Guia de trabajo: ver [docs/AI-GUIDE.md](docs/AI-GUIDE.md).
 
+Tooling del repo: ver [docs/TOOLING.md](docs/TOOLING.md).
+Despliegue (TFM): ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ---
 
 ## ✅ Requisitos
@@ -120,16 +125,26 @@ npm install
 npm run dev:db
 ```
 
+Opcional (email local):
+- Mailpit SMTP: `localhost:1025`
+- UI Mailpit: `http://localhost:8025`
+
 3) Configura el backend:
 - Copia `backend/.env.example` a `backend/.env`
 - Ajusta `DATABASE_URL`, `JWT_SECRET` y `ALLOWED_EMAIL_DOMAINS`
 
-4) Arranca la API:
+4) Aplica migraciones y seeds:
+```bash
+npm run db:migrate
+npm run db:seed:dev
+```
+
+5) Arranca la API:
 ```bash
 npm run dev:api
 ```
 
-5) Healthcheck:
+6) Healthcheck:
 - `GET http://localhost:3001/health`
 
 ---
@@ -138,13 +153,14 @@ npm run dev:api
 - Backend base (Fastify + Postgres) funcional.
 - Frontend minimo conectado a API.
 - Schema inicial en [docker/postgres/init/001_init.sql](docker/postgres/init/001_init.sql).
+- CI basico con GitHub Actions (test + build).
 
 ---
 
-## ✅ Tareas v0.3.0
+## ✅ Tareas v0.4.0
 Ver checklist en [docs/TASKS.md](docs/TASKS.md).
 
-## 🧭 Backlog v0.4.0
+## 🧭 Backlog v0.5.0
 Ver propuestas en [docs/BACKLOG.md](docs/BACKLOG.md).
 
 ---

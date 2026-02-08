@@ -24,4 +24,8 @@ declare module "fastify" {
         };
         requireAuth: preHandlerHookHandler;
     }
+
+    interface FastifyReply {
+        rateLimit?: (opts?: { max?: number; timeWindow?: string | number }) => void;
+    }
 }

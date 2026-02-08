@@ -25,5 +25,16 @@ export const env = {
         .split(",")
         .map(s => s.trim().toLowerCase())
         .filter(Boolean),
+
+    SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
+    SMTP_PORT: Number(process.env.SMTP_PORT ?? 1025),
+    SMTP_USER: process.env.SMTP_USER ?? "",
+    SMTP_PASS: process.env.SMTP_PASS ?? "",
+    SMTP_FROM: process.env.SMTP_FROM ?? "Desk Booking <no-reply@camerfirma.com>",
+    APP_BASE_URL: process.env.APP_BASE_URL ?? "http://localhost:3001",
+    CORS_ORIGINS: (process.env.CORS_ORIGINS ?? "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean),
 } as const;
 
