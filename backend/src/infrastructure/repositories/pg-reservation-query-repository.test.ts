@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createDeskId } from "../../domain/valueObjects/deskId.js";
-import { createOfficeId } from "../../domain/valueObjects/officeId.js";
-import { createReservationId } from "../../domain/valueObjects/reservationId.js";
-import { createUserId } from "../../domain/valueObjects/userId.js";
-import { PgReservationQueryRepository } from "./pgReservationQueryRepository.js";
+import { createDeskId } from "../../domain/valueObjects/desk-id.js";
+import { createOfficeId } from "../../domain/valueObjects/office-id.js";
+import { createReservationId } from "../../domain/valueObjects/reservation-id.js";
+import { createUserId } from "../../domain/valueObjects/user-id.js";
+import { PgReservationQueryRepository } from "./pg-reservation-query-repository.js";
 
 test("PgReservationQueryRepository.findActiveByIdForUser returns null when missing", async () => {
 	const repo = new PgReservationQueryRepository({

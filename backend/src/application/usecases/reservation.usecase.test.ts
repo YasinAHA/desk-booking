@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { ReservationDateInPastError } from "../../domain/entities/reservation.js";
-import { createDeskId } from "../../domain/valueObjects/deskId.js";
-import { createOfficeId } from "../../domain/valueObjects/officeId.js";
-import { createReservationId } from "../../domain/valueObjects/reservationId.js";
-import { createUserId } from "../../domain/valueObjects/userId.js";
+import { createDeskId } from "../../domain/valueObjects/desk-id.js";
+import { createOfficeId } from "../../domain/valueObjects/office-id.js";
+import { createReservationId } from "../../domain/valueObjects/reservation-id.js";
+import { createUserId } from "../../domain/valueObjects/user-id.js";
 import type { ReservationCommandRepository } from "../ports/reservation-command-repository.js";
 import type { ReservationQueryRepository, ReservationRecord } from "../ports/reservation-query-repository.js";
 import { ReservationUseCase } from "./reservation.usecase.js";

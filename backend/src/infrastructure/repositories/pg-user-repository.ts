@@ -1,24 +1,24 @@
 import type {
-	UserAuthData,
-	UserCreate,
-	UserRepository,
+    UserAuthData,
+    UserCreate,
+    UserRepository,
 } from "../../application/ports/user-repository.js";
 import { User } from "../../domain/entities/user.js";
 import type { Email } from "../../domain/valueObjects/email.js";
 import {
-	createEmail,
-	emailToString,
+    createEmail,
+    emailToString,
 } from "../../domain/valueObjects/email.js";
-import type { PasswordHash } from "../../domain/valueObjects/passwordHash.js";
+import type { PasswordHash } from "../../domain/valueObjects/password-hash.js";
 import {
-	createPasswordHash,
-	passwordHashToString,
-} from "../../domain/valueObjects/passwordHash.js";
-import type { UserId } from "../../domain/valueObjects/userId.js";
+    createPasswordHash,
+    passwordHashToString,
+} from "../../domain/valueObjects/password-hash.js";
+import type { UserId } from "../../domain/valueObjects/user-id.js";
 import {
-	createUserId,
-	userIdToString,
-} from "../../domain/valueObjects/userId.js";
+    createUserId,
+    userIdToString,
+} from "../../domain/valueObjects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 

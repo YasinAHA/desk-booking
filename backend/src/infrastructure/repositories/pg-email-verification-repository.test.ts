@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PgEmailVerificationRepository } from "./pgEmailVerificationRepository.js";
+import { PgEmailVerificationRepository } from "./pg-email-verification-repository.js";
 
 test("PgEmailVerificationRepository.findByTokenHash returns null when missing", async () => {
 	const repo = new PgEmailVerificationRepository({

@@ -1,4 +1,4 @@
-import { createUserId } from "../../domain/valueObjects/userId.js";
+import { createUserId } from "../../domain/valueObjects/user-id.js";
 import type { DeskRepository } from "../ports/desk-repository.ts";
 
 export class DeskUseCase {

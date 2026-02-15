@@ -9,7 +9,7 @@ import type {
 import fp from "fastify-plugin";
 
 import { env } from "../../../config/env.js";
-import { sendError } from "../httpErrors.js";
+import { sendError } from "../http-errors.js";
 
 const authPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     await app.register(jwt, {

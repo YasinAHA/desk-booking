@@ -9,12 +9,12 @@ import { ZodError } from "zod";
 import { env } from "./config/env.js";
 import { authRoutes } from "./interfaces/http/auth/auth.routes.js";
 import { desksRoutes } from "./interfaces/http/desks/desks.routes.js";
-import { isHttpError, sendError } from "./interfaces/http/httpErrors.js";
+import { isHttpError, sendError } from "./interfaces/http/http-errors.js";
 import { recordRequest } from "./interfaces/http/metrics/metrics.js";
 import { metricsRoutes } from "./interfaces/http/metrics/metrics.routes.js";
 import { registerAuthPlugin } from "./interfaces/http/plugins/auth.js";
 import { registerDbPlugin } from "./interfaces/http/plugins/db.js";
-import { GLOBAL_RATE_LIMIT } from "./interfaces/http/policies/rateLimitPolicies.js";
+import { GLOBAL_RATE_LIMIT } from "./interfaces/http/policies/rate-limit-policies.js";
 import { reservationsRoutes } from "./interfaces/http/reservations/reservations.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {

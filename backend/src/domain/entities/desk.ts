@@ -1,4 +1,4 @@
-import type { DeskId } from "../valueObjects/deskId.js";
+import type { DeskId } from "../valueObjects/desk-id.js";
 
 /**
  * Domain entity for Desk

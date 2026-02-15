@@ -1,6 +1,6 @@
 import { createEmail, emailToString } from "../../domain/valueObjects/email.js";
-import type { UserId } from "../../domain/valueObjects/userId.js";
-import { userIdToString } from "../../domain/valueObjects/userId.js";
+import type { UserId } from "../../domain/valueObjects/user-id.js";
+import { userIdToString } from "../../domain/valueObjects/user-id.js";
 import type { AuthPolicy } from "../ports/auth-policy.js";
 import type { EmailOutbox } from "../ports/email-outbox.js";
 import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";

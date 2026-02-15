@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import test from "node:test";
 import {
-    PasswordPolicyError,
-    createValidatedPassword,
-    validatePasswordPolicy,
-} from "./passwordPolicy.js";
+	PasswordPolicyError,
+	createValidatedPassword,
+	validatePasswordPolicy,
+} from "./password-policy.js";
 
 test("validatePasswordPolicy accepts strong passwords", () => {
 	const validPasswords = [

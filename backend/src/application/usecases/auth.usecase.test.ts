@@ -7,8 +7,8 @@ import { createEmail } from "../../domain/valueObjects/email.js";
 import {
 	createPasswordHash,
 	passwordHashToString,
-} from "../../domain/valueObjects/passwordHash.js";
-import { createUserId } from "../../domain/valueObjects/userId.js";
+} from "../../domain/valueObjects/password-hash.js";
+import { createUserId } from "../../domain/valueObjects/user-id.js";
 import type { AuthPolicy } from "../ports/auth-policy.js";
 import type { EmailOutbox } from "../ports/email-outbox.js";
 import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";

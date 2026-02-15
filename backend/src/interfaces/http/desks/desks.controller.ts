@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { DeskUseCase } from "../../../application/usecases/desk.usecase.js";
-import { throwHttpError } from "../httpErrors.js";
-import { dateSchema } from "../schemas/dateSchemas.js";
+import { throwHttpError } from "../http-errors.js";
+import { dateSchema } from "../schemas/date-schemas.js";
 
 /**
  * Schemas for desks request validation

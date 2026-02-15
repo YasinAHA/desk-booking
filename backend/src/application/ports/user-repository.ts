@@ -1,7 +1,7 @@
 import { User } from "../../domain/entities/user.js";
 import type { Email } from "../../domain/valueObjects/email.js";
-import type { PasswordHash } from "../../domain/valueObjects/passwordHash.js";
-import type { UserId } from "../../domain/valueObjects/userId.js";
+import type { PasswordHash } from "../../domain/valueObjects/password-hash.js";
+import type { UserId } from "../../domain/valueObjects/user-id.js";
 
 // Input DTO for user creation
 export type UserCreate = {

@@ -251,7 +251,7 @@ function validatePasswordPolicy(password) {
 		minLength: password.length >= 12,
 		uppercase: /[A-Z]/.test(password),
 		lowercase: /[a-z]/.test(password),
-		digit: /[0-9]/.test(password),
+		digit: /\d/.test(password),
 		special: /[!@#$%^&*\-_+=]/.test(password),
 		noCommon: !/^(123|abc|qwerty|password|admin|letmein)/i.test(password),
 	};

@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-    createReservationDate,
-    InvalidReservationDateError,
-    isReservationDateInPast,
-    reservationDateToString,
-} from "./reservationDate.js";
+	createReservationDate,
+	InvalidReservationDateError,
+	isReservationDateInPast,
+	reservationDateToString,
+} from "./reservation-date.js";
 
 test("createReservationDate accepts valid date", () => {
 	const date = createReservationDate("2026-02-20");

@@ -2,17 +2,17 @@ import {
 	ReservationDateInPastError,
 	type ReservationSource,
 } from "../../domain/entities/reservation.js";
-import { createDeskId } from "../../domain/valueObjects/deskId.js";
-import { createOfficeId } from "../../domain/valueObjects/officeId.js";
+import { createDeskId } from "../../domain/valueObjects/desk-id.js";
+import { createOfficeId } from "../../domain/valueObjects/office-id.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
 	createReservationDate,
 	isReservationDateInPast,
 	reservationDateToString,
-} from "../../domain/valueObjects/reservationDate.js";
-import { createReservationId } from "../../domain/valueObjects/reservationId.js";
-import { createUserId } from "../../domain/valueObjects/userId.js";
+} from "../../domain/valueObjects/reservation-date.js";
+import { createReservationId } from "../../domain/valueObjects/reservation-id.js";
+import { createUserId } from "../../domain/valueObjects/user-id.js";
 import type { ReservationCommandRepository } from "../ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "../ports/reservation-query-repository.js";
 

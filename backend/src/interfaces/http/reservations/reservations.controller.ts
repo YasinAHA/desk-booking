@@ -5,8 +5,8 @@ import {
 	ReservationConflictError,
 	ReservationDateInPastError,
 } from "../../../domain/entities/reservation.js";
-import { throwHttpError } from "../httpErrors.js";
-import { dateSchema } from "../schemas/dateSchemas.js";
+import { throwHttpError } from "../http-errors.js";
+import { dateSchema } from "../schemas/date-schemas.js";
 
 /**
  * Schemas for reservation request validation

@@ -1,8 +1,8 @@
 import type { ReservationSource } from "../../domain/entities/reservation.js";
-import type { DeskId } from "../../domain/valueObjects/deskId.js";
-import type { OfficeId } from "../../domain/valueObjects/officeId.js";
-import type { ReservationId } from "../../domain/valueObjects/reservationId.js";
-import type { UserId } from "../../domain/valueObjects/userId.js";
+import type { DeskId } from "../../domain/valueObjects/desk-id.js";
+import type { OfficeId } from "../../domain/valueObjects/office-id.js";
+import type { ReservationId } from "../../domain/valueObjects/reservation-id.js";
+import type { UserId } from "../../domain/valueObjects/user-id.js";
 
 export interface ReservationCommandRepository {
 	create(

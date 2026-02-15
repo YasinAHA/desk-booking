@@ -6,8 +6,8 @@ import {
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "../../../config/constants.js";
-import { validatePasswordPolicy } from "../../../domain/valueObjects/passwordPolicy.js";
-import { throwHttpError } from "../httpErrors.js";
+import { validatePasswordPolicy } from "../../../domain/valueObjects/password-policy.js";
+import { throwHttpError } from "../http-errors.js";
 import { JwtTokenService } from "./jwt-token.service.js";
 
 /**
