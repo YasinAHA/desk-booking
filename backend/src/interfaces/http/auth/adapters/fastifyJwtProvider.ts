@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { JwtProvider, SignOptions, VerifyOptions } from "../ports/jwtProvider.js";
+import type { JwtProvider, SignOptions, VerifyOptions } from "../ports/jwt-provider.js";
 
 /**
  * FastifyJwtProvider: Concrete implementation of JwtProvider using Fastify JWT plugin

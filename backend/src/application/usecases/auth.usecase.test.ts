@@ -9,13 +9,13 @@ import {
 	passwordHashToString,
 } from "../../domain/valueObjects/passwordHash.js";
 import { createUserId } from "../../domain/valueObjects/userId.js";
-import type { AuthPolicy } from "../ports/authPolicy.js";
-import type { EmailOutbox } from "../ports/emailOutbox.js";
-import type { EmailVerificationRepository } from "../ports/emailVerificationRepository.js";
-import type { PasswordHasher } from "../ports/passwordHasher.js";
-import type { TokenService } from "../ports/tokenService.js";
-import type { TransactionManager } from "../ports/transactionManager.js";
-import type { UserRepository } from "../ports/userRepository.js";
+import type { AuthPolicy } from "../ports/auth-policy.js";
+import type { EmailOutbox } from "../ports/email-outbox.js";
+import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";
+import type { PasswordHasher } from "../ports/password-hasher.js";
+import type { TokenService } from "../ports/token-service.js";
+import type { TransactionManager } from "../ports/transaction-manager.js";
+import type { UserRepository } from "../ports/user-repository.js";
 import { AuthUseCase } from "./auth.usecase.js";
 
 function mockUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {

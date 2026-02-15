@@ -13,8 +13,8 @@ import {
 } from "../../domain/valueObjects/reservationDate.js";
 import { createReservationId } from "../../domain/valueObjects/reservationId.js";
 import { createUserId } from "../../domain/valueObjects/userId.js";
-import type { ReservationCommandRepository } from "../ports/reservationCommandRepository.js";
-import type { ReservationQueryRepository } from "../ports/reservationQueryRepository.js";
+import type { ReservationCommandRepository } from "../ports/reservation-command-repository.js";
+import type { ReservationQueryRepository } from "../ports/reservation-query-repository.js";
 
 export class ReservationUseCase {
 	constructor(

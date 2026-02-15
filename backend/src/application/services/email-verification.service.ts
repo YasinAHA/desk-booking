@@ -1,9 +1,9 @@
 import type { UserId } from "../../domain/valueObjects/userId.js";
 import { userIdToString } from "../../domain/valueObjects/userId.js";
 import type { AuthPolicy } from "../ports/authPolicy.js";
-import type { EmailOutbox } from "../ports/emailOutbox.js";
-import type { EmailVerificationRepository } from "../ports/emailVerificationRepository.js";
-import type { TokenService } from "../ports/tokenService.js";
+import type { EmailOutbox } from "../ports/email-outbox.js";
+import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";
+import type { TokenService } from "../ports/token-service.js";
 
 /**
  * EmailVerificationService - Handles email verification workflow

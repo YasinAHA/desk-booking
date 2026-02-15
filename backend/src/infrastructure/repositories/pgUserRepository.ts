@@ -2,7 +2,7 @@ import type {
 	UserAuthData,
 	UserCreate,
 	UserRepository,
-} from "../../application/ports/userRepository.js";
+} from "../../application/ports/user-repository.js";
 import { User } from "../../domain/entities/user.js";
 import type { Email } from "../../domain/valueObjects/email.js";
 import {

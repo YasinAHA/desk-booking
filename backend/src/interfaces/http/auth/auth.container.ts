@@ -4,16 +4,16 @@ import type { Pool } from "pg";
 import { AuthUseCase } from "../../../application/usecases/auth.usecase.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "../../../config/constants.js";
 import { env } from "../../../config/env.js";
-import { PgTransactionManager } from "../../../infrastructure/db/pgTransactionManager.js";
-import { DomainAuthPolicy } from "../../../infrastructure/policies/domainAuthPolicy.js";
-import { PgEmailOutbox } from "../../../infrastructure/repositories/pgEmailOutbox.js";
-import { PgEmailVerificationRepository } from "../../../infrastructure/repositories/pgEmailVerificationRepository.js";
-import { PgTokenRevocationRepository } from "../../../infrastructure/repositories/pgTokenRevocationRepository.js";
-import { PgUserRepository } from "../../../infrastructure/repositories/pgUserRepository.js";
-import { Argon2PasswordHasher } from "../../../infrastructure/security/argon2PasswordHasher.js";
-import { Sha256TokenService } from "../../../infrastructure/security/sha256TokenService.js";
+import { PgTransactionManager } from "../../../infrastructure/db/pg-transaction-manager.js";
+import { DomainAuthPolicy } from "../../../infrastructure/policies/domain-auth-policy.js";
+import { PgEmailOutbox } from "../../../infrastructure/repositories/pg-email-outbox.js";
+import { PgEmailVerificationRepository } from "../../../infrastructure/repositories/pg-email-verification-repository.js";
+import { PgTokenRevocationRepository } from "../../../infrastructure/repositories/pg-token-revocation-repository.js";
+import { PgUserRepository } from "../../../infrastructure/repositories/pg-user-repository.js";
+import { Argon2PasswordHasher } from "../../../infrastructure/security/argon2-password-hasher.js";
+import { Sha256TokenService } from "../../../infrastructure/security/sha256-token-service.js";
+import { FastifyJwtProvider } from "./adapters/fastify-jwt-provider.js";
 import { JwtTokenService } from "./jwt-token.service.js";
-import { FastifyJwtProvider } from "./adapters/fastifyJwtProvider.js";
 
 type AppWithDb = FastifyInstance & {
 	db: {

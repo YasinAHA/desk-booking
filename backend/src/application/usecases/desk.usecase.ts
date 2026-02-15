@@ -1,5 +1,5 @@
 import { createUserId } from "../../domain/valueObjects/userId.js";
-import type { DeskRepository } from "../ports/deskRepository.ts";
+import type { DeskRepository } from "../ports/desk-repository.ts";
 
 export class DeskUseCase {
 	constructor(private readonly deskRepo: DeskRepository) {}

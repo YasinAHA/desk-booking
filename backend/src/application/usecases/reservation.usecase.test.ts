@@ -6,8 +6,8 @@ import { createDeskId } from "../../domain/valueObjects/deskId.js";
 import { createOfficeId } from "../../domain/valueObjects/officeId.js";
 import { createReservationId } from "../../domain/valueObjects/reservationId.js";
 import { createUserId } from "../../domain/valueObjects/userId.js";
-import type { ReservationCommandRepository } from "../ports/reservationCommandRepository.js";
-import type { ReservationQueryRepository, ReservationRecord } from "../ports/reservationQueryRepository.js";
+import type { ReservationCommandRepository } from "../ports/reservation-command-repository.js";
+import type { ReservationQueryRepository, ReservationRecord } from "../ports/reservation-query-repository.js";
 import { ReservationUseCase } from "./reservation.usecase.js";
 
 function mockCommandRepo(

@@ -1,16 +1,16 @@
 import { createEmail, emailToString } from "../../domain/valueObjects/email.js";
 import type { UserId } from "../../domain/valueObjects/userId.js";
 import { userIdToString } from "../../domain/valueObjects/userId.js";
-import type { AuthPolicy } from "../ports/authPolicy.js";
-import type { EmailOutbox } from "../ports/emailOutbox.js";
-import type { EmailVerificationRepository } from "../ports/emailVerificationRepository.js";
-import type { PasswordHasher } from "../ports/passwordHasher.js";
-import type { TokenService } from "../ports/tokenService.js";
+import type { AuthPolicy } from "../ports/auth-policy.js";
+import type { EmailOutbox } from "../ports/email-outbox.js";
+import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";
+import type { PasswordHasher } from "../ports/password-hasher.js";
+import type { TokenService } from "../ports/token-service.js";
 import type {
 	TransactionManager,
 	TransactionalContext,
-} from "../ports/transactionManager.js";
-import type { UserRepository } from "../ports/userRepository.js";
+} from "../ports/transaction-manager.js";
+import type { UserRepository } from "../ports/user-repository.js";
 import { EmailVerificationService } from "../services/email-verification.service.js";
 
 type AuthUser = {
