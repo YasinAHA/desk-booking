@@ -7,6 +7,8 @@ buenas prácticas de arquitectura, backend moderno y despliegue real.
 El proyecto evoluciona desde una primera versión funcional hacia una solución completa,
 lista para ser utilizada en un entorno corporativo.
 
+**Estado actual:** v0.5.0 (Technical consolidation) con schema v1.0.0 alineado. Listo para Camerfirma Internal Release.
+
 ---
 
 ## 🎯 Objetivo del proyecto
@@ -52,9 +54,22 @@ yasinaha-desk-booking/
 │       ├── app.ts
 │       ├── server.ts
 │       ├── config/
-│       ├── lib/
-│       ├── modules/
-│       └── plugins/
+│       ├── domain/
+│       │   └── entities/
+│       ├── application/
+│       │   ├── ports/
+│       │   └── usecases/
+│       ├── infrastructure/
+│       │   ├── notifiers/
+│       │   └── repositories/
+│       ├── interfaces/
+│       │   └── http/
+│       │       ├── auth/
+│       │       ├── desks/
+│       │       ├── metrics/
+│       │       ├── reservations/
+│       │       ├── plugins/
+│       │       └── types/
 ├── frontend/
 │   ├── index.html
 │   ├── styles.css
@@ -77,17 +92,22 @@ yasinaha-desk-booking/
 │   └── DEPLOYMENT.md
 ```
 
+Nota: `src/config` es configuracion compartida entre capas.
+
+
 ---
 
 ## 🧱 Stack tecnológico
 
 ### Backend
 - Node.js
-- Fastify
-- TypeScript
-- PostgreSQL
-- JWT
-- Zod
+- Fastify 5.7.4
+- TypeScript (strict mode)
+- PostgreSQL 13+
+- JWT (access + refresh tokens with jti)
+- Argon2 (password hashing)
+- Helmet 13.0.2 (HTTP security headers: CSP + HSTS)
+- Zod (schema validation)
 - Swagger / OpenAPI
 - Docker
 
@@ -154,13 +174,14 @@ npm run dev:api
 - Frontend minimo conectado a API.
 - Schema inicial en [docker/postgres/init/001_init.sql](docker/postgres/init/001_init.sql).
 - CI basico con GitHub Actions (test + build).
+- Metricas basicas disponibles en `GET /metrics`.
 
 ---
 
-## ✅ Tareas v0.4.0
+## ✅ Tareas v0.5.0
 Ver checklist en [docs/TASKS.md](docs/TASKS.md).
 
-## 🧭 Backlog v0.5.0
+## 🧭 Backlog v0.6.0
 Ver propuestas en [docs/BACKLOG.md](docs/BACKLOG.md).
 
 ---
@@ -175,7 +196,8 @@ Ver propuestas en [docs/BACKLOG.md](docs/BACKLOG.md).
 ## 🚀 Roadmap
 - 0.2.x: estabilización del MVP (sesión, refrescos, UX, bugs).
 - v0.3.0 → Backend propio y arquitectura base
-- v0.4.0 → Frontend TypeScript
+- v0.5.0 → Refactor arquitectonico (Clean Architecture)
+- v0.6.0 → Seguridad, roles y observabilidad
 - v1.0.0 → Versión final TFM
 
 ---

@@ -16,7 +16,7 @@
 }
 ```
 
-## Endpoints actuales
+## Endpoints
 
 ### Healthcheck
 `GET /health`
@@ -24,8 +24,6 @@ Respuesta:
 ```json
 { "ok": true }
 ```
-
-## Endpoints actuales (v0.3.x)
 
 ### Auth
 Nota: el login solo permite usuarios confirmados por email.
@@ -36,7 +34,9 @@ Request:
 {
 	"email": "user@company.com",
 	"password": "string",
-	"display_name": "User"
+	"first_name": "User",
+	"last_name": "Company",
+	"second_last_name": "Optional"
 }
 ```
 Response 200:
@@ -56,11 +56,14 @@ Request:
 Response 200:
 ```json
 {
-	"token": "jwt",
+	"accessToken": "jwt",
+	"refreshToken": "jwt",
 	"user": {
 		"id": "uuid",
 		"email": "user@company.com",
-		"display_name": "User"
+		"first_name": "User",
+		"last_name": "Company",
+		"second_last_name": null
 	}
 }
 ```
@@ -87,7 +90,9 @@ Response 200:
 	"user": {
 		"id": "uuid",
 		"email": "user@company.com",
-		"display_name": "User"
+		"first_name": "User",
+		"last_name": "Company",
+		"second_last_name": null
 	}
 }
 ```
@@ -106,13 +111,14 @@ Response 200:
 	"items": [
 		{
 			"id": "uuid",
+			"officeId": "uuid",
 			"code": "D01",
 			"name": "Puesto 01",
-			"is_active": true,
-			"is_reserved": false,
-			"is_mine": false,
-			"reservation_id": null,
-			"occupant_name": null
+			"status": "active",
+			"isReserved": false,
+			"isMine": false,
+			"reservationId": null,
+			"occupantName": null
 		}
 	]
 }
@@ -125,7 +131,9 @@ Request:
 ```json
 {
 	"date": "2026-02-07",
-	"desk_id": "uuid"
+	"desk_id": "uuid",
+	"office_id": "uuid",
+	"source": "user"
 }
 ```
 Response 200:
@@ -136,15 +144,12 @@ Response 200:
 }
 ```
 Errores: 400, 401, 409
+> Nota: 400 incluye `DATE_IN_PAST` cuando la fecha es anterior a hoy.
 
 #### `DELETE /reservations/:id`
-Response 200:
-```json
-{
-	"ok": true
-}
-```
-Errores: 400, 401, 403, 404
+Response 204 (sin body)
+Errores: 400, 401, 404
+> Nota: 400 incluye `CANNOT_CANCEL_PAST` cuando la reserva es de un dia pasado.
 
 #### `GET /reservations/me`
 Response 200:
@@ -152,10 +157,12 @@ Response 200:
 {
 	"items": [
 		{
-			"id": "uuid",
+			"reservation_id": "uuid",
 			"desk_id": "uuid",
+			"office_id": "uuid",
 			"desk_name": "Puesto 01",
-			"reserved_date": "2026-02-07",
+			"reservation_date": "2026-02-07",
+			"source": "user",
 			"cancelled_at": null
 		}
 	]
@@ -163,6 +170,29 @@ Response 200:
 ```
 Errores: 401
 
+### Metricas
+#### `GET /metrics`
+Response 200:
+```json
+{
+	"startedAt": 0,
+	"uptimeSeconds": 0,
+	"totals": {
+		"count": 0,
+		"errors4xx": 0,
+		"errors5xx": 0
+	},
+	"routes": {
+		"GET /desks": {
+			"count": 0,
+			"errors4xx": 0,
+			"errors5xx": 0,
+			"avgMs": 0,
+			"p95Ms": 0
+		}
+	}
+}
+```
 > Nota: el contrato se valida con Zod. OpenAPI queda pendiente.
 
 ## Datos (DB)
@@ -171,17 +201,23 @@ Errores: 401
 - id
 - email
 - password_hash
-- display_name
+- first_name
+- last_name
+- second_last_name
 
 ### desks
 - id
 - code
 - name
-- is_active
+- status
+- office_id
 
 ### reservations
 - id
 - user_id
 - desk_id
-- reserved_date
+- office_id
+- reservation_date
+- status
+- source
 - cancelled_at

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     container_name: deskbooking_pg
     environment:
       POSTGRES_DB: deskbooking
@@ -9,10 +9,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./postgres/init:/docker-entrypoint-initdb.d
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:9
     container_name: deskbooking_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@local.dev
@@ -29,6 +29,39 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+  outbox-worker:
+    image: node:20
+    container_name: deskbooking_outbox_worker
+    working_dir: /app/backend
+    volumes:
+      - ..:/app
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
+      SMTP_HOST: mailpit
+    command: sh -c "npm install && npm run worker:outbox"
+    depends_on:
+      - postgres
+      - mailpit
+  backend:
+    image: node:20
+    container_name: deskbooking_backend
+    working_dir: /app/backend
+    volumes:
+      - ..:/app
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
+      SMTP_HOST: mailpit
+      HOST: 0.0.0.0
+    ports:
+      - "3001:3001"
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - postgres
+      - mailpit
 
 volumes:
   pgdata:

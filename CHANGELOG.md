@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.0] - 2026-02-15
+
+### Added
+- Schema migration v1.0.0: office/floor/zone/desk hierarchy (configurable by admin)
+- User profile refactor: first_name + last_name + second_last_name (Spanish naming convention)
+- Desk status enum: active, maintenance, disabled (replaced is_active boolean)
+- Reservation metadata: source (user/admin/walk_in/system) and office_id fields
+- Email outbox pattern with worker polling (3s interval, exponential backoff)
+- Security hardening: Helmet 13.0.2 with CSP (Content-Security-Policy) + HSTS headers
+- Password policy enforcement: 12+ chars, uppercase, lowercase, digit, special char (!@#$%^&*-_+=)
+- Password policy Value Object with domain-level validation + comprehensive unit tests
+- Frontend client-side password validation with live requirements checklist (✓/✗ indicators)
+- Comprehensive SECURITY.md documentation: Security by Design + Security by Default principles
+- 55 backend tests (+password policy +security +auth +reservation +desk +repository +routes)
+- Architecture refactor: SOLID/Clean Architecture (domain → application → infrastructure → interfaces)
+- Domain-driven error handling: typed exceptions mapped in HTTP layer
+
+### Changed
+- API serialization: snake_case responses, camelCase form inputs
+- User authentication: passwordHash value object with Argon2 validation + password policy enforcement
+- Reservation queries: CQRS pattern for command/query separation
+- Frontend form: split display_name into first_name, last_name, second_last_name fields
+- Frontend form: password input now shows requirements checklist with real-time validation feedback
+- Frontend API client: updated signatures for register() and createReservation()
+- Frontend error handling: added WEAK_PASSWORD error code with user-friendly message
+- Docker: Mailpit SMTP server for local email testing
+- JWT_REFRESH_SECRET: now required in production (safe default in dev/test)
+
+### Fixed
+- Email delivery pipeline: outbox worker constraint now allows 'processing' status (concurrency lock)
+- Schema migration 004: idempotent guards for constraints, column renames, and seed data
+- Reservation uniqueness: enforced by DB unique constraints per user-desk-date
+- Test fixtures: all 55 tests passing with new user naming conventions + password policy tests
+- Password validation: moved from HTTP layer to domain Value Object for better separation of concerns
+
+### Security
+- ✅ HTTP security headers (Helmet with CSP + HSTS) enabled
+- ✅ Password policy enforcement with complexity requirements
+- ✅ JWT_REFRESH_SECRET production enforcement
+- ✅ Security documentation with design principles (see SECURITY.md)
+- ⏳ Known gaps (v0.6.0+): httpOnly cookies, CSRF tokens, audit logging, 2FA
+
+### Notes
+- v0.5.0 is part of v0.4.x-v0.9.x technical consolidation phase (see SCOPE.md)
+- Security hardening phase 1 complete (headers + password policy + documentation)
+- v0.5.1 (planned): naming convention refactor (kebab-case files for backend)
+- Admin UI and QR check-in postponed for v0.7.0
+- Multi-language and recurring reservations postponed for v2.0.0
+
+---
+
 ## [0.4.0] - 2026-02-08
 
 ### Added

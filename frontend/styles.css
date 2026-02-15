@@ -232,6 +232,23 @@ input {
 	border-radius: 10px;
 }
 
+.password-requirements {
+	display: grid;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--muted);
+	margin-top: 4px;
+}
+
+.password-requirements div {
+	transition: color 0.2s ease;
+}
+
+.password-requirements div.met {
+	color: var(--accent);
+	font-weight: 500;
+}
+
 @media (max-width: 720px) {
 	.header {
 		flex-direction: column;

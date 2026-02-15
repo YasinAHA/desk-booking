@@ -24,7 +24,7 @@
 			<header class="header">
 				<div>
 					<h1>Desk Booking</h1>
-					<p class="subtitle">Frontend minimo para v0.4.0</p>
+					<p class="subtitle">Frontend minimo para v0.5.0</p>
 				</div>
 				<button id="logoutBtn" class="btn btn-ghost" disabled>Logout</button>
 			</header>
@@ -55,11 +55,26 @@
 					</label>
 					<label>
 						Nombre
-						<input type="text" id="registerName" placeholder="Tu nombre" />
+						<input type="text" id="registerFirstName" required placeholder="Tu nombre" />
+					</label>
+					<label>
+						Primer apellido
+						<input type="text" id="registerLastName" required placeholder="Tu primer apellido" />
+					</label>
+					<label>
+						Segundo apellido
+						<input type="text" id="registerSecondLastName" placeholder="Tu segundo apellido" />
 					</label>
 					<label>
 						Password
-						<input type="password" id="registerPassword" required placeholder="Min 6 caracteres" />
+						<input type="password" id="registerPassword" required placeholder="Mín 12 caracteres con mayús, dígito, carácter especial" />
+						<small id="passwordRequirements" class="password-requirements">
+							<div>✗ Mínimo 12 caracteres</div>
+							<div>✗ Al menos 1 mayúscula</div>
+							<div>✗ Al menos 1 minúscula</div>
+							<div>✗ Al menos 1 dígito</div>
+							<div>✗ Al menos 1 carácter especial (!@#$%^&*-_+=)</div>
+						</small>
 					</label>
 					<button type="submit" class="btn">Registrarse</button>
 				</form>

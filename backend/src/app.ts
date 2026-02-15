@@ -1,4 +1,5 @@
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
@@ -6,19 +7,15 @@ import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
 
 import { env } from "./config/env.js";
-import { sendError } from "./lib/httpErrors.js";
-import { authRoutes } from "./modules/auth/auth.routes.js";
-import { desksRoutes } from "./modules/desks/desks.routes.js";
-import { reservationsRoutes } from "./modules/reservations/reservations.routes.js";
-import { registerAuthPlugin } from "./plugins/auth.js";
-import { registerDbPlugin } from "./plugins/db.js";
-
-// Si ya tienes estos plugins/rutas creados, descomenta e integra.
-// import { registerSwaggerPlugin } from "./plugins/swagger.js";
-// import { registerAuthPlugin } from "./plugins/auth.js";
-// import { authRoutes } from "./modules/auth/auth.routes.js";
-// import { desksRoutes } from "./modules/desks/desks.routes.js";
-// import { reservationsRoutes } from "./modules/reservations/reservations.routes.js";
+import { authRoutes } from "./interfaces/http/auth/auth.routes.js";
+import { desksRoutes } from "./interfaces/http/desks/desks.routes.js";
+import { isHttpError, sendError } from "./interfaces/http/httpErrors.js";
+import { recordRequest } from "./interfaces/http/metrics/metrics.js";
+import { metricsRoutes } from "./interfaces/http/metrics/metrics.routes.js";
+import { registerAuthPlugin } from "./interfaces/http/plugins/auth.js";
+import { registerDbPlugin } from "./interfaces/http/plugins/db.js";
+import { GLOBAL_RATE_LIMIT } from "./interfaces/http/policies/rateLimitPolicies.js";
+import { reservationsRoutes } from "./interfaces/http/reservations/reservations.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({
@@ -39,6 +36,15 @@ export async function buildApp(): Promise<FastifyInstance> {
     app.addHook("onResponse", (req, reply, done) => {
         const startTime = (req as { startTime?: number }).startTime ?? Date.now();
         const durationMs = Date.now() - startTime;
+        const routePath =
+            (req as { routeOptions?: { url?: string } }).routeOptions?.url ??
+            req.url.split("?")[0] ?? "";
+        recordRequest({
+            method: req.method,
+            route: routePath,
+            statusCode: reply.statusCode,
+            durationMs,
+        });
         req.log.info(
             {
                 event: "request.end",
@@ -47,6 +53,18 @@ export async function buildApp(): Promise<FastifyInstance> {
             },
             "Request completed"
         );
+        done();
+    });
+
+    // --- Ensure body is always parsed (handle cases where it might be a string) ---
+    app.addHook("preValidation", (req, reply, done) => {
+        if (typeof req.body === "string" && req.body.length > 0) {
+            try {
+                (req as any).body = JSON.parse(req.body);
+            } catch {
+                // Let Fastify error handler deal with parse errors
+            }
+        }
         done();
     });
 
@@ -70,9 +88,23 @@ export async function buildApp(): Promise<FastifyInstance> {
     });
 
     // --- Rate limit (global) ---
-    await app.register(rateLimit, {
-        max: 100,
-        timeWindow: "1 minute",
+    await app.register(rateLimit, GLOBAL_RATE_LIMIT);
+
+    // --- Security headers (helmet) ---
+    await app.register(helmet, {
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", "data:"],
+            },
+        },
+        hsts: {
+            maxAge: 31536000, // 1 year
+            includeSubDomains: true,
+            preload: true,
+        },
     });
 
     // --- Healthcheck ---
@@ -91,6 +123,9 @@ export async function buildApp(): Promise<FastifyInstance> {
         if (err instanceof ZodError) {
             return sendError(reply, 400, "BAD_REQUEST", "Invalid payload");
         }
+        if (isHttpError(err)) {
+            return sendError(reply, err.statusCode, err.code, err.message);
+        }
 
         app.log.error(err);
         return sendError(reply, 500, "INTERNAL_ERROR", "Unexpected error");
@@ -100,6 +135,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(authRoutes, { prefix: "/auth" });
     await app.register(desksRoutes, { prefix: "/desks" });
     await app.register(reservationsRoutes, { prefix: "/reservations" });
+    await app.register(metricsRoutes, { prefix: "/metrics" });
 
     return app;
 }

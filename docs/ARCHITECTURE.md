@@ -10,9 +10,29 @@ Monorepo con backend propio y frontend ligero:
 ### Backend (`backend/`)
 - `src/server.ts`: bootstrap del servidor HTTP.
 - `src/app.ts`: construye la app Fastify, registra plugins y rutas.
-- `src/plugins/db.ts`: pool de Postgres y decorador `app.db`.
-- `src/config/env.ts`: lectura y validacion de variables de entorno.
-- `src/modules/*`: modulos por dominio (auth, desks, reservations).
+- `src/interfaces/http/plugins/db.ts`: pool de Postgres y decorador `app.db`.
+- `src/interfaces/http/types/*`: tipos y augmentations para Fastify.
+- `src/config/env.ts`: configuracion compartida (env) usada por varias capas.
+- `src/interfaces/http/*`: rutas HTTP por feature (auth, desks, reservations).
+- `src/interfaces/http/*/*.container.ts`: wiring por feature (composition root).
+
+### Capas (v0.5.0)
+- `src/domain`: entidades y reglas de negocio puras (User, Desk, Reservation).
+- `src/application`: casos de uso y orquestacion (usecases, ports).
+- `src/infrastructure`: adaptadores (DB, mailer, logger, etc.).
+- `src/interfaces`: entrada/salida (HTTP/controllers, DTOs, validacion).
+
+### Guardrails de arquitectura
+- `application` solo depende de `domain` y `ports`.
+- `usecases` no dependen de otros usecases.
+- Errores de negocio se modelan como tipos en `domain` y se traducen en `interfaces`.
+- Serializacion/formatos se resuelven en `infrastructure`.
+- Constantes de negocio y limites compartidos en `src/config/constants.ts`.
+
+### CQRS (criterio pragmatica)
+- CQRS estricto solo se aplica cuando hay lecturas complejas o proyecciones.
+- En v1 se usa separacion comando/consulta donde aporta claridad (reservations).
+- En otras entidades se mantiene repositorio unificado para evitar complejidad.
 
 ### Frontend (`frontend/`)
 - `index.html`, `styles.css`: UI base.
@@ -21,6 +41,12 @@ Monorepo con backend propio y frontend ligero:
 ### Base de datos
 - Postgres local via Docker.
 - SQL de inicializacion en `docker/postgres/init/001_init.sql`.
+
+### Outbox Pattern (side effects)
+- Cambios criticos se persisten en una sola transaccion junto con el outbox.
+- Un worker procesa la cola y reintenta envios (email) sin bloquear el flujo principal.
+- El dominio no conoce el outbox; la aplicacion usa ports.
+- La infraestructura implementa los adaptadores y el worker.
 
 ## Datos (alto nivel)
 - `users`
@@ -36,6 +62,7 @@ Monorepo con backend propio y frontend ligero:
 ## Observabilidad
 - Logs estructurados por request con `request id`.
 - Trazas basicas en operaciones criticas (auth y reservas).
+- Metricas basicas in-memory expuestas en `GET /metrics`.
 
 ## API (contrato base)
 - Auth con `Authorization: Bearer <token>`.
@@ -45,5 +72,6 @@ Monorepo con backend propio y frontend ligero:
 - Errores con formato comun `{ error: { code, message } }`.
 
 ## Notas de evolucion
-- Rutas y servicios base implementados.
-- Migracion a TypeScript en frontend queda para v0.4.0.
+- Rutas HTTP delgadas en `interfaces/http/`, con logica en `application/usecases`.
+- Entidades base en `domain/` para evolucionar reglas de negocio.
+- Migracion por capas en curso (v0.5.0).

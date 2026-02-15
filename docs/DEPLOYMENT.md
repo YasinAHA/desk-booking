@@ -15,7 +15,10 @@ La seleccion de entorno se define por `NODE_ENV` y las variables en `backend/.en
 
 ## Variables clave
 - `NODE_ENV`: `development`, `test`, `production`
+- `HOST`
 - `DATABASE_URL`
+- `DB_SSL`
+- `DB_POOL_MAX`
 - `JWT_SECRET`
 - `ALLOWED_EMAIL_DOMAINS`
 - `APP_BASE_URL`

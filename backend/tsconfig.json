@@ -20,6 +20,6 @@
     },
     "include": [
         "src/**/*.ts",
-        "src/types/**/*.d.ts"
+        "src/interfaces/**/*.d.ts"
     ]
 }

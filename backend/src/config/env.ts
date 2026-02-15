@@ -1,40 +1,61 @@
-type RequiredEnv =
-    | "DATABASE_URL"
-    | "JWT_SECRET";
+import { z } from "zod";
 
-function requiredEnv(name: RequiredEnv): string {
-    const value = process.env[name];
-    if (!value) throw new Error(`Missing env: ${name}`);
-    return value;
-}
+const nodeEnv = process.env.NODE_ENV || "development";
 
+const envSchema = z.object({
+    NODE_ENV: z.string().default("development"),
+    PORT: z.coerce.number().int().positive().default(3001),
+    HOST: z.string().default("0.0.0.0"),
+    DATABASE_URL: z.string().url(),
+    JWT_SECRET: z.string().min(1),
+    JWT_EXPIRATION: z.string().default("15m"),
+    JWT_REFRESH_SECRET:
+        nodeEnv === "production"
+            ? z.string().min(32) // Production: strong enforcement
+            : z.string().default("dev-refresh-secret-change-in-production"), // Dev/test: safe default
+    JWT_REFRESH_EXPIRATION: z.string().default("7d"),
+    JWT_ISSUER: z.string().default("desk-booking"),
+    JWT_AUDIENCE: z.string().default("desk-booking-api"),
+    ALLOWED_EMAIL_DOMAINS: z.string().default("camerfirma.com"),
+    SMTP_HOST: z.string().default("localhost"),
+    SMTP_PORT: z.coerce.number().int().positive().default(1025),
+    SMTP_USER: z.string().default(""),
+    SMTP_PASS: z.string().default(""),
+    SMTP_FROM: z
+        .string()
+        .default("Desk Booking <no-reply@camerfirma.com>"),
+    APP_BASE_URL: z.string().url().default("http://localhost:3001"),
+    CORS_ORIGINS: z.string().default(""),
+    DB_SSL: z.preprocess(
+        value => {
+            if (value === "true") {
+                return true;
+            }
+            if (value === "false") {
+                return false;
+            }
+            return value;
+        },
+        z.boolean().default(false)
+    ),
+    DB_POOL_MAX: z.coerce.number().int().positive().default(10),
+    EMAIL_MODE: z.enum(["fake", "real"]).default("fake"),
+    OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(3000),
+    OUTBOX_BATCH_SIZE: z.coerce.number().int().positive().default(20),
+    OUTBOX_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+    OUTBOX_BACKOFF_BASE_MS: z.coerce.number().int().positive().default(2000),
+    OUTBOX_BACKOFF_MAX_MS: z.coerce.number().int().positive().default(60000),
+});
+
+const parsed = envSchema.parse(process.env);
 
 export const env = {
-    NODE_ENV: process.env.NODE_ENV ?? "development",
-    PORT: Number(process.env.PORT ?? 3001),
-
-    DATABASE_URL: (() => {
-        const url = requiredEnv("DATABASE_URL");
-        const parsed = new URL(url); // valida formato
-        return parsed.toString();
-    })(),
-
-    JWT_SECRET: requiredEnv("JWT_SECRET"),
-
-    ALLOWED_EMAIL_DOMAINS: (process.env.ALLOWED_EMAIL_DOMAINS ?? "camerfirma.com")
-        .split(",")
-        .map(s => s.trim().toLowerCase())
+    ...parsed,
+    ALLOWED_EMAIL_DOMAINS: parsed.ALLOWED_EMAIL_DOMAINS.split(",")
+        .map(value => value.trim().toLowerCase())
         .filter(Boolean),
-
-    SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
-    SMTP_PORT: Number(process.env.SMTP_PORT ?? 1025),
-    SMTP_USER: process.env.SMTP_USER ?? "",
-    SMTP_PASS: process.env.SMTP_PASS ?? "",
-    SMTP_FROM: process.env.SMTP_FROM ?? "Desk Booking <no-reply@camerfirma.com>",
-    APP_BASE_URL: process.env.APP_BASE_URL ?? "http://localhost:3001",
-    CORS_ORIGINS: (process.env.CORS_ORIGINS ?? "")
-        .split(",")
-        .map(s => s.trim())
+    CORS_ORIGINS: parsed.CORS_ORIGINS.split(",")
+        .map(value => value.trim())
         .filter(Boolean),
 } as const;
 

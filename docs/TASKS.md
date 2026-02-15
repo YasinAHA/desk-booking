@@ -1,27 +1,38 @@
-# Tasks v0.4.0
+# Tasks v0.5.0
 
-## 1) Auth y seguridad
-- [x] Registro con confirmacion por email.
-- [x] Servicio SMTP y plantilla de email de confirmacion.
-- [x] Endpoint de registro (crear usuario + enviar confirmacion).
-- [x] Refresh/verify token en frontend (session persistente real).
-- [x] Rate limiting en endpoints sensibles.
-- [x] CORS restringido al dominio real.
+Objetivo: reducir deuda tecnica y reorganizar la arquitectura con SOLID, Clean Architecture, DRY, KISS y patrones de diseno.
 
-## 2) Calidad
-- [x] Tests de rutas (auth, desks, reservations).
-- [x] Tests de errores HTTP (401, 403, 404, 409).
-- [x] Setup de CI basico (test + build).
+Nota: estas propuestas se mueven a este fichero tras cerrar la v0.4.0.
 
-## 3) Observabilidad
-- [x] Logs estructurados por request (request id).
-- [x] Trazas basicas en operaciones criticas.
+## 1) Capas y contratos
+- [x] Definir capas (domain, application, infrastructure, interfaces).
+- [x] Crear interfaces de repositorios (Users, Desks, Reservations).
+- [x] Crear interfaz de notificaciones (Notifier).
 
-## 4) Base de datos
-- [x] Migraciones versionadas (mas alla del init).
-- [x] Seeds controlados por entorno.
+## 2) Repositorios
+- [x] Implementar repositorios Postgres (PgUserRepository, PgDeskRepository, PgReservationRepository).
+- [x] Eliminar acceso directo a `app.db` desde servicios.
+- [x] Tests unitarios de repositorios con mocks.
 
-## 5) Frontend
-- [x] Mensajes de error mas claros y guiados.
-- [x] Pantalla de estado / loading global.
-- [x] Pulido UX (feedback de reserva/cancelacion).
+## 3) Use cases
+- [x] AuthUseCase desacoplado de Fastify.
+- [x] ReservationUseCase con reglas de negocio en dominio.
+- [x] EmailConfirmationUseCase en capa de aplicacion.
+
+## 4) Infraestructura
+- [x] Mailer como adaptador de infraestructura.
+- [x] Config centralizada con esquema.
+- [x] Logger con contexto (request id) y adaptadores.
+
+## 5) API / Interfaces
+- [x] Rutas delgadas (HTTP -> DTO -> use case).
+- [x] Contenedores por feature para wiring de dependencias.
+- [x] Manejo de errores estandarizado en un middleware.
+
+## 6) Observabilidad
+- [x] Logging estructurado por request.
+- [x] Metricas basicas (opcional).
+
+## 7) Testing
+- [x] Tests unitarios de use cases.
+- [x] Tests de integracion minimos (repos + API).

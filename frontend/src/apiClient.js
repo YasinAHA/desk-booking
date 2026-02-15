@@ -40,13 +40,15 @@ export async function login(email, password) {
 	});
 }
 
-export async function register(email, password, displayName) {
+export async function register(email, password, firstName, lastName, secondLastName) {
 	return request("/auth/register", {
 		method: "POST",
 		body: JSON.stringify({
 			email,
 			password,
-			display_name: displayName || undefined,
+			first_name: firstName,
+			last_name: lastName,
+			second_last_name: secondLastName || undefined,
 		}),
 	});
 }
@@ -72,11 +74,16 @@ export async function getDesks(date, token) {
 	});
 }
 
-export async function createReservation(date, deskId, token) {
+export async function createReservation(date, deskId, officeId, token, source) {
 	return request("/reservations", {
 		method: "POST",
 		headers: authHeaders(token),
-		body: JSON.stringify({ date, desk_id: deskId }),
+		body: JSON.stringify({
+			date,
+			desk_id: deskId,
+			office_id: officeId || undefined,
+			source: source || undefined,
+		}),
 	});
 }
 
