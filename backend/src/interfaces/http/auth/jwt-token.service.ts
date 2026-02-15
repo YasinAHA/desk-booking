@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { TokenRevocationRepository } from "../../../application/ports/tokenRevocationRepository.js";
+import type { TokenRevocationRepository } from "../../../application/ports/token-revocation-repository.js";
 import { env } from "../../../config/env.js";
 import { JwtProvider } from "./ports/jwtProvider.js";
 

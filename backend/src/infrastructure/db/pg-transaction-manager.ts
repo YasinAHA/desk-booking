@@ -1,9 +1,9 @@
 import type { Pool, PoolClient } from "pg";
 
 import type {
-    TransactionManager,
-    TransactionalContext,
-} from "../../application/ports/transactionManager.js";
+	TransactionManager,
+	TransactionalContext,
+} from "../../application/ports/transaction-manager.js";
 
 /**
  * PostgreSQL implementation of TransactionManager

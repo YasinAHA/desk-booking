@@ -1,4 +1,4 @@
-import type { DeskAvailability, DeskRepository } from "../../application/ports/deskRepository.ts";
+import type { DeskAvailability, DeskRepository } from "../../application/ports/desk-repository.js";
 import { createDeskId } from "../../domain/valueObjects/deskId.js";
 import { createOfficeId } from "../../domain/valueObjects/officeId.js";
 import { createReservationId } from "../../domain/valueObjects/reservationId.js";

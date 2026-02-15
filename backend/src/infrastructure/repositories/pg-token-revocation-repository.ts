@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import type { TokenRevocationRepository } from "../../application/ports/tokenRevocationRepository.js";
+import type { TokenRevocationRepository } from "../../application/ports/token-revocation-repository.js";
 
 /**
  * PostgreSQL implementation of TokenRevocationRepository

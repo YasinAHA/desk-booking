@@ -1,7 +1,7 @@
 import type {
 	ReservationQueryRepository,
 	ReservationRecord,
-} from "../../application/ports/reservationQueryRepository.js";
+} from "../../application/ports/reservation-query-repository.js";
 import { createDeskId } from "../../domain/valueObjects/deskId.js";
 import { createOfficeId } from "../../domain/valueObjects/officeId.js";
 import {

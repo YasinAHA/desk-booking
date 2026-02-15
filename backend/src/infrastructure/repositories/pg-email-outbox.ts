@@ -1,4 +1,4 @@
-import type { EmailMessage, EmailOutbox } from "../../application/ports/emailOutbox.js";
+import type { EmailMessage, EmailOutbox } from "../../application/ports/email-outbox.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 
