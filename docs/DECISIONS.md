@@ -18,4 +18,5 @@ Registro de decisiones clave para mantener coherencia tecnica.
 | 2026-02-08 | Serializacion en infraestructura | Fechas/formatos se resuelven en adaptadores, no en use cases. |
 | 2026-02-08 | Constantes centralizadas | Limites y regex en `backend/src/config/constants.ts`. |
 | 2026-02-15 | Estrategia de versionado por madurez | v1.0.0 como release interna (Camerfirma). Multi-org/SaaS se reserva para v2.0.0. |
+| 2026-02-16 | Convencion de mensajes de commit y tags en ingles | Mantener consistencia historica, facilitar lectura en PRs/releases y evitar mezcla de idiomas en el historial. |
 
