@@ -1,8 +1,8 @@
-# Backlog v0.6.0 (propuesto)
+# Backlog v0.7.0 (propuesto)
 
-Objetivo: consolidar seguridad, roles y preparacion para uso interno tras el refactor de v0.5.0.
+Objetivo: consolidar seguridad, roles y preparacion para uso interno tras la modularizacion planificada en v0.6.0.
 
-Nota: estas propuestas se moveran a `docs/TASKS.md` una vez tagueada y cerrada la v0.5.1.
+Nota: estas propuestas se moveran a `docs/TASKS.md` una vez cerrada la v0.6.0.
 
 ## 1) Seguridad y sesiones
 - [x] HTTP security headers (helmet) implementado en v0.5.0
@@ -39,25 +39,3 @@ Nota: estas propuestas se moveran a `docs/TASKS.md` una vez tagueada y cerrada l
 - [ ] Documento de roles y permisos.
 - [ ] Guia de despliegue interno (borrador).
 
-## 8) Arquitectura y modularidad (v0.6.x)
-Prerrequisito:
-- [ ] Cerrar y taguear v0.5.1 antes de iniciar cambios estructurales.
-
-Plan incremental (sin big-bang):
-- [ ] Definir ADR corta en `docs/DECISIONS.md` para modelo hibrido (capas + agrupacion por feature).
-- [ ] Fase 1 (auth): reorganizar modulos de `application` e `infrastructure` por feature manteniendo contratos actuales.
-- [ ] Fase 2 (reservations): misma estrategia, sin cambios funcionales.
-- [ ] Fase 3 (desks): misma estrategia, sin cambios funcionales.
-- [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
-- [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
-
-Deuda tecnica previa (alta prioridad):
-- [ ] Corregir flujo de refresh token para no emitir access token con payload parcial/vacio.
-- [ ] Eliminar `any` en factories transaccionales de `auth.container`.
-- [ ] Normalizar imports/extensiones inconsistentes.
-
-Criterios de aceptacion:
-- [ ] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
-- [ ] Sin regresiones funcionales en auth/reservations/desks.
-- [ ] Tests backend pasando al 100% tras cada fase.
-- [ ] Documentacion (AI-GUIDE/ARCHITECTURE/TASKS/CHANGELOG) actualizada al cierre.
