@@ -1,8 +1,8 @@
-import type { DeskId } from "../valueObjects/desk-id.js";
-import type { OfficeId } from "../valueObjects/office-id.js";
-import type { ReservationDate } from "../valueObjects/reservation-date.js";
-import type { ReservationId } from "../valueObjects/reservation-id.js";
-import type { UserId } from "../valueObjects/user-id.js";
+import type { DeskId } from "@domain/valueObjects/desk-id.js";
+import type { OfficeId } from "@domain/valueObjects/office-id.js";
+import type { ReservationDate } from "@domain/valueObjects/reservation-date.js";
+import type { ReservationId } from "@domain/valueObjects/reservation-id.js";
+import type { UserId } from "@domain/valueObjects/user-id.js";
 
 /**
  * Domain entity for Reservation
@@ -42,4 +42,4 @@ export class ReservationDateInPastError extends Error {
 }
 
 // Re-export from value object for convenience
-export { isReservationDateInPast } from "../valueObjects/reservation-date.js";
+export { isReservationDateInPast } from "@domain/valueObjects/reservation-date.js";

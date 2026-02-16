@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
-import type { TokenService } from "../../application/ports/token-service.js";
-import { TOKEN_BYTES } from "../../config/constants.js";
+import type { TokenService } from "@application/ports/token-service.js";
+import { TOKEN_BYTES } from "@config/constants.js";
 
 export class Sha256TokenService implements TokenService {
 	generate(): string {

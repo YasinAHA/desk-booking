@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { ErrorTranslator } from "../../application/ports/error-translator.js";
-import { ReservationConflictError } from "../../domain/entities/reservation.js";
-import { createDeskId } from "../../domain/valueObjects/desk-id.js";
-import { createUserId } from "../../domain/valueObjects/user-id.js";
-import { PgErrorTranslator } from "../services/error-translator.js";
-import { PgReservationCommandRepository } from "./pg-reservation-command-repository.js";
+import type { ErrorTranslator } from "@application/ports/error-translator.js";
+import { ReservationConflictError } from "@domain/entities/reservation.js";
+import { createDeskId } from "@domain/valueObjects/desk-id.js";
+import { createUserId } from "@domain/valueObjects/user-id.js";
+import { PgReservationCommandRepository } from "@infrastructure/repositories/pg-reservation-command-repository.js";
+import { PgErrorTranslator } from "@infrastructure/services/error-translator.js";
 
 test("PgReservationCommandRepository.create throws conflict on unique violation", async () => {
 	const errorTranslator: ErrorTranslator = new PgErrorTranslator();

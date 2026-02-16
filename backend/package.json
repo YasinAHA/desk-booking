@@ -9,7 +9,7 @@
         "test": "tsx --test src/**/*.test.ts",
         "db:migrate": "tsx scripts/db/migrate.ts",
         "db:seed": "tsx scripts/db/seed.ts",
-        "worker:outbox": "tsx src/workers/emailOutboxWorker.ts"
+        "worker:outbox": "tsx src/workers/email-outbox-worker.ts"
     },
     "dependencies": {
         "@fastify/cors": "^11.2.0",

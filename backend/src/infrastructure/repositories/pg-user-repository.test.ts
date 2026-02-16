@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { User } from "../../domain/entities/user.js";
-import { createEmail } from "../../domain/valueObjects/email.js";
-import { createPasswordHash } from "../../domain/valueObjects/password-hash.js";
-import { createUserId } from "../../domain/valueObjects/user-id.js";
+import { User } from "@domain/entities/user.js";
+import { createEmail } from "@domain/valueObjects/email.js";
+import { createPasswordHash } from "@domain/valueObjects/password-hash.js";
+import { createUserId } from "@domain/valueObjects/user-id.js";
 import { PgUserRepository } from "./pg-user-repository.js";
 
 const baseUserRow = {

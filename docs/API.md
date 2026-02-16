@@ -98,6 +98,22 @@ Response 200:
 ```
 Errores: 400, 401
 
+#### `POST /auth/refresh`
+Request:
+```json
+{
+	"token": "jwt_refresh"
+}
+```
+Response 200:
+```json
+{
+	"accessToken": "jwt",
+	"refreshToken": "jwt_refresh"
+}
+```
+Errores: 400, 401
+
 #### `POST /auth/logout`
 Response 204 (sin body)
 Errores: 401

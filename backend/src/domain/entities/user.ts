@@ -1,6 +1,6 @@
-import type { Email } from "../valueObjects/email.js";
-import type { PasswordHash } from "../valueObjects/password-hash.js";
-import type { UserId } from "../valueObjects/user-id.js";
+import type { Email } from "@domain/valueObjects/email.js";
+import type { PasswordHash } from "@domain/valueObjects/password-hash.js";
+import type { UserId } from "@domain/valueObjects/user-id.js";
 
 /**
  * Domain entity for User

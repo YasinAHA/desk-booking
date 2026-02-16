@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import type { TokenRevocationRepository } from "../../../application/ports/token-revocation-repository.js";
-import { env } from "../../../config/env.js";
-import { JwtProvider } from "./ports/jwtProvider.js";
+import type { TokenRevocationRepository } from "@application/ports/token-revocation-repository.js";
+import { env } from "@config/env.js";
+import { JwtProvider } from "./ports/jwt-provider.js";
 
 /**
  * JWT payload structure for access tokens

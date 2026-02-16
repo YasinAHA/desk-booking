@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.1] - 2026-02-16
+
+### Changed
+- Backend naming convention refactor to `kebab-case` across ports, repositories, policies, security modules, HTTP interfaces, and workers.
+- Imports normalized using path aliases (`@domain`, `@application`, `@infrastructure`, `@interfaces`, `@config`).
+- Documentation consistency pass in `docs/` (API, tooling, known issues, scope, security, prompts, backlog/tasks alignment).
+
+### Fixed
+- Resolved broken intra-doc links in `docs/`.
+- Documented `POST /auth/refresh` in API contract.
+- Unified test-count references to current backend suite (`55 tests`).
+- Corrected cross-doc contradictions in DB delete strategy notes (`RESTRICT/CASCADE/SET NULL`).
+
+### Notes
+- v0.5.1 remains focused on maintainability/refactor hygiene (no major feature scope changes).
+- Release closure checklist tracked in `docs/TASKS.md`.
+
+---
+
 ## [0.5.0] - 2026-02-15
 
 ### Added

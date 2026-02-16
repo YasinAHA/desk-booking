@@ -1,19 +1,19 @@
-import type { ErrorTranslator } from "../../application/ports/error-translator.js";
-import type { ReservationCommandRepository } from "../../application/ports/reservation-command-repository.js";
+import type { ErrorTranslator } from "@application/ports/error-translator.js";
+import type { ReservationCommandRepository } from "@application/ports/reservation-command-repository.js";
 import {
-    deskIdToString,
-    type DeskId,
-} from "../../domain/valueObjects/desk-id.js";
-import { officeIdToString, type OfficeId } from "../../domain/valueObjects/office-id.js";
+	deskIdToString,
+	type DeskId,
+} from "@domain/valueObjects/desk-id.js";
+import { officeIdToString, type OfficeId } from "@domain/valueObjects/office-id.js";
 import {
-    createReservationId,
-    reservationIdToString,
-    type ReservationId,
-} from "../../domain/valueObjects/reservation-id.js";
+	createReservationId,
+	reservationIdToString,
+	type ReservationId,
+} from "@domain/valueObjects/reservation-id.js";
 import {
-    userIdToString,
-    type UserId,
-} from "../../domain/valueObjects/user-id.js";
+	userIdToString,
+	type UserId,
+} from "@domain/valueObjects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 

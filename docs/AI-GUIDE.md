@@ -51,11 +51,6 @@ Infrastructure ← Application ← Domain
   - JwtTokenService depende de JwtProvider (port), no FastifyInstance.
   - Controllers inyectan dependencias, no crean directamente.
 
-### Patrones arquitectónicos
-
-#### Ports & Adapters
-- **Puerto:** Interfaz en `application/ports/` (e.g., `TokenRevocationRepository`).
-- **Adaptador:** Implementación en `infrastructure/repositories/` o `interfaces/http/auth/adapters/`.
 - Ejemplo: `JwtProvider` (port) → `FastifyJwtProvider` (adapter que encapsula Fastify).
 
 #### CQRS (Command Query Responsibility Segregation)
@@ -76,15 +71,8 @@ Si varios cambios deben ser atómicos (e.g., crear usuario + enviar email):
 2. Worker lee `outbox` y ejecuta side effects (emailing).
 3. Si worker falla, reintentar sin datos duplicados.
 
-### Use cases (application/usecases/)
-- No dependen de otros use cases.
-- Puros: sin side effects (efectos mediante ports inyectados).
-- Testables sin infraestructura.
 - Orquestan domain entities + puertos de infraestructura.
 
-### Serialización y DTOs
-- Use cases retornan Domain entities o tipos simples.
-- Controllers convierten a DTOs para HTTP.
 - NO serializar (JSON.stringify) dentro de use cases.
 - NO incluir lógica HTTP en application.
 

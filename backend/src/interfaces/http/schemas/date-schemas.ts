@@ -1,5 +1,5 @@
+import { DATE_ONLY_REGEX } from "@config/constants.js";
 import { z } from "zod";
-import { DATE_ONLY_REGEX } from "../../../config/constants.js";
 
 /**
  * Reusable Zod schema for date validation

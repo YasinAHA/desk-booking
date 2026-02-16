@@ -27,13 +27,13 @@ Linea de desarrollo para refinar arquitectura, seguridad y aspectos operacionale
 - Migraciones y seeds versionadas.
 
 ### v0.5.0 (Current)
-- ✅ Schema migration v1.0.0 (office/floor/zone/desk hierarchy).
-- ✅ User names refactored (first_name/last_name/second_last_name, Spanish naming).
-- ✅ Desk status enum (active/maintenance/disabled).
-- ✅ Reservation metadata (source, office_id).
-- ✅ Email outbox pattern with worker.
-- ✅ SOLID/Clean Architecture refactor (domain → application → infrastructure → interfaces).
-- ✅ 46 tests (auth, reservation, desk, repository, routes).
+- [x] Schema migration v1.0.0 (office/floor/zone/desk hierarchy).
+- [x] User names refactored (first_name/last_name/second_last_name, Spanish naming).
+- [x] Desk status enum (active/maintenance/disabled).
+- [x] Reservation metadata (source, office_id).
+- [x] Email outbox pattern with worker.
+- [x] SOLID/Clean Architecture refactor (domain -> application -> infrastructure -> interfaces).
+- [x] 55 tests (auth, reservation, desk, repository, routes).
 
 ### v0.6.0-v0.9.0 (Planned)
 - Seguridad y sesiones (refresh token cookie httpOnly).
@@ -46,7 +46,7 @@ Linea de desarrollo para refinar arquitectura, seguridad y aspectos operacionale
 
 ## v1.0.0 (Camerfirma Internal Release)
 Release estable para uso interno en una unica organizacion.
-- Single-org (una fila en `organization`).
+- Single-org (una fila en `organizations`).
 - Office -> (Floor) -> (Zone) -> Desk, configurables por admin.
 - Estados de desk: active, maintenance, disabled.
 - Reserva por dia (DATE) con una reserva activa por usuario y desk.
@@ -72,7 +72,7 @@ Release estable para uso interno en una unica organizacion.
 ## No incluido (fuera de v1.0.0)
 - Multi-idioma
 - Reservas recurrentes
-- Reservas por delegación
+- Reservas por delegacion
 - SLA / soporte / guardias
 
 ## Nota

@@ -9,7 +9,7 @@ process.env.JWT_SECRET = "test-secret";
 process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 
 const { authRoutes } = await import("./auth.routes.js");
-const { registerAuthPlugin } = await import("../plugins/auth.js");
+const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
 

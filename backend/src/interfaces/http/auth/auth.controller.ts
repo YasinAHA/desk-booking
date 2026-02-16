@@ -1,14 +1,14 @@
-import type { FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
-import type { AuthUseCase } from "../../../application/usecases/auth.usecase.js";
+import type { AuthUseCase } from "@application/usecases/auth.usecase.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
-} from "../../../config/constants.js";
-import { validatePasswordPolicy } from "../../../domain/valueObjects/password-policy.js";
-import { throwHttpError } from "../http-errors.js";
-import { JwtTokenService } from "./jwt-token.service.js";
+} from "@config/constants.js";
+import { validatePasswordPolicy } from "@domain/valueObjects/password-policy.js";
+import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
+import { throwHttpError } from "@interfaces/http/http-errors.js";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 
 /**
  * Schemas for auth request validation
@@ -161,9 +161,12 @@ export class AuthController {
 			reply.rateLimit(AUTH_VERIFY_RATE_LIMIT);
 		}
 
+		req.log.info({ event: "auth.verify", body: req.body }, "Verify request received");
+
 		// Validation
 		const parse = verifySchema.safeParse(req.body);
 		if (!parse.success) {
+			req.log.warn({ event: "auth.verify", body: req.body }, "Invalid payload");
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
@@ -171,6 +174,7 @@ export class AuthController {
 		try {
 			const payload = await this.jwtTokenService.verifyAccessToken(parse.data.token);
 
+			req.log.info({ event: "auth.verify", userId: payload.id }, "Token verified OK");
 			// Response mapping
 			return reply.send({
 				valid: true,
@@ -182,7 +186,8 @@ export class AuthController {
 					second_last_name: payload.secondLastName,
 				},
 			});
-		} catch {
+		} catch (err) {
+			req.log.warn({ event: "auth.verify", error: err }, "Token verification failed");
 			throwHttpError(401, "UNAUTHORIZED", "Invalid token");
 		}
 	}

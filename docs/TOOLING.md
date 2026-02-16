@@ -32,6 +32,8 @@ Guia rapida del tooling y scripts del proyecto.
   - Postgres
   - pgAdmin
   - Mailpit (SMTP + UI)
+  - backend
+  - outbox-worker
 
 ## Variables de entorno
 - `backend/.env` desde `backend/.env.example`
@@ -53,4 +55,4 @@ Guia rapida del tooling y scripts del proyecto.
 - Workflow: `.github/workflows/ci.yml`
 
 ## Deployment
-- Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Ver [DEPLOYMENT.md](DEPLOYMENT.md)

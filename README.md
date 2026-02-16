@@ -1,213 +1,149 @@
 # Desk Booking Platform
 
-Plataforma de reservas internas de escritorios orientada a uso empresarial y concebida como
-**Trabajo de Fin de Máster (TFM)**, con un enfoque profesional, escalable y alineado con
-buenas prácticas de arquitectura, backend moderno y despliegue real.
+Plataforma interna de reserva de escritorios para entorno corporativo. El proyecto forma parte de un TFM y evoluciona con foco en arquitectura mantenible, seguridad y operacion real.
 
-El proyecto evoluciona desde una primera versión funcional hacia una solución completa,
-lista para ser utilizada en un entorno corporativo.
+Estado del repo: `v0.5.x` (consolidacion tecnica y refactor por capas).
 
-**Estado actual:** v0.5.0 (Technical consolidation) con schema v1.0.0 alineado. Listo para Camerfirma Internal Release.
+## Objetivo
 
----
+- Backend desacoplado (Clean Architecture + SOLID).
+- Persistencia en PostgreSQL con migraciones y seeds por entorno.
+- Autenticacion JWT con access/refresh token.
+- Confirmacion de email con patron outbox + worker asincrono.
+- Base de seguridad y observabilidad para endurecimiento en `v0.6.0+`.
 
-## 🎯 Objetivo del proyecto
+## Estructura
 
-Desarrollar una aplicación real que demuestre:
-
-- Dominio de **arquitectura de software**
-- Uso de **principios SOLID**
-- Diseño de **backend desacoplado y escalable**
-- Persistencia con **PostgreSQL**
-- Autenticación segura
-- Preparación para **TDD**
-- Uso de **IA como apoyo al desarrollo** (no como feature artificial)
-- Despliegue realista (Docker / cloud / entorno empresarial)
-
-El objetivo no es solo que funcione, sino que esté **bien diseñada, documentada y mantenible**.
-
----
-
-## 🧠 Enfoque TFM
-
-- Proyecto **original y con aplicación real**
-- Backend propio (sin dependencia de BaaS como Supabase)
-- Arquitectura pensada para crecer y mantenerse
-- Documentación clara y razonada
-- Control de versiones desde el inicio
-- Evolución planificada por versiones
-
----
-
-## 🗂️ Estructura del proyecto (Monorepo)
-
-```
-yasinaha-desk-booking/
-├── README.md
-├── CHANGELOG.md
-├── LICENSE
-├── .editorconfig
-├── backend/
-│   ├── package.json
-│   ├── .env.example
-│   └── src/
-│       ├── app.ts
-│       ├── server.ts
-│       ├── config/
-│       ├── domain/
-│       │   └── entities/
-│       ├── application/
-│       │   ├── ports/
-│       │   └── usecases/
-│       ├── infrastructure/
-│       │   ├── notifiers/
-│       │   └── repositories/
-│       ├── interfaces/
-│       │   └── http/
-│       │       ├── auth/
-│       │       ├── desks/
-│       │       ├── metrics/
-│       │       ├── reservations/
-│       │       ├── plugins/
-│       │       └── types/
-├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   └── src/
-│       ├── apiClient.js
-│       ├── app.js
-│       └── state.js
-├── docker/
-│   ├── docker-compose.yml
-│   └── postgres/
-│       └── init/
-│           └── 001_init.sql
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── API.md
-│   ├── DECISIONS.md
-│   ├── KNOWN-ISSUES.md
-│   ├── SCOPE.md
-│   ├── TOOLING.md
-│   └── DEPLOYMENT.md
+```text
+desk-booking/
+|-- backend/
+|-- db/
+|-- docker/
+|-- docs/
+|-- frontend/
+|-- CHANGELOG.md
+`-- README.md
 ```
 
-Nota: `src/config` es configuracion compartida entre capas.
+## Stack
 
+- Backend: Node.js, Fastify, TypeScript, PostgreSQL, Zod, Argon2, JWT.
+- Infra local: Docker Compose (Postgres, pgAdmin, Mailpit, backend y outbox-worker).
+- Frontend: HTML/CSS/JS vanilla.
 
----
+## Requisitos
 
-## 🧱 Stack tecnológico
+- Node.js LTS
+- npm
+- Docker + Docker Compose
 
-### Backend
-- Node.js
-- Fastify 5.7.4
-- TypeScript (strict mode)
-- PostgreSQL 13+
-- JWT (access + refresh tokens with jti)
-- Argon2 (password hashing)
-- Helmet 13.0.2 (HTTP security headers: CSP + HSTS)
-- Zod (schema validation)
-- Swagger / OpenAPI
-- Docker
+## Arranque rapido
 
-### Frontend
-- HTML, CSS, JavaScript
-- Migración a TypeScript planificada
+### Opcion A: local mixto (DB en Docker, API desde host)
 
----
+1. Instalar dependencias:
 
-## 🤖 Uso de IA
-
-La IA se utiliza como **apoyo al desarrollo**.
-Guia de trabajo: ver [docs/AI-GUIDE.md](docs/AI-GUIDE.md).
-
-Tooling del repo: ver [docs/TOOLING.md](docs/TOOLING.md).
-Despliegue (TFM): ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
----
-
-## ✅ Requisitos
-- Node.js (LTS recomendado)
-- Docker (para Postgres local)
-
----
-
-## ▶️ Arranque rapido (dev)
-
-1) Instala dependencias:
 ```bash
 npm install
 ```
 
-2) Levanta la base de datos:
+2. Levantar servicios Docker:
+
 ```bash
 npm run dev:db
 ```
 
-Opcional (email local):
-- Mailpit SMTP: `localhost:1025`
-- UI Mailpit: `http://localhost:8025`
+3. Configurar entorno:
 
-3) Configura el backend:
-- Copia `backend/.env.example` a `backend/.env`
-- Ajusta `DATABASE_URL`, `JWT_SECRET` y `ALLOWED_EMAIL_DOMAINS`
+- Copiar `backend/.env.example` a `backend/.env`.
+- Ajustar como minimo: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ALLOWED_EMAIL_DOMAINS`, `CORS_ORIGINS`.
 
-4) Aplica migraciones y seeds:
+4. Migrar y poblar datos:
+
 ```bash
 npm run db:migrate
 npm run db:seed:dev
 ```
 
-5) Arranca la API:
+5. Ejecutar API desde host:
+
 ```bash
 npm run dev:api
 ```
 
-6) Healthcheck:
-- `GET http://localhost:3001/health`
+6. Verificar:
 
----
+- Healthcheck: `GET http://localhost:3001/health`
+- Metricas: `GET http://localhost:3001/metrics`
+- Mailpit UI: `http://localhost:8025`
 
-## 📌 Estado actual
-- Backend base (Fastify + Postgres) funcional.
-- Frontend minimo conectado a API.
-- Schema inicial en [docker/postgres/init/001_init.sql](docker/postgres/init/001_init.sql).
-- CI basico con GitHub Actions (test + build).
-- Metricas basicas disponibles en `GET /metrics`.
+### Opcion B: Docker completo
 
----
+`npm run dev:db` tambien levanta `backend` y `outbox-worker` en contenedores segun `docker/docker-compose.yml`.
 
-## ✅ Tareas v0.5.0
-Ver checklist en [docs/TASKS.md](docs/TASKS.md).
+## Scripts utiles
 
-## 🧭 Backlog v0.6.0
-Ver propuestas en [docs/BACKLOG.md](docs/BACKLOG.md).
+En raiz:
 
----
+- `npm run dev:db`
+- `npm run dev:api`
+- `npm run db:migrate`
+- `npm run db:seed:dev`
+- `npm run db:seed:test`
+- `npm run db:seed:correction`
 
-## 🏷️ Versiones
-- v0.1.0: base UI + skeleton magic link ([tag](https://github.com/YasinAHA/desk-booking/releases/tag/v0.1.0), ver [CHANGELOG.md](CHANGELOG.md)).
-- v0.2.0: piloto estable con flujo de reservas ([tag](https://github.com/YasinAHA/desk-booking/releases/tag/v0.2.0), ver [CHANGELOG.md](CHANGELOG.md)).
-- v0.3.0: backend propio + frontend minimo (ver [CHANGELOG.md](CHANGELOG.md)).
+En backend:
 
----
+- `npm -w backend run dev`
+- `npm -w backend run test`
+- `npm -w backend run build`
+- `npm -w backend run start`
+- `npm -w backend run worker:outbox`
 
-## 🚀 Roadmap
-- 0.2.x: estabilización del MVP (sesión, refrescos, UX, bugs).
-- v0.3.0 → Backend propio y arquitectura base
-- v0.5.0 → Refactor arquitectonico (Clean Architecture)
-- v0.6.0 → Seguridad, roles y observabilidad
-- v1.0.0 → Versión final TFM
+## API (resumen)
 
----
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/verify`
+- `POST /auth/logout`
+- `GET /auth/confirm?token=...`
+- `GET /desks?date=YYYY-MM-DD`
+- `POST /reservations`
+- `DELETE /reservations/:id`
+- `GET /reservations/me`
+- `GET /health`
+- `GET /metrics`
 
-## 👤 Autor
+Contrato detallado: [docs/API.md](docs/API.md)
+
+## Variables de entorno clave
+
+Ademas de las tipicas (`DATABASE_URL`, `JWT_SECRET`), el backend usa:
+
+- `HOST`, `PORT`, `DB_SSL`, `DB_POOL_MAX`
+- `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION`, `JWT_ISSUER`, `JWT_AUDIENCE`
+- `EMAIL_MODE`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+- `OUTBOX_POLL_INTERVAL_MS`, `OUTBOX_BATCH_SIZE`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_BACKOFF_BASE_MS`, `OUTBOX_BACKOFF_MAX_MS`
+- `APP_BASE_URL`, `CORS_ORIGINS`, `ALLOWED_EMAIL_DOMAINS`
+
+Referencia completa: `backend/.env.example`
+
+## Documentacion principal
+
+- Arquitectura: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- API: [docs/API.md](docs/API.md)
+- Seguridad: [docs/SECURITY.md](docs/SECURITY.md)
+- Tooling: [docs/TOOLING.md](docs/TOOLING.md)
+- Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Tareas: [docs/TASKS.md](docs/TASKS.md)
+- Backlog: [docs/BACKLOG.md](docs/BACKLOG.md)
+- Issues conocidos: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md)
+
+## Autor
 
 Yassine Ait El Hadj Ahajtan
 
----
-
-## 📜 Licencia
+## Licencia
 
 MIT

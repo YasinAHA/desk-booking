@@ -1,11 +1,11 @@
 # Prompts / IA
 
 Este fichero queda como indice historico.
-La guia principal esta en [docs/AI-GUIDE.md](docs/AI-GUIDE.md).
+La guia principal esta en [AI-GUIDE.md](AI-GUIDE.md).
 
 Actúa como un reviewer senior (arquitectura + calidad + seguridad) y audita un repo Node.js + TypeScript con Clean Architecture.
 
-Objetivo: detectar violaciones de arquitectura, SOLID, malas prácticas, deuda técnica y riesgos de seguridad/mantenibilidad al margen de lo anotado en Knowing-issues. 
+Objetivo: detectar violaciones de arquitectura, SOLID, malas prácticas, deuda técnica y riesgos de seguridad/mantenibilidad al margen de lo anotado en Known-issues.
 
 Contexto esperado de arquitectura:
 - src/domain: entidades, value objects, reglas/invariantes (sin dependencias externas)
@@ -36,8 +36,8 @@ C) Diseño de casos de uso / application layer
 - retornos inconsistentes (null + union status) vs Result pattern
 - mezcla de serialización/persistencia en application (Date->string, formatos DB)
 - idempotencia, transacciones (operaciones multi-step como confirmEmail + consumeToken)
-- separación command/query (read models tipo “Availability” vs entidades)
-- “leaks” de HTTP (request/response) hacia application
+- separación command/query (read models tipo "Availability" vs entidades)
+- "leaks" de HTTP (request/response) hacia application
 
 D) Domain model (calidad del dominio)
 - entidades anémicas, invariantes fuera del dominio
@@ -76,7 +76,7 @@ I) Observabilidad y errores
 - no usar console.log en producción
 
 2) Formato de salida (estricto):
-- “Issues”  con severidad: CRITICAL/HIGH/MEDIUM/LOW
+- "Issues" con severidad: CRITICAL/HIGH/MEDIUM/LOW
 - Para cada issue:
   - Archivo/ruta
   - Fragmento (máx 8-12 líneas)

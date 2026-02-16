@@ -1,5 +1,5 @@
-import type { EmailConfirmationService } from "../../application/ports/email-confirmation-service.js";
-import type { Notifier } from "../../application/ports/notifier.js";
+import type { EmailConfirmationService } from "@application/ports/email-confirmation-service.js";
+import type { Notifier } from "@application/ports/notifier.js";
 
 export class EmailConfirmationServiceImpl implements EmailConfirmationService {
 	constructor(

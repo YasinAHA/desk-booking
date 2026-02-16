@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createOfficeId } from "../../domain/valueObjects/office-id.js";
-import { createUserId } from "../../domain/valueObjects/user-id.js";
+import { createOfficeId } from "@domain/valueObjects/office-id.js";
+import { createUserId } from "@domain/valueObjects/user-id.js";
 import { PgDeskRepository } from "./pg-desk-repository.js";
 
 test("PgDeskRepository.listForDate maps rows", async () => {

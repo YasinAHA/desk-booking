@@ -1,24 +1,24 @@
 import type {
-    UserAuthData,
-    UserCreate,
-    UserRepository,
-} from "../../application/ports/user-repository.js";
-import { User } from "../../domain/entities/user.js";
-import type { Email } from "../../domain/valueObjects/email.js";
+	UserAuthData,
+	UserCreate,
+	UserRepository,
+} from "@application/ports/user-repository.js";
+import { User } from "@domain/entities/user.js";
+import type { Email } from "@domain/valueObjects/email.js";
 import {
-    createEmail,
-    emailToString,
-} from "../../domain/valueObjects/email.js";
-import type { PasswordHash } from "../../domain/valueObjects/password-hash.js";
+	createEmail,
+	emailToString,
+} from "@domain/valueObjects/email.js";
+import type { PasswordHash } from "@domain/valueObjects/password-hash.js";
 import {
-    createPasswordHash,
-    passwordHashToString,
-} from "../../domain/valueObjects/password-hash.js";
-import type { UserId } from "../../domain/valueObjects/user-id.js";
+	createPasswordHash,
+	passwordHashToString,
+} from "@domain/valueObjects/password-hash.js";
+import type { UserId } from "@domain/valueObjects/user-id.js";
 import {
-    createUserId,
-    userIdToString,
-} from "../../domain/valueObjects/user-id.js";
+	createUserId,
+	userIdToString,
+} from "@domain/valueObjects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 

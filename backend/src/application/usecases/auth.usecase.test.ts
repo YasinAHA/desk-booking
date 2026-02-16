@@ -2,20 +2,20 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 
-import { User } from "../../domain/entities/user.js";
-import { createEmail } from "../../domain/valueObjects/email.js";
+import type { AuthPolicy } from "@application/ports/auth-policy.js";
+import type { EmailOutbox } from "@application/ports/email-outbox.js";
+import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
+import type { PasswordHasher } from "@application/ports/password-hasher.js";
+import type { TokenService } from "@application/ports/token-service.js";
+import type { TransactionManager } from "@application/ports/transaction-manager.js";
+import type { UserRepository } from "@application/ports/user-repository.js";
+import { User } from "@domain/entities/user.js";
+import { createEmail } from "@domain/valueObjects/email.js";
 import {
 	createPasswordHash,
 	passwordHashToString,
-} from "../../domain/valueObjects/password-hash.js";
-import { createUserId } from "../../domain/valueObjects/user-id.js";
-import type { AuthPolicy } from "../ports/auth-policy.js";
-import type { EmailOutbox } from "../ports/email-outbox.js";
-import type { EmailVerificationRepository } from "../ports/email-verification-repository.js";
-import type { PasswordHasher } from "../ports/password-hasher.js";
-import type { TokenService } from "../ports/token-service.js";
-import type { TransactionManager } from "../ports/transaction-manager.js";
-import type { UserRepository } from "../ports/user-repository.js";
+} from "@domain/valueObjects/password-hash.js";
+import { createUserId } from "@domain/valueObjects/user-id.js";
 import { AuthUseCase } from "./auth.usecase.js";
 
 function mockUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {

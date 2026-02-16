@@ -1,11 +1,11 @@
 import argon2 from "argon2";
 
-import type { PasswordHasher } from "../../application/ports/password-hasher.js";
+import type { PasswordHasher } from "@application/ports/password-hasher.js";
 import {
-    createPasswordHash,
-    passwordHashToString,
-    type PasswordHash,
-} from "../../domain/valueObjects/password-hash.js";
+	createPasswordHash,
+	passwordHashToString,
+	type PasswordHash,
+} from "@domain/valueObjects/password-hash.js";
 
 export class Argon2PasswordHasher implements PasswordHasher {
 	async hash(plain: string): Promise<PasswordHash> {

@@ -1,5 +1,5 @@
-import type { ErrorTranslator } from "../../application/ports/error-translator.js";
-import { ReservationConflictError } from "../../domain/entities/reservation.js";
+import type { ErrorTranslator } from "@application/ports/error-translator.js";
+import { ReservationConflictError } from "@domain/entities/reservation.js";
 
 /**
  * PostgreSQL error translator.

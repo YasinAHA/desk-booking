@@ -8,8 +8,8 @@ import type {
 } from "fastify";
 import fp from "fastify-plugin";
 
-import { env } from "../../../config/env.js";
-import { sendError } from "../http-errors.js";
+import { env } from "@config/env.js";
+import { sendError } from "@interfaces/http/http-errors.js";
 
 const authPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     await app.register(jwt, {

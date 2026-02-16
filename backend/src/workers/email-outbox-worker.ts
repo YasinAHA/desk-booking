@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
-import { env } from "../config/env.js";
-import { sendEmail } from "../infrastructure/email/mailer.js";
+import { env } from "@config/env.js";
+import { sendEmail } from "@infrastructure/email/mailer.js";
 
 type OutboxRow = {
 	id: string;

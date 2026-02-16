@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import { Pool } from "pg";
 
-import { env } from "../../../config/env.js";
+import { env } from "@config/env.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
 

@@ -1,12 +1,12 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
-import type { ReservationUseCase } from "../../../application/usecases/reservation.usecase.js";
+import type { ReservationUseCase } from "@application/usecases/reservation.usecase.js";
 import {
 	ReservationConflictError,
 	ReservationDateInPastError,
-} from "../../../domain/entities/reservation.js";
-import { throwHttpError } from "../http-errors.js";
-import { dateSchema } from "../schemas/date-schemas.js";
+} from "@domain/entities/reservation.js";
+import { throwHttpError } from "@interfaces/http/http-errors.js";
+import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 
 /**
  * Schemas for reservation request validation

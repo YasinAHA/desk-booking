@@ -2,39 +2,39 @@
 
 ## Overview
 
-Este documento define la estrategia de seguridad para la aplicación desk-booking.
-Sigue dos principios clave: **Security by Design** (arquitectura segura desde el inicio) 
+Este documento define la estrategia de seguridad para la aplicacion desk-booking.
+Sigue dos principios clave: **Security by Design** (arquitectura segura desde el inicio)
 y **Security by Default** (configuraciones seguras por defecto).
 
 ## Principles
 
 ### Security by Design
 
-La seguridad está **integrada en la arquitectura**, no agregada después.
+La seguridad esta integrada en la arquitectura, no agregada despues.
 
-| Principio | Implementación | Ubicación |
+| Principio | Implementacion | Ubicacion |
 |-----------|---|---|
-| **Layers & Separation** | domain → application → infrastructure → interfaces. Cada capa tiene responsabilidades claras. | `backend/src/` |
+| **Layers & Separation** | domain -> application -> infrastructure -> interfaces. Cada capa tiene responsabilidades claras. | `backend/src/` |
 | **Typed Domain Errors** | Errores de negocio como tipos, no strings. Mapeados en HTTP. | `domain/entities/` |
-| **Value Objects** | Validación en la frontera del dominio (Email, PasswordHash, UserId, etc.) | `domain/valueObjects/` |
-| **Transactions** | Multi-step auth ops (create user + send email) en transacción DB. | `authUseCase.register()` |
-| **Immutable Entities** | Domain entities no tienen setters. Métodos retornan nuevas instancias. | `domain/entities/user.ts` |
-| **Ports & Adapters** | Use cases dependen de puertos, no de impl. Fácil testear y reemplazar. | `application/ports/` |
+| **Value Objects** | Validacion en la frontera del dominio (Email, PasswordHash, UserId, etc.) | `domain/valueObjects/` |
+| **Transactions** | Multi-step auth ops (create user + send email) en transaccion DB. | `authUseCase.register()` |
+| **Immutable Entities** | Domain entities no tienen setters. Metodos retornan nuevas instancias. | `domain/entities/user.ts` |
+| **Ports & Adapters** | Use cases dependen de puertos, no de impl. Facil testear y reemplazar. | `application/ports/` |
 
 ### Security by Default
 
-Las **configuraciones por defecto son seguras**, no inseguras.
+Las configuraciones por defecto son seguras, no inseguras.
 
 | Aspecto | Default (Dev) | Production | Enforced? |
 |--------|---|---|---|
-| **JWT_REFRESH_SECRET** | Safe dev value | **REQUIRED** (enforced, min 32 chars) | ✅ Zod validation |
-| **DATABASE_URL** | localhost (no SSL) | **REQUIRED SSL** | ⚠️ Dev only |
-| **NODE_ENV** | development (verbose) | production (minimal) | ⚠️ Manual |
-| **EMAIL_MODE** | fake (no sends) | real (SMTP) | ✅ Env-based |
-| **CORS_ORIGINS** | Specific localhost | Env-required | ✅ Validation |
-| **HTTP Headers** | Helmet CSP+HSTS | Helmet CSP+HSTS | ✅ Helmet plugin |
-| **Rate Limiting** | Global + endpoint-specific | Global + endpoint-specific | ✅ Registered |
-| **Password Policy** | 12+ chars, mixed case, digit, special | Same | ✅ Zod refine |
+| **JWT_REFRESH_SECRET** | Safe dev value | **REQUIRED** (enforced, min 32 chars) | Yes, Zod validation |
+| **DATABASE_URL** | localhost (no SSL) | SSL recomendado/obligatorio segun entorno | Manual |
+| **NODE_ENV** | development (verbose) | production (minimal) | Manual |
+| **EMAIL_MODE** | fake (no sends) | real (SMTP) | Yes, env-based |
+| **CORS_ORIGINS** | Specific localhost | Env-required | Yes, validation |
+| **HTTP Headers** | Helmet CSP+HSTS | Helmet CSP+HSTS | Yes, helmet plugin |
+| **Rate Limiting** | Global + endpoint-specific | Global + endpoint-specific | Yes |
+| **Password Policy** | 12+ chars, mixed case, digit, special | Same | Yes, Zod refine |
 
 ---
 
@@ -69,15 +69,15 @@ Las **configuraciones por defecto son seguras**, no inseguras.
 ### Authorization
 
 **Role-based (v0.5.0)**
-- `user`: Can reserve desks for themselves
-- `admin`: Can manage desks, view all reservations (not yet implemented, v0.7.0)
+- `user`: can reserve desks for themselves
+- `admin`: can manage desks, view all reservations (not yet implemented, v0.7.0)
 
 ### Database
 
 **Constraints & Policies**
 - Unique email (CITEXT, case-insensitive)
-- Unique reservation per user-desk-date
-- Foreign keys with ON DELETE CASCADE for audit trail
+- One active reservation per user per day and one active reservation per desk per day
+- ON DELETE strategy: RESTRICT for reservations, CASCADE for dependent tables, SET NULL for audit references
 - Soft deletes for audit trails (deleted_at IS NOT NULL)
 
 **Transactions**
@@ -98,7 +98,7 @@ Las **configuraciones por defecto son seguras**, no inseguras.
 - Credentials: true (allows cookies & auth headers)
 
 **Rate Limiting**
-- Global: 100 req/15min per IP (prevents abuse)
+- Global: 100 req/15min per IP
 - Auth endpoints:
   - Login: 10/min
   - Register: 5/10min
@@ -111,7 +111,7 @@ Las **configuraciones por defecto son seguras**, no inseguras.
 - Type-safe at compile time
 - Password policy validated via `.refine()`
 
-###　Output
+### Output
 
 **Error Responses**
 - Generic messages to client (no PII or stack trace leaks)
@@ -163,15 +163,15 @@ Las **configuraciones por defecto son seguras**, no inseguras.
 All security features are covered by unit + integration tests:
 ```bash
 npm -w backend run test
-# 46 tests passing (auth, reservation, desk, repository)
+# 55 tests passing (auth, reservation, desk, repository, routes)
 ```
 
 Test coverage includes:
-- ✅ Email confirmation enforcement
-- ✅ Password policy validation
-- ✅ Rate limiting
-- ✅ Unique constraints
-- ✅ Transaction rollbacks on errors
+- [x] Email confirmation enforcement
+- [x] Password policy validation
+- [x] Rate limiting
+- [x] Unique constraints
+- [x] Transaction rollbacks on errors
 
 ---
 
