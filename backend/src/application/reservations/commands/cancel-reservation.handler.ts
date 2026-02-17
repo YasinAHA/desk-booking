@@ -1,5 +1,5 @@
 ﻿import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
-import type { ReservationDependencies } from "@application/reservations/handlers/reservation.types.js";
+import type { ReservationDependencies } from "@application/reservations/types.js";
 import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
 import {
 	InvalidReservationDateError,
@@ -45,4 +45,5 @@ export class CancelReservationHandler {
 		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
 	}
 }
+
 

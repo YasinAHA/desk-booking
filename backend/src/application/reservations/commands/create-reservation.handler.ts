@@ -1,5 +1,5 @@
 ﻿import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
-import type { ReservationDependencies } from "@application/reservations/handlers/reservation.types.js";
+import type { ReservationDependencies } from "@application/reservations/types.js";
 import {
 	ReservationDateInPastError,
 	type ReservationSource,
@@ -49,4 +49,5 @@ export class CreateReservationHandler {
 		);
 	}
 }
+
 

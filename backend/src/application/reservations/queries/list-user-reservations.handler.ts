@@ -1,4 +1,4 @@
-﻿import type { ReservationDependencies } from "@application/reservations/handlers/reservation.types.js";
+﻿import type { ReservationDependencies } from "@application/reservations/types.js";
 import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -12,4 +12,5 @@ export class ListUserReservationsHandler {
 		return this.deps.queryRepo.listForUser(userIdVO);
 	}
 }
+
 
