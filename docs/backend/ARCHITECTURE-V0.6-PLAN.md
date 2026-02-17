@@ -51,7 +51,7 @@ backend/src/
 - [ ] Ajuste imports
 
 3. `application/usecases` -> `application/<feature>`
-- [ ] Auth: separar command/query handlers
+- [ ] Auth: separar command/query handlers (transición aplicada: `application/auth/handlers/auth.usecase.ts`)
 - [ ] Reservations: separar command/query handlers
 - [ ] Desks: estructurar handlers/queries
 
@@ -71,7 +71,7 @@ backend/src/
 - [x] Convención de transición: objetivo final `handlers`; `usecases` permitido temporalmente durante el refactor.
 
 ## Fases recomendadas (sin big-bang)
-- [ ] Fase 1: mover composition root + eliminar `any` críticos.
+- [x] Fase 1: mover composition root + eliminar `any` críticos.
 - [ ] Fase 2: renombre `value-objects` + imports.
 - [ ] Fase 3: refactor `application/auth` a command/query.
 - [ ] Fase 4: refactor `application/reservations`.

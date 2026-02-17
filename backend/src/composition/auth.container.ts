@@ -2,17 +2,17 @@ import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
 import type { TransactionalContext } from "@application/ports/transaction-manager.js";
-import { AuthUseCase } from "@application/usecases/auth.usecase.js";
+import { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
 import { env } from "@config/env.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
-import { DomainAuthPolicy } from "@infrastructure/policies/domain-auth-policy.js";
-import { PgEmailOutbox } from "@infrastructure/repositories/pg-email-outbox.js";
-import { PgEmailVerificationRepository } from "@infrastructure/repositories/pg-email-verification-repository.js";
-import { PgTokenRevocationRepository } from "@infrastructure/repositories/pg-token-revocation-repository.js";
-import { PgUserRepository } from "@infrastructure/repositories/pg-user-repository.js";
-import { Argon2PasswordHasher } from "@infrastructure/security/argon2-password-hasher.js";
-import { Sha256TokenService } from "@infrastructure/security/sha256-token-service.js";
+import { DomainAuthPolicy } from "@infrastructure/auth/policies/domain-auth-policy.js";
+import { PgEmailOutbox } from "@infrastructure/auth/repositories/pg-email-outbox.js";
+import { PgEmailVerificationRepository } from "@infrastructure/auth/repositories/pg-email-verification-repository.js";
+import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/pg-token-revocation-repository.js";
+import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
+import { Argon2PasswordHasher } from "@infrastructure/auth/security/argon2-password-hasher.js";
+import { Sha256TokenService } from "@infrastructure/auth/security/sha256-token-service.js";
 import { FastifyJwtProvider } from "@interfaces/http/auth/adapters/fastify-jwt-provider.js";
 import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 

@@ -1,4 +1,4 @@
-import type { AuthUseCase } from "@application/usecases/auth.usecase.js";
+import type { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
