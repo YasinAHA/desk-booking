@@ -27,10 +27,10 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Cerrar estructura final: `infrastructure/reservations` e `infrastructure/desks` por feature.
 - [x] Cerrar estructura final: distribuir `application/ports` por feature (dejar `common` solo para transversales).
 - [x] Cerrar estructura final: retirar restos legacy en `application/usecases/*` y alinear docs internos.
-- [ ] Retirar facades `*.usecase` por feature (prioridad: `desks` -> `reservations` -> `auth`) sin cambios funcionales HTTP.
+- [x] Retirar facades `*.usecase` por feature (prioridad: `desks` -> `reservations` -> `auth`) sin cambios funcionales HTTP.
 - [x] Desks: eliminar `application/desks/handlers/desk.usecase.ts` y consumir `queries/list-desks.handler.ts` desde composition/controller.
 - [x] Reservations: eliminar `application/reservations/handlers/reservation.usecase.ts` y conectar handlers de command/query directos.
-- [ ] Auth: eliminar `application/auth/handlers/auth.usecase.ts` y conectar handlers de command/query directos.
+- [x] Auth: eliminar `application/auth/handlers/auth.usecase.ts` y conectar handlers de command/query directos.
 - [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
 - [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
 

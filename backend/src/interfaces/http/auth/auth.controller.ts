@@ -1,4 +1,9 @@
-﻿import type { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
+﻿import type { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
+import type { ConfirmEmailCommand } from "@application/auth/commands/confirm-email.command.js";
+import type { RegisterHandler } from "@application/auth/commands/register.handler.js";
+import type { RegisterCommand } from "@application/auth/commands/register.command.js";
+import type { LoginHandler } from "@application/auth/queries/login.handler.js";
+import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
@@ -40,39 +45,30 @@ const registerSchema = z.object({
 	second_last_name: z.string().min(1).optional(),
 });
 
-/**
- * AuthController: Handles HTTP layer concerns for authentication
- * - Request validation
- * - Response mapping
- * - Rate limiting
- * - Error handling
- * - JWT token creation and verification
- */
 export class AuthController {
 	constructor(
-		private readonly authUseCase: AuthUseCase,
+		private readonly loginHandler: LoginHandler,
+		private readonly registerHandler: RegisterHandler,
+		private readonly confirmEmailHandler: ConfirmEmailHandler,
 		private readonly jwtTokenService: JwtTokenService
 	) {}
 
 	async login(req: FastifyRequest, reply: FastifyReply) {
-		// Rate limiting
 		if (reply.rateLimit) {
 			reply.rateLimit(AUTH_LOGIN_RATE_LIMIT);
 		}
 
-		// Validation
 		const parse = loginSchema.safeParse(req.body);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic
-		const result = await this.authUseCase.login(
-			parse.data.email.toLowerCase(),
-			parse.data.password
-		);
+		const query: LoginQuery = {
+			email: parse.data.email.toLowerCase(),
+			password: parse.data.password,
+		};
+		const result = await this.loginHandler.execute(query);
 
-		// Error mapping
 		if (result.status === "NOT_CONFIRMED") {
 			throwHttpError(401, "EMAIL_NOT_CONFIRMED", "Tu email aun no esta confirmado.");
 		}
@@ -80,7 +76,6 @@ export class AuthController {
 			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
 		}
 
-		// Response mapping
 		const user = result.user;
 		const accessToken = this.jwtTokenService.createAccessToken({
 			id: user.id,
@@ -113,15 +108,12 @@ export class AuthController {
 	}
 
 	async register(req: FastifyRequest, reply: FastifyReply) {
-		// Rate limiting
 		if (reply.rateLimit) {
 			reply.rateLimit(AUTH_REGISTER_RATE_LIMIT);
 		}
 
-		// Validation
 		const parse = registerSchema.safeParse(req.body);
 		if (!parse.success) {
-			// Check if it's a password validation error (more granular error message)
 			const passwordError = parse.error.issues.find(issue => issue.path.includes("password"));
 			if (passwordError) {
 				throwHttpError(400, "WEAK_PASSWORD", passwordError.message);
@@ -129,21 +121,21 @@ export class AuthController {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic
-		const result = await this.authUseCase.register(
-			parse.data.email.toLowerCase(),
-			parse.data.password,
-			parse.data.first_name,
-			parse.data.last_name,
-			parse.data.second_last_name
-		);
+		const command: RegisterCommand = {
+			email: parse.data.email.toLowerCase(),
+			password: parse.data.password,
+			firstName: parse.data.first_name,
+			lastName: parse.data.last_name,
+			...(parse.data.second_last_name
+				? { secondLastName: parse.data.second_last_name }
+				: {}),
+		};
+		const result = await this.registerHandler.execute(command);
 
-		// Error mapping
 		if (result.status === "DOMAIN_NOT_ALLOWED") {
 			throwHttpError(403, "DOMAIN_NOT_ALLOWED", "Email not allowed");
 		}
 
-		// Response mapping
 		if (result.status === "ALREADY_CONFIRMED") {
 			req.log.info(
 				{ event: "auth.register.noop", reason: "already_confirmed" },
@@ -162,26 +154,22 @@ export class AuthController {
 	}
 
 	async verify(req: FastifyRequest, reply: FastifyReply) {
-		// Rate limiting
 		if (reply.rateLimit) {
 			reply.rateLimit(AUTH_VERIFY_RATE_LIMIT);
 		}
 
 		req.log.info({ event: "auth.verify", body: req.body }, "Verify request received");
 
-		// Validation
 		const parse = verifySchema.safeParse(req.body);
 		if (!parse.success) {
 			req.log.warn({ event: "auth.verify", body: req.body }, "Invalid payload");
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic & error handling
 		try {
 			const payload = await this.jwtTokenService.verifyAccessToken(parse.data.token);
 
 			req.log.info({ event: "auth.verify", userId: payload.id }, "Token verified OK");
-			// Response mapping
 			return reply.send({
 				valid: true,
 				user: {
@@ -199,21 +187,18 @@ export class AuthController {
 	}
 
 	async confirmEmail(req: FastifyRequest, reply: FastifyReply) {
-		// Validation
 		const token = (req.query as { token?: string }).token;
 		if (!token) {
 			throwHttpError(400, "BAD_REQUEST", "Missing token");
 		}
 
-		// Application logic
-		const ok = await this.authUseCase.confirmEmail(token);
+		const command: ConfirmEmailCommand = { token };
+		const ok = await this.confirmEmailHandler.execute(command);
 
-		// Error mapping
 		if (!ok) {
 			throwHttpError(400, "INVALID_TOKEN", "Invalid or expired token");
 		}
 
-		// Response mapping
 		req.log.info({ event: "auth.confirm" }, "Email confirmed");
 		return reply.send({ ok: true });
 	}
@@ -223,18 +208,15 @@ export class AuthController {
 	}
 
 	async refresh(req: FastifyRequest, reply: FastifyReply) {
-		// Rate limiting
 		if (reply.rateLimit) {
 			reply.rateLimit(AUTH_LOGIN_RATE_LIMIT);
 		}
 
-		// Validation
 		const parse = verifySchema.safeParse(req.body);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic & error handling
 		try {
 			const refreshPayload = await this.jwtTokenService.verifyRefreshToken(parse.data.token);
 
@@ -248,15 +230,12 @@ export class AuthController {
 
 			req.log.info({ event: "auth.refresh", userId: refreshPayload.id }, "Token refreshed");
 
-			// Response mapping
 			return reply.send({
 				accessToken,
-				refreshToken: parse.data.token, // Refresh token unchanged
+				refreshToken: parse.data.token,
 			});
 		} catch {
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");
 		}
 	}
 }
-
-

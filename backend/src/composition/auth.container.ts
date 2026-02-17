@@ -1,8 +1,10 @@
 ﻿import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
+import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
+import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import type { TransactionalContext } from "@application/common/ports/transaction-manager.js";
-import { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
+import { LoginHandler } from "@application/auth/queries/login.handler.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
 import { env } from "@config/env.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
@@ -23,7 +25,11 @@ type AppWithDb = FastifyInstance & {
 	};
 };
 
-export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
+export function buildAuthHandlers(app: FastifyInstance): {
+	loginHandler: LoginHandler;
+	registerHandler: RegisterHandler;
+	confirmEmailHandler: ConfirmEmailHandler;
+} {
 	const dbApp = app as AppWithDb;
 	const passwordHasher = new Argon2PasswordHasher();
 	const tokenService = new Sha256TokenService();
@@ -34,12 +40,11 @@ export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
 
-	// Factories for creating transactional repository instances
 	const userRepoFactory = (tx: TransactionalContext) => new PgUserRepository(tx);
 	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
 		new PgEmailVerificationRepository(tx);
 
-	return new AuthUseCase({
+	const deps = {
 		authPolicy,
 		passwordHasher,
 		tokenService,
@@ -48,7 +53,13 @@ export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
 		emailVerificationRepoFactory,
 		emailOutbox,
 		confirmationBaseUrl: env.APP_BASE_URL,
-	});
+	};
+
+	return {
+		loginHandler: new LoginHandler(deps),
+		registerHandler: new RegisterHandler(deps),
+		confirmEmailHandler: new ConfirmEmailHandler(deps),
+	};
 }
 
 export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
@@ -57,4 +68,3 @@ export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
 	return new JwtTokenService(jwtProvider, tokenRevocationRepository);
 }
-

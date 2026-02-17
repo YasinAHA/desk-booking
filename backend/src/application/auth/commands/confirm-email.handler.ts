@@ -1,5 +1,5 @@
-import type { ConfirmEmailCommand } from "@application/auth/commands/confirm-email.command.js";
-import type { AuthDependencies } from "@application/auth/handlers/auth.types.js";
+﻿import type { ConfirmEmailCommand } from "@application/auth/commands/confirm-email.command.js";
+import type { AuthDependencies } from "@application/auth/types.js";
 
 type ConfirmEmailDependencies = Pick<
 	AuthDependencies,
@@ -17,3 +17,4 @@ export class ConfirmEmailHandler {
 		});
 	}
 }
+

@@ -2,13 +2,16 @@
 import { createHash } from "node:crypto";
 import test from "node:test";
 
+import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
+import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
-import type { TransactionManager } from "@application/common/ports/transaction-manager.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
+import { LoginHandler } from "@application/auth/queries/login.handler.js";
+import type { TransactionManager } from "@application/common/ports/transaction-manager.js";
 import { User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import {
@@ -16,7 +19,6 @@ import {
 	passwordHashToString,
 } from "@domain/auth/value-objects/password-hash.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
-import { AuthUseCase } from "./auth.usecase.js";
 
 function mockUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {
 	return {
@@ -53,21 +55,9 @@ function mockEmailOutbox(
 	};
 }
 
-function mockTransactionManager(): TransactionManager {
-	return {
-		runInTransaction: async <T>(callback: (tx: any) => Promise<T>): Promise<T> => {
-			// Execute callback directly without actual transaction
-			const mockTx = {
-				query: async () => ({ rows: [], rowCount: 0 }),
-			};
-			return callback(mockTx);
-		},
-	};
-}
-
 function buildPasswordHasher(): PasswordHasher {
 	return {
-		hash: async (plain) => createPasswordHash(`hash:${plain}`),
+		hash: async plain => createPasswordHash(`hash:${plain}`),
 		verify: async (hash, plain) => passwordHashToString(hash) === `hash:${plain}`,
 	};
 }
@@ -75,13 +65,13 @@ function buildPasswordHasher(): PasswordHasher {
 function buildTokenService(): TokenService {
 	return {
 		generate: () => "token-123",
-		hash: (token) => createHash("sha256").update(token).digest("hex"),
+		hash: token => createHash("sha256").update(token).digest("hex"),
 	};
 }
 
 function buildAuthPolicy(overrides: Partial<AuthPolicy> = {}): AuthPolicy {
 	return {
-		isAllowedEmail: (email) => {
+		isAllowedEmail: email => {
 			const domain = email.split("@")[1]?.toLowerCase();
 			return domain === "camerfirma.com";
 		},
@@ -90,7 +80,7 @@ function buildAuthPolicy(overrides: Partial<AuthPolicy> = {}): AuthPolicy {
 	};
 }
 
-function buildAuthUseCase(
+function buildAuthHandlers(
 	userRepo: UserRepository,
 	emailVerificationRepo: EmailVerificationRepository,
 	emailOutbox: EmailOutbox,
@@ -106,21 +96,18 @@ function buildAuthUseCase(
 	const tokenService = overrides?.tokenService ?? buildTokenService();
 	const authPolicy = overrides?.authPolicy ?? buildAuthPolicy();
 	const confirmationBaseUrl = overrides?.confirmationBaseUrl ?? "http://localhost:3001";
-	
-	// Custom txManager that uses the mocked repos
+
 	const txManager: TransactionManager = {
 		runInTransaction: async <T>(callback: (tx: any) => Promise<T>): Promise<T> => {
-			// Pass an object that will make factories return the mocked repos
 			const mockTx = { userRepo, emailVerificationRepo };
 			return callback(mockTx);
 		},
 	};
 
-	// Factories that extract repos from the transaction context
 	const userRepoFactory = (tx: any) => tx.userRepo ?? userRepo;
 	const emailVerificationRepoFactory = (tx: any) => tx.emailVerificationRepo ?? emailVerificationRepo;
 
-	return new AuthUseCase({
+	const deps = {
 		authPolicy,
 		passwordHasher,
 		tokenService,
@@ -129,10 +116,16 @@ function buildAuthUseCase(
 		emailVerificationRepoFactory,
 		emailOutbox,
 		confirmationBaseUrl,
-	});
+	};
+
+	return {
+		loginHandler: new LoginHandler(deps),
+		registerHandler: new RegisterHandler(deps),
+		confirmEmailHandler: new ConfirmEmailHandler(deps),
+	};
 }
 
-test("AuthUseCase.login rejects non-allowed domain", async () => {
+test("LoginHandler.execute rejects non-allowed domain", async () => {
 	let called = false;
 	const userRepo = mockUserRepo({
 		findByEmail: async () => {
@@ -140,32 +133,32 @@ test("AuthUseCase.login rejects non-allowed domain", async () => {
 			return null;
 		},
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		userRepo,
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const result = await auth.login("user@other.com", "1234");
+	const result = await handlers.loginHandler.execute({ email: "user@other.com", password: "1234" });
 	assert.deepEqual(result, { status: "INVALID_CREDENTIALS" });
 	assert.equal(called, false);
 });
 
-test("AuthUseCase.login returns null when user not found", async () => {
+test("LoginHandler.execute returns null when user not found", async () => {
 	const userRepo = mockUserRepo({
 		findAuthData: async () => null,
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		userRepo,
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const result = await auth.login("admin@camerfirma.com", "1234");
+	const result = await handlers.loginHandler.execute({ email: "admin@camerfirma.com", password: "1234" });
 	assert.deepEqual(result, { status: "INVALID_CREDENTIALS" });
 });
 
-test("AuthUseCase.login returns NOT_CONFIRMED when user not confirmed", async () => {
+test("LoginHandler.execute returns NOT_CONFIRMED when user not confirmed", async () => {
 	const passwordHasher = buildPasswordHasher();
 	const hash = await passwordHasher.hash("1234");
 	const unconfirmedUser = new User(
@@ -183,18 +176,18 @@ test("AuthUseCase.login returns NOT_CONFIRMED when user not confirmed", async ()
 			passwordHash: hash,
 		}),
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		userRepo,
 		mockEmailVerificationRepo(),
 		mockEmailOutbox(),
 		{ passwordHasher }
 	);
 
-	const result = await auth.login("admin@camerfirma.com", "1234");
+	const result = await handlers.loginHandler.execute({ email: "admin@camerfirma.com", password: "1234" });
 	assert.deepEqual(result, { status: "NOT_CONFIRMED" });
 });
 
-test("AuthUseCase.login returns OK when credentials match", async () => {
+test("LoginHandler.execute returns OK when credentials match", async () => {
 	const passwordHasher = buildPasswordHasher();
 	const hash = await passwordHasher.hash("1234");
 	const confirmedUser = new User(
@@ -212,14 +205,14 @@ test("AuthUseCase.login returns OK when credentials match", async () => {
 			passwordHash: hash,
 		}),
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		userRepo,
 		mockEmailVerificationRepo(),
 		mockEmailOutbox(),
 		{ passwordHasher }
 	);
 
-	const result = await auth.login("admin@camerfirma.com", "1234");
+	const result = await handlers.loginHandler.execute({ email: "admin@camerfirma.com", password: "1234" });
 	assert.deepEqual(result, {
 		status: "OK",
 		user: {
@@ -232,18 +225,23 @@ test("AuthUseCase.login returns OK when credentials match", async () => {
 	});
 });
 
-test("AuthUseCase.register rejects non-allowed domain", async () => {
-	const auth = buildAuthUseCase(
+test("RegisterHandler.execute rejects non-allowed domain", async () => {
+	const handlers = buildAuthHandlers(
 		mockUserRepo(),
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const result = await auth.register("user@other.com", "123456", "User", "Other");
+	const result = await handlers.registerHandler.execute({
+		email: "user@other.com",
+		password: "123456",
+		firstName: "User",
+		lastName: "Other",
+	});
 	assert.deepEqual(result, { status: "DOMAIN_NOT_ALLOWED" });
 });
 
-test("AuthUseCase.register returns ALREADY_CONFIRMED when user exists", async () => {
+test("RegisterHandler.execute returns ALREADY_CONFIRMED when user exists", async () => {
 	const hash = createPasswordHash("hash:pass");
 	const confirmedUser = new User(
 		createUserId("user-1"),
@@ -257,17 +255,22 @@ test("AuthUseCase.register returns ALREADY_CONFIRMED when user exists", async ()
 	const userRepo = mockUserRepo({
 		findByEmail: async () => confirmedUser,
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		userRepo,
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const result = await auth.register("admin@camerfirma.com", "123456", "Admin", "User");
+	const result = await handlers.registerHandler.execute({
+		email: "admin@camerfirma.com",
+		password: "123456",
+		firstName: "Admin",
+		lastName: "User",
+	});
 	assert.deepEqual(result, { status: "ALREADY_CONFIRMED" });
 });
 
-test("AuthUseCase.register updates unconfirmed user and sends email", async () => {
+test("RegisterHandler.execute updates unconfirmed user and sends email", async () => {
 	let updateCalled = false;
 	let verificationCalled = false;
 	let emailEnqueued = false;
@@ -297,26 +300,27 @@ test("AuthUseCase.register updates unconfirmed user and sends email", async () =
 			emailEnqueued = true;
 		},
 	});
-	const auth = buildAuthUseCase(
-		userRepo,
-		emailVerificationRepo,
-		emailOutbox
-	);
+	const handlers = buildAuthHandlers(userRepo, emailVerificationRepo, emailOutbox);
 
-	const result = await auth.register("admin@camerfirma.com", "123456", "Admin", "User");
+	const result = await handlers.registerHandler.execute({
+		email: "admin@camerfirma.com",
+		password: "123456",
+		firstName: "Admin",
+		lastName: "User",
+	});
 	assert.deepEqual(result, { status: "OK" });
 	assert.equal(updateCalled, true);
 	assert.equal(verificationCalled, true);
 	assert.equal(emailEnqueued, true);
 });
 
-test("AuthUseCase.register inserts new user and sends email", async () => {
+test("RegisterHandler.execute inserts new user and sends email", async () => {
 	let createCalled = false;
 	let verificationCalled = false;
 	let emailEnqueued = false;
 	const userRepo = mockUserRepo({
 		findByEmail: async () => null,
-		createUser: async (input) => {
+		createUser: async input => {
 			createCalled = true;
 			const hash = await buildPasswordHasher().hash("pass");
 			return new User(
@@ -340,50 +344,48 @@ test("AuthUseCase.register inserts new user and sends email", async () => {
 			emailEnqueued = true;
 		},
 	});
-	const auth = buildAuthUseCase(
-		userRepo,
-		emailVerificationRepo,
-		emailOutbox
-	);
+	const handlers = buildAuthHandlers(userRepo, emailVerificationRepo, emailOutbox);
 
-	const result = await auth.register("admin@camerfirma.com", "123456", "Admin", "User");
+	const result = await handlers.registerHandler.execute({
+		email: "admin@camerfirma.com",
+		password: "123456",
+		firstName: "Admin",
+		lastName: "User",
+	});
 	assert.deepEqual(result, { status: "OK" });
 	assert.equal(createCalled, true);
 	assert.equal(verificationCalled, true);
 	assert.equal(emailEnqueued, true);
 });
 
-test("AuthUseCase.confirmEmail returns false for invalid token", async () => {
-	const auth = buildAuthUseCase(
+test("ConfirmEmailHandler.execute returns false for invalid token", async () => {
+	const handlers = buildAuthHandlers(
 		mockUserRepo(),
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const ok = await auth.confirmEmail("bad-token");
+	const ok = await handlers.confirmEmailHandler.execute({ token: "bad-token" });
 	assert.equal(ok, false);
 });
 
-test("AuthUseCase.confirmEmail marks user and verification", async () => {
+test("ConfirmEmailHandler.execute marks user and verification", async () => {
 	const token = "token-123";
 	const tokenService = buildTokenService();
 	const tokenHash = tokenService.hash(token);
 	const emailVerificationRepo = mockEmailVerificationRepo({
-		confirmEmailByTokenHash: async (hash) => {
+		confirmEmailByTokenHash: async hash => {
 			assert.equal(hash, tokenHash);
 			return true;
 		},
 	});
-	const auth = buildAuthUseCase(
+	const handlers = buildAuthHandlers(
 		mockUserRepo(),
 		emailVerificationRepo,
 		mockEmailOutbox(),
 		{ tokenService }
 	);
 
-	const ok = await auth.confirmEmail(token);
+	const ok = await handlers.confirmEmailHandler.execute({ token });
 	assert.equal(ok, true);
 });
-
-
-
