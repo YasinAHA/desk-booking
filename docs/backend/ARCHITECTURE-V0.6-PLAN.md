@@ -52,7 +52,7 @@ backend/src/
 
 3. `application/usecases` -> `application/<feature>`
 - [x] Auth: separar command/query handlers (`application/auth/commands`, `application/auth/queries`, `application/auth/handlers`)
-- [ ] Reservations: separar command/query handlers
+- [x] Reservations: separar command/query handlers (`application/reservations/commands`, `application/reservations/queries`, `application/reservations/handlers`)
 - [ ] Desks: estructurar handlers/queries
 
 4. SQL bootstrap vs migraciones
@@ -74,7 +74,7 @@ backend/src/
 - [x] Fase 1: mover composition root + eliminar `any` críticos.
 - [x] Fase 2: renombre `value-objects` + imports.
 - [x] Fase 3: refactor `application/auth` a command/query.
-- [ ] Fase 4: refactor `application/reservations`.
+- [x] Fase 4: refactor `application/reservations`.
 - [ ] Fase 5: refactor `application/desks`.
 
 ## Definition of Done por PR

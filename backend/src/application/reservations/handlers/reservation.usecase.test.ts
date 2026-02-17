@@ -8,7 +8,7 @@ import { createDeskId } from "@domain/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/value-objects/office-id.js";
 import { createReservationId } from "@domain/value-objects/reservation-id.js";
 import { createUserId } from "@domain/value-objects/user-id.js";
-import { ReservationUseCase } from "./reservation.usecase.js";
+import { ReservationUseCase } from "@application/reservations/handlers/reservation.usecase.js";
 
 function mockCommandRepo(
 	overrides: Partial<ReservationCommandRepository> = {}
@@ -122,4 +122,5 @@ test("ReservationUseCase.listForUser returns rows", async () => {
 	const result = await useCase.listForUser("user");
 	assert.deepEqual(result, rows);
 });
+
 

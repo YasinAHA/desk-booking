@@ -1,4 +1,4 @@
-import type { ReservationUseCase } from "@application/usecases/reservation.usecase.js";
+﻿import type { ReservationUseCase } from "@application/reservations/handlers/reservation.usecase.js";
 import {
 	ReservationConflictError,
 	ReservationDateInPastError,
@@ -141,3 +141,4 @@ export class ReservationController {
 		});
 	}
 }
+
