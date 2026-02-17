@@ -56,10 +56,10 @@ backend/src/
 - [x] Desks: estructurar handlers/queries (`application/desks/queries`, `application/desks/handlers`)
 
 4. SQL bootstrap vs migraciones
-- [ ] Revisar `docker/postgres/init/001_init.sql` para minimizar duplicidades
-- [ ] Mantener `db/migrations` como fuente principal de esquema
-- [ ] `docker init` solo para bootstrap mínimo (extensiones y, si aplica, roles/permisos)
-- [ ] No crear tablas de negocio en `docker init`
+- [x] Revisar `docker/postgres/init/001_init.sql` para minimizar duplicidades
+- [x] Mantener `db/migrations` como fuente principal de esquema
+- [x] `docker init` solo para bootstrap mínimo (extensiones y, si aplica, roles/permisos)
+- [x] No crear tablas de negocio en `docker init`
 
 ## Decisiones concretas (aprobadas)
 - [x] Enfoque objetivo: layer-first en core + agrupacion por feature dentro de cada capa.
