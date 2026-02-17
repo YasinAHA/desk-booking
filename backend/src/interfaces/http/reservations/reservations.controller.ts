@@ -1,4 +1,9 @@
-﻿import type { ReservationUseCase } from "@application/reservations/handlers/reservation.usecase.js";
+﻿import type { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+import type { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
+import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
+import type { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
+import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import {
 	ReservationConflictError,
 	ReservationDateInPastError,
@@ -34,7 +39,9 @@ const idParamSchema = z.object({
  */
 export class ReservationController {
 	constructor(
-		private readonly reservationUseCase: ReservationUseCase,
+		private readonly createReservationHandler: CreateReservationHandler,
+		private readonly cancelReservationHandler: CancelReservationHandler,
+		private readonly listUserReservationsHandler: ListUserReservationsHandler,
 		private readonly app: FastifyInstance
 	) {}
 
@@ -48,13 +55,14 @@ export class ReservationController {
 
 		// Application logic
 		try {
-			const reservationId = await this.reservationUseCase.create(
-				req.user.id,
-				parse.data.date,
-				parse.data.desk_id,
-				parse.data.source,
-				parse.data.office_id
-			);
+			const command: CreateReservationCommand = {
+				userId: req.user.id,
+				date: parse.data.date,
+				deskId: parse.data.desk_id,
+				...(parse.data.source ? { source: parse.data.source } : {}),
+				...(parse.data.office_id ? { officeId: parse.data.office_id } : {}),
+			};
+			const reservationId = await this.createReservationHandler.execute(command);
 
 			// Response mapping
 			req.log.info(
@@ -95,7 +103,11 @@ export class ReservationController {
 
 		// Application logic
 		try {
-			const ok = await this.reservationUseCase.cancel(req.user.id, parse.data.id);
+			const command: CancelReservationCommand = {
+				userId: req.user.id,
+				reservationId: parse.data.id,
+			};
+			const ok = await this.cancelReservationHandler.execute(command);
 
 			// Error mapping
 			if (!ok) {
@@ -125,7 +137,8 @@ export class ReservationController {
 
 	async listForUser(req: FastifyRequest, reply: FastifyReply) {
 		// Application logic
-		const items = await this.reservationUseCase.listForUser(req.user.id);
+		const query: ListUserReservationsQuery = { userId: req.user.id };
+		const items = await this.listUserReservationsHandler.execute(query);
 
 		// Response mapping
 		return reply.send({
@@ -141,5 +154,3 @@ export class ReservationController {
 		});
 	}
 }
-
-

@@ -85,7 +85,7 @@ backend/src/
 - [ ] Retirar facades `*.usecase` restantes en `application/*/handlers` sin cambios funcionales HTTP.
 - [ ] Orden de ejecución acordado: `desks` -> `reservations` -> `auth`.
 - [x] `desks`: eliminar `application/desks/handlers/desk.usecase.ts` y consumir `queries/list-desks.handler.ts` desde composition/controller.
-- [ ] `reservations`: eliminar `application/reservations/handlers/reservation.usecase.ts` y conectar handlers directos.
+- [x] `reservations`: eliminar `application/reservations/handlers/reservation.usecase.ts` y conectar handlers directos.
 - [ ] `auth`: eliminar `application/auth/handlers/auth.usecase.ts` y conectar handlers directos.
 - [ ] Completar hardening post-refactor (tipado opaco de transacciones, resultados semánticos, etc.) según `docs/backend/TASKS.md`.
 

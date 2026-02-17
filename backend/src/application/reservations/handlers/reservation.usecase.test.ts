@@ -1,14 +1,19 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
+import { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
+import { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
-import type { ReservationQueryRepository, ReservationRecord } from "@application/reservations/ports/reservation-query-repository.js";
+import type {
+	ReservationQueryRepository,
+	ReservationRecord,
+} from "@application/reservations/ports/reservation-query-repository.js";
 import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
-import { ReservationUseCase } from "@application/reservations/handlers/reservation.usecase.js";
 
 function mockCommandRepo(
 	overrides: Partial<ReservationCommandRepository> = {}
@@ -32,21 +37,26 @@ function mockQueryRepo(
 	};
 }
 
-test("ReservationUseCase.create throws on past date", async () => {
+test("CreateReservationHandler.execute throws on past date", async () => {
 	const commandRepo = mockCommandRepo({
 		create: async () => {
 			throw new Error("Repo should not be called");
 		},
 	});
-	const queryRepo = mockQueryRepo();
-	const useCase = new ReservationUseCase(commandRepo, queryRepo);
+	const handler = new CreateReservationHandler({ commandRepo });
+
 	await assert.rejects(
-		() => useCase.create("user", "2000-01-01", "desk"),
+		() =>
+			handler.execute({
+				userId: "user",
+				date: "2000-01-01",
+				deskId: "desk",
+			}),
 		ReservationDateInPastError
 	);
 });
 
-test("ReservationUseCase.create inserts and returns id", async () => {
+test("CreateReservationHandler.execute inserts and returns id", async () => {
 	const commandRepo = mockCommandRepo({
 		create: async (userId, date, deskId, source, officeId) => {
 			assert.equal(userId, createUserId("user"));
@@ -57,14 +67,17 @@ test("ReservationUseCase.create inserts and returns id", async () => {
 			return createReservationId("res-1");
 		},
 	});
-	const queryRepo = mockQueryRepo();
-	const useCase = new ReservationUseCase(commandRepo, queryRepo);
+	const handler = new CreateReservationHandler({ commandRepo });
 
-	const id = await useCase.create("user", "2026-02-20", "desk");
+	const id = await handler.execute({
+		userId: "user",
+		date: "2026-02-20",
+		deskId: "desk",
+	});
 	assert.equal(id, "res-1");
 });
 
-test("ReservationUseCase.cancel returns true when row updated", async () => {
+test("CancelReservationHandler.execute returns true when row updated", async () => {
 	const commandRepo = mockCommandRepo({
 		cancel: async () => true,
 	});
@@ -75,13 +88,13 @@ test("ReservationUseCase.cancel returns true when row updated", async () => {
 			return { id: createReservationId("res-1"), reservationDate: "2099-01-01" };
 		},
 	});
-	const useCase = new ReservationUseCase(commandRepo, queryRepo);
+	const handler = new CancelReservationHandler({ commandRepo, queryRepo });
 
-	const ok = await useCase.cancel("user", "res-1");
+	const ok = await handler.execute({ userId: "user", reservationId: "res-1" });
 	assert.equal(ok, true);
 });
 
-test("ReservationUseCase.cancel returns false when nothing updated", async () => {
+test("CancelReservationHandler.execute returns false when nothing updated", async () => {
 	const commandRepo = mockCommandRepo({
 		cancel: async () => false,
 	});
@@ -91,13 +104,13 @@ test("ReservationUseCase.cancel returns false when nothing updated", async () =>
 			reservationDate: "2099-01-01",
 		}),
 	});
-	const useCase = new ReservationUseCase(commandRepo, queryRepo);
+	const handler = new CancelReservationHandler({ commandRepo, queryRepo });
 
-	const ok = await useCase.cancel("user", "res-2");
+	const ok = await handler.execute({ userId: "user", reservationId: "res-2" });
 	assert.equal(ok, false);
 });
 
-test("ReservationUseCase.listForUser returns rows", async () => {
+test("ListUserReservationsHandler.execute returns rows", async () => {
 	const rows: ReservationRecord[] = [
 		{
 			id: createReservationId("res-1"),
@@ -110,19 +123,14 @@ test("ReservationUseCase.listForUser returns rows", async () => {
 		},
 	];
 
-	const commandRepo = mockCommandRepo();
 	const queryRepo = mockQueryRepo({
-		listForUser: async (userId) => {
+		listForUser: async userId => {
 			assert.equal(userId, createUserId("user"));
 			return rows;
 		},
 	});
-	const useCase = new ReservationUseCase(commandRepo, queryRepo);
+	const handler = new ListUserReservationsHandler({ queryRepo });
 
-	const result = await useCase.listForUser("user");
+	const result = await handler.execute({ userId: "user" });
 	assert.deepEqual(result, rows);
 });
-
-
-
-

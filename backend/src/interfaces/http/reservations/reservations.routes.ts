@@ -1,11 +1,16 @@
-import type { FastifyPluginAsync } from "fastify";
+﻿import type { FastifyPluginAsync } from "fastify";
 
-import { buildReservationUseCase } from "@composition/reservations.container.js";
+import { buildReservationHandlers } from "@composition/reservations.container.js";
 import { ReservationController } from "./reservations.controller.js";
 
 export const reservationsRoutes: FastifyPluginAsync = async app => {
-	const reservationUseCase = buildReservationUseCase(app);
-	const controller = new ReservationController(reservationUseCase, app);
+	const handlers = buildReservationHandlers(app);
+	const controller = new ReservationController(
+		handlers.createReservationHandler,
+		handlers.cancelReservationHandler,
+		handlers.listUserReservationsHandler,
+		app
+	);
 
 	app.post(
 		"/",
