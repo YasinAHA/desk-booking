@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createOfficeId } from "@domain/value-objects/office-id.js";
 import { createUserId } from "@domain/value-objects/user-id.js";
-import { PgDeskRepository } from "./pg-desk-repository.js";
+import { PgDeskRepository } from "@infrastructure/desks/repositories/pg-desk-repository.js";
 
 test("PgDeskRepository.listForDate maps rows", async () => {
 	const repo = new PgDeskRepository({
@@ -43,4 +43,5 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 		},
 	]);
 });
+
 

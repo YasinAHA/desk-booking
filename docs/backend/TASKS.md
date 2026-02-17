@@ -23,6 +23,10 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Fase 4 (reservations): misma estrategia, sin cambios funcionales.
 - [x] Fase 5 (desks): misma estrategia, sin cambios funcionales.
 - [x] SQL bootstrap mínimo en Docker y migraciones como fuente única de esquema.
+- [ ] Cerrar estructura final: `domain` por feature (`auth`, `reservations`, `desks`).
+- [x] Cerrar estructura final: `infrastructure/reservations` e `infrastructure/desks` por feature.
+- [ ] Cerrar estructura final: distribuir `application/ports` por feature (dejar `common` solo para transversales).
+- [ ] Cerrar estructura final: retirar restos legacy en `application/usecases/*` y alinear docs internos.
 - [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
 - [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
 
@@ -36,6 +40,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [ ] Revisar factories transaccionales para que todas tipen contra puertos de `application` y `TransactionalContext`.
 - [ ] Evolucionar `confirmEmail` de `boolean` a resultado semántico (`confirmed | invalid_token | expired | already_confirmed`).
 - [ ] Revisar y distribuir `ports` por feature cuando aporte claridad (mantener `common` solo para contratos realmente transversales).
+- [ ] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
 - [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
 
 ### Criterios de aceptacion

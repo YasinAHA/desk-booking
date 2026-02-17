@@ -1,8 +1,8 @@
 ﻿import type { FastifyInstance } from "fastify";
 
 import { ReservationUseCase } from "@application/reservations/handlers/reservation.usecase.js";
-import { PgReservationCommandRepository } from "@infrastructure/repositories/pg-reservation-command-repository.js";
-import { PgReservationQueryRepository } from "@infrastructure/repositories/pg-reservation-query-repository.js";
+import { PgReservationCommandRepository } from "@infrastructure/reservations/repositories/pg-reservation-command-repository.js";
+import { PgReservationQueryRepository } from "@infrastructure/reservations/repositories/pg-reservation-query-repository.js";
 import { PgErrorTranslator } from "@infrastructure/services/error-translator.js";
 
 export function buildReservationUseCase(
@@ -13,4 +13,5 @@ export function buildReservationUseCase(
 	const queryRepo = new PgReservationQueryRepository(app.db);
 	return new ReservationUseCase(commandRepo, queryRepo);
 }
+
 

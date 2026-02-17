@@ -5,7 +5,7 @@ import { createDeskId } from "@domain/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/value-objects/office-id.js";
 import { createReservationId } from "@domain/value-objects/reservation-id.js";
 import { createUserId } from "@domain/value-objects/user-id.js";
-import { PgReservationQueryRepository } from "./pg-reservation-query-repository.js";
+import { PgReservationQueryRepository } from "@infrastructure/reservations/repositories/pg-reservation-query-repository.js";
 
 test("PgReservationQueryRepository.findActiveByIdForUser returns null when missing", async () => {
 	const repo = new PgReservationQueryRepository({
@@ -50,4 +50,5 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 		},
 	]);
 });
+
 

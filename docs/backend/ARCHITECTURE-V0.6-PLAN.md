@@ -77,6 +77,54 @@ backend/src/
 - [x] Fase 4: refactor `application/reservations`.
 - [x] Fase 5: refactor `application/desks`.
 
+## Pendientes para cerrar estructura objetivo
+- [ ] Reorganizar `domain` por feature (`domain/auth`, `domain/reservations`, `domain/desks`) y mantener entidades/value-objects/policies en su módulo.
+- [x] Reorganizar `infrastructure` de `reservations` y `desks` por feature (salir de `infrastructure/repositories/*` genérico).
+- [ ] Distribuir `application/ports` por feature cuando corresponda y dejar en `common` solo contratos transversales.
+- [ ] Revisar y retirar restos legacy (`application/usecases/*` remanentes) y alinear `README` internos de capa.
+- [ ] Completar hardening post-refactor (tipado opaco de transacciones, resultados semánticos, etc.) según `docs/backend/TASKS.md`.
+
+## Estructura objetivo final (referencia)
+```text
+backend/src/
+  app.ts
+  server.ts
+
+  config/
+  shared/
+  composition/
+
+  domain/
+    auth/(entities|value-objects|policies)
+    reservations/(entities|value-objects|policies)
+    desks/(entities|value-objects|policies)
+
+  application/
+    auth/(commands|queries|handlers|ports)
+    reservations/(commands|queries|handlers|ports)
+    desks/(commands|queries|handlers|ports)
+    common/services/
+
+  infrastructure/
+    db/
+    auth/(repositories|security|policies)
+    reservations/(repositories|mappers)
+    desks/(repositories|mappers)
+    email/(mailer.ts|outbox)
+    notifiers/
+    services/
+
+  interfaces/http/
+    plugins/
+    schemas/
+    auth/(routes.ts|controller.ts|adapters)
+    reservations/(routes.ts|controller.ts)
+    desks/(routes.ts|controller.ts)
+    metrics/(routes.ts)
+
+  workers/
+```
+
 ## Definition of Done por PR
 - [ ] Tests backend en verde.
 - [ ] Build TypeScript en verde.
