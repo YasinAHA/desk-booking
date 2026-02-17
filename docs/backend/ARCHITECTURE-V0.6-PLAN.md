@@ -53,7 +53,7 @@ backend/src/
 3. `application/usecases` -> `application/<feature>`
 - [x] Auth: separar command/query handlers (`application/auth/commands`, `application/auth/queries`, `application/auth/handlers`)
 - [x] Reservations: separar command/query handlers (`application/reservations/commands`, `application/reservations/queries`, `application/reservations/handlers`)
-- [ ] Desks: estructurar handlers/queries
+- [x] Desks: estructurar handlers/queries (`application/desks/queries`, `application/desks/handlers`)
 
 4. SQL bootstrap vs migraciones
 - [ ] Revisar `docker/postgres/init/001_init.sql` para minimizar duplicidades
@@ -75,7 +75,7 @@ backend/src/
 - [x] Fase 2: renombre `value-objects` + imports.
 - [x] Fase 3: refactor `application/auth` a command/query.
 - [x] Fase 4: refactor `application/reservations`.
-- [ ] Fase 5: refactor `application/desks`.
+- [x] Fase 5: refactor `application/desks`.
 
 ## Definition of Done por PR
 - [ ] Tests backend en verde.

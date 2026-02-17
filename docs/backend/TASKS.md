@@ -21,7 +21,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Auth/application (objetivo): separar `handlers` en `commands` y `queries` manteniendo contratos HTTP.
 - [x] Fase 2: renombre `domain/value-objects` y ajuste de imports.
 - [x] Fase 4 (reservations): misma estrategia, sin cambios funcionales.
-- [ ] Fase 5 (desks): misma estrategia, sin cambios funcionales.
+- [x] Fase 5 (desks): misma estrategia, sin cambios funcionales.
 - [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
 - [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
 

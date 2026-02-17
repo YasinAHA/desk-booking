@@ -1,4 +1,4 @@
-import type { DeskUseCase } from "@application/usecases/desk.usecase.js";
+﻿import type { DeskUseCase } from "@application/desks/handlers/desk.usecase.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -45,3 +45,4 @@ export class DeskController {
 		});
 	}
 }
+
