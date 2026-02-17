@@ -2,8 +2,7 @@
 import type { EmailOutbox } from "@application/ports/email-outbox.js";
 import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
 import type { TokenService } from "@application/ports/token-service.js";
-import type { UserId } from "@domain/value-objects/user-id.js";
-import { userIdToString } from "@domain/value-objects/user-id.js";
+import { userIdToString, type UserId } from "@domain/value-objects/user-id.js";
 
 /**
  * EmailVerificationService - Handles email verification workflow

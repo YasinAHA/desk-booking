@@ -4,19 +4,19 @@
 	UserRepository,
 } from "@application/ports/user-repository.js";
 import { User } from "@domain/entities/user.js";
-import type { Email } from "@domain/value-objects/email.js";
 import {
 	createEmail,
 	emailToString,
+	type Email,
 } from "@domain/value-objects/email.js";
-import type { PasswordHash } from "@domain/value-objects/password-hash.js";
 import {
 	createPasswordHash,
 	passwordHashToString,
+	type PasswordHash,
 } from "@domain/value-objects/password-hash.js";
-import type { UserId } from "@domain/value-objects/user-id.js";
 import {
 	createUserId,
+	type UserId,
 	userIdToString,
 } from "@domain/value-objects/user-id.js";
 
@@ -36,17 +36,6 @@ function mapToDomainUser(row: any): User {
 		createPasswordHash(row.password_hash),
 		row.confirmed_at,
 	);
-}
-
-function mapToApiUser(domainUser: User) {
-	return {
-		id: domainUser.id,
-		email: domainUser.email,
-		firstName: domainUser.firstName,
-		lastName: domainUser.lastName,
-		secondLastName: domainUser.secondLastName,
-		isConfirmed: domainUser.isConfirmed(),
-	};
 }
 
 function mapUserAuthData(row: any): UserAuthData {

@@ -10,34 +10,17 @@ import type {
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
 
-export type { LoginResult, RegisterResult };
+export type {
+	LoginResult,
+	RegisterResult,
+} from "@application/auth/handlers/auth.types.js";
 
 export class AuthUseCase {
 	private readonly loginHandler: LoginHandler;
 	private readonly registerHandler: RegisterHandler;
 	private readonly confirmEmailHandler: ConfirmEmailHandler;
 
-	constructor(
-		authPolicy: AuthDependencies["authPolicy"],
-		passwordHasher: AuthDependencies["passwordHasher"],
-		tokenService: AuthDependencies["tokenService"],
-		txManager: AuthDependencies["txManager"],
-		userRepoFactory: AuthDependencies["userRepoFactory"],
-		emailVerificationRepoFactory: AuthDependencies["emailVerificationRepoFactory"],
-		emailOutbox: AuthDependencies["emailOutbox"],
-		confirmationBaseUrl: AuthDependencies["confirmationBaseUrl"]
-	) {
-		const deps: AuthDependencies = {
-			authPolicy,
-			passwordHasher,
-			tokenService,
-			txManager,
-			userRepoFactory,
-			emailVerificationRepoFactory,
-			emailOutbox,
-			confirmationBaseUrl,
-		};
-
+	constructor(private readonly deps: AuthDependencies) {
 		this.loginHandler = new LoginHandler(deps);
 		this.registerHandler = new RegisterHandler(deps);
 		this.confirmEmailHandler = new ConfirmEmailHandler(deps);

@@ -39,7 +39,7 @@ export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
 	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
 		new PgEmailVerificationRepository(tx);
 
-	return new AuthUseCase(
+	return new AuthUseCase({
 		authPolicy,
 		passwordHasher,
 		tokenService,
@@ -47,8 +47,8 @@ export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
 		userRepoFactory,
 		emailVerificationRepoFactory,
 		emailOutbox,
-		env.APP_BASE_URL,
-	);
+		confirmationBaseUrl: env.APP_BASE_URL,
+	});
 }
 
 export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {

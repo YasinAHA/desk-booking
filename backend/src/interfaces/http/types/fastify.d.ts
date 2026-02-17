@@ -1,5 +1,4 @@
 import "@fastify/jwt";
-import "fastify";
 import type { preHandlerHookHandler } from "fastify";
 
 declare module "@fastify/jwt" {

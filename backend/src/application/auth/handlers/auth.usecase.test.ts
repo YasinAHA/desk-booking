@@ -120,16 +120,16 @@ function buildAuthUseCase(
 	const userRepoFactory = (tx: any) => tx.userRepo ?? userRepo;
 	const emailVerificationRepoFactory = (tx: any) => tx.emailVerificationRepo ?? emailVerificationRepo;
 
-	return new AuthUseCase(
+	return new AuthUseCase({
 		authPolicy,
 		passwordHasher,
 		tokenService,
-		overrides?.txManager ?? txManager,
+		txManager: overrides?.txManager ?? txManager,
 		userRepoFactory,
 		emailVerificationRepoFactory,
 		emailOutbox,
 		confirmationBaseUrl,
-	);
+	});
 }
 
 test("AuthUseCase.login rejects non-allowed domain", async () => {
