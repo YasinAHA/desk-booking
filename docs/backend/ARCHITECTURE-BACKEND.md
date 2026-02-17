@@ -18,7 +18,7 @@ Monorepo con backend propio y frontend ligero:
 
 ### Capas (v0.5.0)
 - `src/domain`: entidades y reglas de negocio puras (User, Desk, Reservation).
-- `src/application`: casos de uso y orquestacion (usecases, ports).
+- `src/application`: orquestacion por feature (commands, queries, handlers, ports, services).
 - `src/infrastructure`: adaptadores (DB, mailer, logger, etc.).
 - `src/interfaces`: entrada/salida (HTTP/controllers, DTOs, validación).
 
@@ -72,7 +72,7 @@ Monorepo con backend propio y frontend ligero:
 - Errores con formato comun `{ error: { code, message } }`.
 
 ## Notas de evolución
-- Rutas HTTP delgadas en `interfaces/http/`, con lógica en `application/usecases`.
+- Rutas HTTP delgadas en `interfaces/http/`, con lógica en `application/<feature>`.
 - Entidades base en `domain/` para evolucionar reglas de negocio.
 - Migración por capas en curso (v0.5.0).
 

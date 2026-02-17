@@ -81,7 +81,7 @@ backend/src/
 - [x] Reorganizar `domain` por feature (`domain/auth`, `domain/reservations`, `domain/desks`) y mantener entidades/value-objects/policies en su módulo.
 - [x] Reorganizar `infrastructure` de `reservations` y `desks` por feature (salir de `infrastructure/repositories/*` genérico).
 - [x] Distribuir `application/ports` por feature cuando corresponda y dejar en `common` solo contratos transversales.
-- [ ] Revisar y retirar restos legacy (`application/usecases/*` remanentes) y alinear `README` internos de capa.
+- [x] Revisar y retirar restos legacy (`application/usecases/*` remanentes) y alinear `README` internos de capa.
 - [ ] Completar hardening post-refactor (tipado opaco de transacciones, resultados semánticos, etc.) según `docs/backend/TASKS.md`.
 
 ## Estructura objetivo final (referencia)
@@ -100,10 +100,10 @@ backend/src/
     desks/(entities|value-objects|policies)
 
   application/
-    auth/(commands|queries|handlers|ports)
+    auth/(commands|queries|handlers|ports|services)
     reservations/(commands|queries|handlers|ports)
     desks/(commands|queries|handlers|ports)
-    common/services/
+    common/ports/
 
   infrastructure/
     db/

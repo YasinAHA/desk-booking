@@ -26,7 +26,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Cerrar estructura final: `domain` por feature (`auth`, `reservations`, `desks`).
 - [x] Cerrar estructura final: `infrastructure/reservations` e `infrastructure/desks` por feature.
 - [x] Cerrar estructura final: distribuir `application/ports` por feature (dejar `common` solo para transversales).
-- [ ] Cerrar estructura final: retirar restos legacy en `application/usecases/*` y alinear docs internos.
+- [x] Cerrar estructura final: retirar restos legacy en `application/usecases/*` y alinear docs internos.
 - [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
 - [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
 

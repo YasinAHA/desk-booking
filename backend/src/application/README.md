@@ -1,5 +1,5 @@
 # Application
 
-Capa de aplicacion con casos de uso y orquestacion.
+Capa de aplicacion con orquestacion por feature.
 
 Objetivo: coordinar dominio y dependencias mediante interfaces.
