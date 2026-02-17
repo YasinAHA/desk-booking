@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
+import type { TransactionalContext } from "@application/ports/transaction-manager.js";
 import { AuthUseCase } from "@application/usecases/auth.usecase.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
 import { env } from "@config/env.js";
@@ -34,8 +35,9 @@ export function buildAuthUseCase(app: FastifyInstance): AuthUseCase {
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
 
 	// Factories for creating transactional repository instances
-	const userRepoFactory = (tx: any) => new PgUserRepository(tx);
-	const emailVerificationRepoFactory = (tx: any) => new PgEmailVerificationRepository(tx);
+	const userRepoFactory = (tx: TransactionalContext) => new PgUserRepository(tx);
+	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
+		new PgEmailVerificationRepository(tx);
 
 	return new AuthUseCase(
 		authPolicy,

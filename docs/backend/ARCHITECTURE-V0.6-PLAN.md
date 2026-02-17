@@ -1,6 +1,6 @@
-﻿# Temporary Architecture Checklist (v0.6.0 draft)
+﻿# Architecture Checklist (v0.6.0)
 
-Estado: borrador temporal para alinear criterio antes de refactor.
+Estado: documento de ejecución priorizado para la v0.6.0.
 
 ## Contexto
 - El proyecto ya tiene avance funcional relevante.
@@ -42,7 +42,7 @@ backend/src/
 
 ## Cambios candidatos (v0.6.0)
 1. `interfaces/http/*/*.container.ts` -> `composition/*.container.ts`
-- [ ] Auth
+- [x] Auth
 - [ ] Reservations
 - [ ] Desks
 
@@ -88,5 +88,7 @@ backend/src/
 - [x] Alcance de CQRS en `desks`: parcial en v0.6.0, ampliar solo si hay complejidad real.
 - [x] SQL init en v0.6.0: bootstrap mínimo y esquema de negocio en migraciones.
 - [ ] Si este documento temporal pasa a ADR/DECISION formal tras consenso.
+
+
 
 

@@ -135,7 +135,7 @@ Si varios cambios deben ser atómicos (e.g., crear usuario + enviar email):
 4. **Actualizar migraciones:** Si toca DB, actualizar `docker/postgres/init/001_init.sql` y crear `db/migrations/XXX_*.sql`.
 5. **Actualizar docs:** `TASKS.md`/`BACKLOG.md` backend + `DECISIONS.md` (si es decisión) + `CHANGELOG.md`.
 6. **Testing:** Escribir tests desde Domain → Application → Integration.
-7. **Mantener separación:** Features bajo `interfaces/http/<feature>/` con su `.container.ts` (composition root).
+7. **Mantener separación:** Features bajo `interfaces/http/<feature>/` y composition root en `backend/src/composition/`.
 
 ## Estilo de código
 
@@ -204,11 +204,12 @@ backend/src/
 │       ├── auth/
 │       │   ├── auth.controller.ts
 │       │   ├── auth.routes.ts
-│       │   ├── auth.container.ts    # Dependency injection
 │       │   ├── ports/               # Ports HTTP-específica (e.g., JwtProvider)
 │       │   └── adapters/            # Adapters Fastify-específicos
 │       ├── desks/
 │       └── reservations/
+├── composition/                # Composition root / dependency injection
+│   └── auth.container.ts
 └── config/                     # Constantes, ENV
 ```
 

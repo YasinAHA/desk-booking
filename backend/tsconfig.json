@@ -21,6 +21,7 @@
         "paths": {
             "@domain/*": ["domain/*"],
             "@application/*": ["application/*"],
+            "@composition/*": ["composition/*"],
             "@infrastructure/*": ["infrastructure/*"],
             "@interfaces/*": ["interfaces/*"],
             "@config/*": ["config/*"]

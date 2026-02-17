@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 
-import { buildAuthUseCase, buildJwtTokenService } from "./auth.container.js";
+import { buildAuthUseCase, buildJwtTokenService } from "@composition/auth.container.js";
 import { AuthController } from "./auth.controller.js";
 
 export const authRoutes: FastifyPluginAsync = async app => {

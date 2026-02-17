@@ -89,7 +89,13 @@ export class AuthController {
 			lastName: user.lastName,
 			secondLastName: user.secondLastName,
 		});
-		const refreshToken = this.jwtTokenService.createRefreshToken(user.id);
+		const refreshToken = this.jwtTokenService.createRefreshToken({
+			id: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			secondLastName: user.secondLastName,
+		});
 
 		req.log.info({ event: "auth.login", userId: user.id }, "Login ok");
 
@@ -232,15 +238,12 @@ export class AuthController {
 		try {
 			const refreshPayload = await this.jwtTokenService.verifyRefreshToken(parse.data.token);
 
-			// Get user data (would need user repo in real scenario)
-			// For now, we'll create a new access token with minimal info
-			// In production, fetch user from DB to ensure it still exists and isn't deactivated
 			const accessToken = this.jwtTokenService.createAccessToken({
 				id: refreshPayload.id,
-				email: "", // Would fetch from DB
-				firstName: "", // Would fetch from DB
-				lastName: "", // Would fetch from DB
-				secondLastName: null,
+				email: refreshPayload.email,
+				firstName: refreshPayload.firstName,
+				lastName: refreshPayload.lastName,
+				secondLastName: refreshPayload.secondLastName,
 			});
 
 			req.log.info({ event: "auth.refresh", userId: refreshPayload.id }, "Token refreshed");
