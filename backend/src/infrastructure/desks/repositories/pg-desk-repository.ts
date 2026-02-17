@@ -1,4 +1,4 @@
-﻿import type { DeskAvailability, DeskRepository } from "@application/ports/desk-repository.js";
+﻿import type { DeskAvailability, DeskRepository } from "@application/desks/ports/desk-repository.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
@@ -43,5 +43,6 @@ export class PgDeskRepository implements DeskRepository {
 		}));
 	}
 }
+
 
 

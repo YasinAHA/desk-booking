@@ -1,5 +1,5 @@
-﻿import type { ErrorTranslator } from "@application/ports/error-translator.js";
-import type { ReservationCommandRepository } from "@application/ports/reservation-command-repository.js";
+﻿import type { ErrorTranslator } from "@application/common/ports/error-translator.js";
+import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import {
 	deskIdToString,
 	type DeskId,
@@ -62,5 +62,6 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 		return (result.rowCount ?? 0) > 0;
 	}
 }
+
 
 

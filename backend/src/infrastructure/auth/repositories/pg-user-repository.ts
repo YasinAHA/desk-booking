@@ -2,7 +2,7 @@
 	UserAuthData,
 	UserCreate,
 	UserRepository,
-} from "@application/ports/user-repository.js";
+} from "@application/auth/ports/user-repository.js";
 import { User } from "@domain/auth/entities/user.js";
 import {
 	createEmail,
@@ -131,5 +131,6 @@ export class PgUserRepository implements UserRepository {
 		return (result.rowCount ?? 0) > 0;
 	}
 }
+
 
 

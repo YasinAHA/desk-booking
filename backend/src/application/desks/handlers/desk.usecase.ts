@@ -1,4 +1,4 @@
-﻿import type { DeskRepository } from "@application/ports/desk-repository.js";
+﻿import type { DeskRepository } from "@application/desks/ports/desk-repository.js";
 import { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
 import type { ListDesksQuery } from "@application/desks/queries/list-desks.query.js";
 
@@ -14,3 +14,4 @@ export class DeskUseCase {
 		return this.listDesksHandler.execute(query);
 	}
 }
+

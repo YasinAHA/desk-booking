@@ -1,4 +1,4 @@
-import type { Notifier, NotifyParams } from "@application/ports/notifier.js";
+﻿import type { Notifier, NotifyParams } from "@application/common/ports/notifier.js";
 import { sendEmail } from "@infrastructure/email/mailer.js";
 
 export class EmailNotifier implements Notifier {
@@ -6,3 +6,4 @@ export class EmailNotifier implements Notifier {
 		await sendEmail(params);
 	}
 }
+

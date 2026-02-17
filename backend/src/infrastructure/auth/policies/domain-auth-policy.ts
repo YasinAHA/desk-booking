@@ -1,4 +1,4 @@
-import type { AuthPolicy } from "@application/ports/auth-policy.js";
+﻿import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
 
 export class DomainAuthPolicy implements AuthPolicy {
 	constructor(
@@ -15,3 +15,4 @@ export class DomainAuthPolicy implements AuthPolicy {
 		return this.emailVerificationTtlMs;
 	}
 }
+

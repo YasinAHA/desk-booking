@@ -1,4 +1,4 @@
-﻿import type { DeskRepository } from "@application/ports/desk-repository.js";
+﻿import type { DeskRepository } from "@application/desks/ports/desk-repository.js";
 import type { ListDesksQuery } from "@application/desks/queries/list-desks.query.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -14,4 +14,5 @@ export class ListDesksHandler {
 		return this.deps.deskRepo.listForDate(query.date, userIdVO);
 	}
 }
+
 

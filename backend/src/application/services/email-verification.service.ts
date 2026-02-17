@@ -1,7 +1,7 @@
-﻿import type { AuthPolicy } from "@application/ports/auth-policy.js";
-import type { EmailOutbox } from "@application/ports/email-outbox.js";
-import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
-import type { TokenService } from "@application/ports/token-service.js";
+﻿import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
+import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
+import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
+import type { TokenService } from "@application/auth/ports/token-service.js";
 import { userIdToString, type UserId } from "@domain/auth/value-objects/user-id.js";
 
 /**
@@ -63,5 +63,6 @@ export class EmailVerificationService {
 		return this.emailVerificationRepo.confirmEmailByTokenHash(tokenHash);
 	}
 }
+
 
 

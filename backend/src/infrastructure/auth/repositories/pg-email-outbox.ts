@@ -1,4 +1,4 @@
-import type { EmailMessage, EmailOutbox } from "@application/ports/email-outbox.js";
+﻿import type { EmailMessage, EmailOutbox } from "@application/auth/ports/email-outbox.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 
@@ -23,3 +23,4 @@ export class PgEmailOutbox implements EmailOutbox {
 		);
 	}
 }
+

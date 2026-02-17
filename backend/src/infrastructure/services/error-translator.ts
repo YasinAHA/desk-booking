@@ -1,4 +1,4 @@
-﻿import type { ErrorTranslator } from "@application/ports/error-translator.js";
+﻿import type { ErrorTranslator } from "@application/common/ports/error-translator.js";
 import { ReservationConflictError } from "@domain/reservations/entities/reservation.js";
 
 /**
@@ -28,4 +28,5 @@ export class PgErrorTranslator implements ErrorTranslator {
 		return new Error(String(error));
 	}
 }
+
 

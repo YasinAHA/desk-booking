@@ -1,6 +1,6 @@
 ﻿import type { RegisterCommand } from "@application/auth/commands/register.command.js";
 import type { AuthDependencies, RegisterResult } from "@application/auth/handlers/auth.types.js";
-import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
+import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import { EmailVerificationService } from "@application/services/email-verification.service.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
@@ -84,4 +84,5 @@ export class RegisterHandler {
 		await service.sendVerificationEmail(userId, email);
 	}
 }
+
 

@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import type { TokenRevocationRepository } from "@application/ports/token-revocation-repository.js";
+﻿import { randomUUID } from "node:crypto";
+import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
 import { env } from "@config/env.js";
 import { JwtProvider } from "./ports/jwt-provider.js";
 
@@ -170,3 +170,4 @@ export class JwtTokenService {
 		return this.verifyAccessToken(token);
 	}
 }
+

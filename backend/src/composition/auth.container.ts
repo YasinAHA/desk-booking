@@ -1,7 +1,7 @@
-import type { FastifyInstance } from "fastify";
+﻿import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
-import type { TransactionalContext } from "@application/ports/transaction-manager.js";
+import type { TransactionalContext } from "@application/common/ports/transaction-manager.js";
 import { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
 import { env } from "@config/env.js";
@@ -57,3 +57,4 @@ export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
 	return new JwtTokenService(jwtProvider, tokenRevocationRepository);
 }
+

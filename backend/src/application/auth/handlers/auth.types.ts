@@ -1,13 +1,13 @@
-import type { AuthPolicy } from "@application/ports/auth-policy.js";
-import type { EmailOutbox } from "@application/ports/email-outbox.js";
-import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
-import type { PasswordHasher } from "@application/ports/password-hasher.js";
-import type { TokenService } from "@application/ports/token-service.js";
+﻿import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
+import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
+import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
+import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
+import type { TokenService } from "@application/auth/ports/token-service.js";
 import type {
 	TransactionManager,
 	TransactionalContext,
-} from "@application/ports/transaction-manager.js";
-import type { UserRepository } from "@application/ports/user-repository.js";
+} from "@application/common/ports/transaction-manager.js";
+import type { UserRepository } from "@application/auth/ports/user-repository.js";
 
 export type AuthUser = {
 	id: string;
@@ -42,3 +42,4 @@ export type AuthDependencies = {
 	emailOutbox: EmailOutbox;
 	confirmationBaseUrl: string;
 };
+

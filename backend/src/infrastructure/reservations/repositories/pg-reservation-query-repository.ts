@@ -1,7 +1,7 @@
 ﻿import type {
 	ReservationQueryRepository,
 	ReservationRecord,
-} from "@application/ports/reservation-query-repository.js";
+} from "@application/reservations/ports/reservation-query-repository.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
@@ -62,5 +62,6 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		}));
 	}
 }
+
 
 

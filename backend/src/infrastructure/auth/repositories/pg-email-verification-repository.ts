@@ -1,7 +1,7 @@
-import type {
+﻿import type {
 	EmailVerificationRecord,
 	EmailVerificationRepository,
-} from "@application/ports/email-verification-repository.js";
+} from "@application/auth/ports/email-verification-repository.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 
@@ -75,3 +75,4 @@ export class PgEmailVerificationRepository implements EmailVerificationRepositor
 		);
 	}
 }
+

@@ -1,8 +1,8 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { ReservationCommandRepository } from "@application/ports/reservation-command-repository.js";
-import type { ReservationQueryRepository, ReservationRecord } from "@application/ports/reservation-query-repository.js";
+import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
+import type { ReservationQueryRepository, ReservationRecord } from "@application/reservations/ports/reservation-query-repository.js";
 import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
@@ -122,6 +122,7 @@ test("ReservationUseCase.listForUser returns rows", async () => {
 	const result = await useCase.listForUser("user");
 	assert.deepEqual(result, rows);
 });
+
 
 
 

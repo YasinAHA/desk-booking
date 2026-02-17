@@ -1,6 +1,6 @@
 ﻿import argon2 from "argon2";
 
-import type { PasswordHasher } from "@application/ports/password-hasher.js";
+import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
 import {
 	createPasswordHash,
 	passwordHashToString,
@@ -17,5 +17,6 @@ export class Argon2PasswordHasher implements PasswordHasher {
 		return argon2.verify(passwordHashToString(hash), plain);
 	}
 }
+
 
 

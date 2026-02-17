@@ -2,13 +2,13 @@
 import { createHash } from "node:crypto";
 import test from "node:test";
 
-import type { AuthPolicy } from "@application/ports/auth-policy.js";
-import type { EmailOutbox } from "@application/ports/email-outbox.js";
-import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
-import type { PasswordHasher } from "@application/ports/password-hasher.js";
-import type { TokenService } from "@application/ports/token-service.js";
-import type { TransactionManager } from "@application/ports/transaction-manager.js";
-import type { UserRepository } from "@application/ports/user-repository.js";
+import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
+import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
+import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
+import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
+import type { TokenService } from "@application/auth/ports/token-service.js";
+import type { TransactionManager } from "@application/common/ports/transaction-manager.js";
+import type { UserRepository } from "@application/auth/ports/user-repository.js";
 import { User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import {
@@ -384,5 +384,6 @@ test("AuthUseCase.confirmEmail marks user and verification", async () => {
 	const ok = await auth.confirmEmail(token);
 	assert.equal(ok, true);
 });
+
 
 

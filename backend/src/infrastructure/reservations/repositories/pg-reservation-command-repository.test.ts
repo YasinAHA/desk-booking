@@ -1,7 +1,7 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { ErrorTranslator } from "@application/ports/error-translator.js";
+import type { ErrorTranslator } from "@application/common/ports/error-translator.js";
 import { ReservationConflictError } from "@domain/reservations/entities/reservation.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
@@ -33,6 +33,7 @@ test("PgReservationCommandRepository.create throws conflict on unique violation"
 		ReservationConflictError
 	);
 });
+
 
 
 
