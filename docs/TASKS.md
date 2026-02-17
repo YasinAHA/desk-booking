@@ -1,27 +1,11 @@
-# Tasks (v0.6.0)
+﻿# Tasks (Global)
 
-Este fichero contiene solo las tareas activas de la version en curso.
-Historico de versiones cerradas: `CHANGELOG.md` + tags Git.
+Este fichero contiene tareas transversales del monorepo.
 
-## v0.6.0 (Prioridad) Arquitectura y modularidad
+## Estado actual
+- [ ] Definir si se necesita roadmap global BE/FE para v0.7.0+.
+- [ ] Mantener sincronizados los índices de documentación (`docs/README.md`, `docs/backend/README.md`, `docs/frontend/README.md`).
 
-Objetivo: modularizar internamente por feature de forma incremental, sin big-bang y sin regresiones.
+## Referencias por area
+- Backend tasks activas: [backend/TASKS.md](backend/TASKS.md)
 
-### Plan incremental
-- [ ] Definir ADR corta en `docs/DECISIONS.md` para modelo hibrido (capas + agrupacion por feature).
-- [ ] Fase 1 (auth): reorganizar modulos de `application` e `infrastructure` por feature manteniendo contratos actuales.
-- [ ] Fase 2 (reservations): misma estrategia, sin cambios funcionales.
-- [ ] Fase 3 (desks): misma estrategia, sin cambios funcionales.
-- [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
-- [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
-
-### Deuda tecnica previa (alta prioridad)
-- [ ] Corregir flujo de refresh token para no emitir access token con payload parcial/vacio.
-- [ ] Eliminar `any` en factories transaccionales de `auth.container`.
-- [ ] Normalizar imports/extensiones inconsistentes.
-
-### Criterios de aceptacion
-- [ ] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
-- [ ] Sin regresiones funcionales en auth/reservations/desks.
-- [ ] Tests backend pasando al 100% tras cada fase.
-- [ ] Documentacion (AI-GUIDE/ARCHITECTURE/TASKS/CHANGELOG) actualizada al cierre.

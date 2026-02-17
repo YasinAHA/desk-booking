@@ -1,9 +1,9 @@
-# Alcance
+﻿# Alcance
 
 ## v0.1.0 (pilot inicial)
 - UI base en vanilla JS.
-- Autenticacion con magic link (skeleton).
-- Supabase como backend (pre-migracion).
+- Autenticación con magic link (skeleton).
+- Supabase como backend (pre-migración).
 
 ## v0.2.0 (piloto estable)
 - Flujo de reservas estabilizado.
@@ -14,11 +14,11 @@
 - Backend propio (Fastify + Postgres).
 - Healthcheck operativo.
 - Infra local con Docker (Postgres + seed inicial).
-- Modulos de dominio creados (auth, desks, reservations) con estructura lista.
-- Frontend minimo conectado a la API.
+- Módulos de dominio creados (auth, desks, reservations) con estructura lista.
+- Frontend mínimo conectado a la API.
 - Tests unitarios base para reservations y auth.
 
-## v0.4.x - v0.9.x (consolidacion tecnica)
+## v0.4.x - v0.9.x (consolidación técnica)
 Linea de desarrollo para refinar arquitectura, seguridad y aspectos operacionales.
 
 ### v0.4.0 (Completed)
@@ -45,7 +45,7 @@ Linea de desarrollo para refinar arquitectura, seguridad y aspectos operacionale
 - Calendario de festivos.
 
 ## v1.0.0 (Camerfirma Internal Release)
-Release estable para uso interno en una unica organizacion.
+Release estable para uso interno en una unica organización.
 - Single-org (una fila en `organizations`).
 - Office -> (Floor) -> (Zone) -> Desk, configurables por admin.
 - Estados de desk: active, maintenance, disabled.
@@ -63,10 +63,10 @@ Release estable para uso interno en una unica organizacion.
 - Calendario de festivos o dias no reservables.
 - Notificaciones reales via outbox worker.
 
-## v2.0.0 (multi-organizacion / SaaS)
+## v2.0.0 (multi-organización / SaaS)
 - Multi-org real con aislamiento por organization_id.
-- Branding por organizacion.
-- Roles y permisos mas granulares.
+- Branding por organización.
+- Roles y permisos más granulares.
 - Preparacion para planes/entitlements si aplica.
 
 ## No incluido (fuera de v1.0.0)
@@ -77,3 +77,5 @@ Release estable para uso interno en una unica organizacion.
 
 ## Nota
 Piloto / best-effort. Si hay incidencias, se puede usar la app anterior.
+
+

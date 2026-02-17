@@ -1,8 +1,8 @@
-# Security
+﻿# Security
 
 ## Overview
 
-Este documento define la estrategia de seguridad para la aplicacion desk-booking.
+Este documento define la estrategia de seguridad para la aplicación desk-booking.
 Sigue dos principios clave: **Security by Design** (arquitectura segura desde el inicio)
 y **Security by Default** (configuraciones seguras por defecto).
 
@@ -16,7 +16,7 @@ La seguridad esta integrada en la arquitectura, no agregada despues.
 |-----------|---|---|
 | **Layers & Separation** | domain -> application -> infrastructure -> interfaces. Cada capa tiene responsabilidades claras. | `backend/src/` |
 | **Typed Domain Errors** | Errores de negocio como tipos, no strings. Mapeados en HTTP. | `domain/entities/` |
-| **Value Objects** | Validacion en la frontera del dominio (Email, PasswordHash, UserId, etc.) | `domain/valueObjects/` |
+| **Value Objects** | Validación en la frontera del dominio (Email, PasswordHash, UserId, etc.) | `domain/valueObjects/` |
 | **Transactions** | Multi-step auth ops (create user + send email) en transaccion DB. | `authUseCase.register()` |
 | **Immutable Entities** | Domain entities no tienen setters. Metodos retornan nuevas instancias. | `domain/entities/user.ts` |
 | **Ports & Adapters** | Use cases dependen de puertos, no de impl. Facil testear y reemplazar. | `application/ports/` |
@@ -201,3 +201,5 @@ Before deploying to production:
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [Argon2 Password Hashing](https://github.com/ranisalt/node-argon2)
 - [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
+
+

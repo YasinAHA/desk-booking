@@ -115,7 +115,7 @@ En backend:
 - `GET /health`
 - `GET /metrics`
 
-Contrato detallado: [docs/API.md](docs/API.md)
+Contrato detallado: [docs/backend/API.md](docs/backend/API.md)
 
 ## Variables de entorno clave
 
@@ -131,13 +131,16 @@ Referencia completa: `backend/.env.example`
 
 ## Documentacion principal
 
-- Arquitectura: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- API: [docs/API.md](docs/API.md)
-- Seguridad: [docs/SECURITY.md](docs/SECURITY.md)
-- Tooling: [docs/TOOLING.md](docs/TOOLING.md)
-- Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-- Tareas: [docs/TASKS.md](docs/TASKS.md)
-- Backlog: [docs/BACKLOG.md](docs/BACKLOG.md)
+- Arquitectura (global): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Arquitectura backend: [docs/backend/ARCHITECTURE-BACKEND.md](docs/backend/ARCHITECTURE-BACKEND.md)
+- API: [docs/backend/API.md](docs/backend/API.md)
+- Seguridad: [docs/backend/SECURITY.md](docs/backend/SECURITY.md)
+- Tooling: [docs/backend/TOOLING.md](docs/backend/TOOLING.md)
+- Deployment: [docs/backend/DEPLOYMENT.md](docs/backend/DEPLOYMENT.md)
+- Tareas globales: [docs/TASKS.md](docs/TASKS.md)
+- Backlog global: [docs/BACKLOG.md](docs/BACKLOG.md)
+- Tareas backend: [docs/backend/TASKS.md](docs/backend/TASKS.md)
+- Backlog backend: [docs/backend/BACKLOG.md](docs/backend/BACKLOG.md)
 - Issues conocidos: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md)
 
 ## Autor

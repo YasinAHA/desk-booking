@@ -1,4 +1,4 @@
-# Database Model (v1.0.0)
+﻿# Database Model (v1.0.0)
 
 ## Purpose
 This document defines the database model for the v1.0.0 Camerfirma Internal Release.
@@ -143,7 +143,7 @@ Columns:
 
 Notes:
 - Role is minimal in v1.0.0
-- Admin subtypes (admin_operaciones, admin_tecnico) can be stored as role or in a separate table if needed
+- Admin subtypes (admin_operaciones, admin_técnico) can be stored as role or in a separate table if needed
 - **Soft delete convention**: `deleted_at IS NOT NULL` indicates user is deleted
   - `status` reflects last state before deletion (useful for historical context)
   - Application layer MUST filter `WHERE deleted_at IS NULL` in all user queries (auth, listings, lookups)
@@ -367,3 +367,4 @@ Benefit: Guarantees consistency without relying on application layer remembering
 - v1.x: optional branding fields in organizations (logo_url, theme_color)
 - v1.x: office layout assets (manual desk positioning)
 - v2.0+: AI-assisted desk detection from uploaded floor plans
+

@@ -1,7 +1,7 @@
-# Prompts / IA
+﻿# Prompts / IA
 
-Este fichero queda como indice historico.
-La guia principal esta en [AI-GUIDE.md](AI-GUIDE.md).
+Este fichero queda como indice histórico.
+La guía principal esta en [AI-GUIDE.md](AI-GUIDE.md).
 
 Actúa como un reviewer senior (arquitectura + calidad + seguridad) y audita un repo Node.js + TypeScript con Clean Architecture.
 
@@ -84,3 +84,4 @@ I) Observabilidad y errores
   - Refactor sugerido (pasos concretos)
   - Riesgo si no se corrige
 - Checklist final de arquitectura SOLID + Clean para volver a pasar.
+

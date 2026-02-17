@@ -1,4 +1,4 @@
-# Tooling
+﻿# Tooling
 
 Guia rapida del tooling y scripts del proyecto.
 
@@ -12,9 +12,9 @@ Guia rapida del tooling y scripts del proyecto.
 - Paquetes actuales:
   - backend
 
-## Scripts principales (raiz)
+## Scripts principales (raíz)
 - `npm install`
-- `npm run dev:db` (Postgres + servicios locales via Docker)
+- `npm run dev:db` (Postgres + servicios locales vía Docker)
 - `npm run dev:api` (API en modo dev)
 - `npm run db:migrate`
 - `npm run db:seed:dev`
@@ -56,3 +56,4 @@ Guia rapida del tooling y scripts del proyecto.
 
 ## Deployment
 - Ver [DEPLOYMENT.md](DEPLOYMENT.md)
+

@@ -1,7 +1,7 @@
-# Known issues / Deuda tecnica
+﻿# Known issues / Deuda técnica
 
-Tareas v0.5.0: ver [TASKS.md](TASKS.md).
-Backlog v0.6.0: ver [BACKLOG.md](BACKLOG.md).
+Tareas backend activas: ver [backend/TASKS.md](backend/TASKS.md).
+Backlog backend: ver [backend/BACKLOG.md](backend/BACKLOG.md).
 
 ## v0.5.0 Status
 - [x] Schema v1.0.0 implemented (office/floor/zone/desk hierarchy)
@@ -24,5 +24,6 @@ Backlog v0.6.0: ver [BACKLOG.md](BACKLOG.md).
 - [x] Tokens with refresh token rotation (accessToken + refreshToken)
 - [x] Email confirmation required before login
 - [x] Password hashed with Argon2
-- [~] Token refresh via POST /auth/refresh (not yet exposed in frontend)
+- [~] Token refresh vía POST /auth/refresh (not yet exposed in frontend)
 - Future: cookie httpOnly option for extra XSS protection
+

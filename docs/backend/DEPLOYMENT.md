@@ -1,6 +1,6 @@
-# Deployment
+﻿# Deployment
 
-Este documento define el enfoque de despliegue para la correccion del TFM y el futuro uso interno.
+Este documento define el enfoque de despliegue para la corrección del TFM y el futuro uso interno.
 
 ## Objetivo
 - Correccion TFM: despliegue temporal y de bajo coste.
@@ -27,7 +27,7 @@ La seleccion de entorno se define por `NODE_ENV` y las variables en `backend/.en
 
 ## Migraciones y seeds
 - Ejecutar `npm run db:migrate` en cada despliegue.
-- Ejecutar `npm run db:seed:correction` solo para la correccion TFM.
+- Ejecutar `npm run db:seed:correction` solo para la corrección TFM.
 
 ## Despliegue gratuito (correction)
 Opciones previstas (por definir la elegida):
@@ -36,7 +36,7 @@ Opciones previstas (por definir la elegida):
 - SMTP: proveedor con plan gratuito (o SMTP corporativo si aplica)
 
 Notas:
-- El entorno de correccion no debe reutilizar credenciales internas.
+- El entorno de corrección no debe reutilizar credenciales internas.
 - No se habilita acceso de administracion ni roles avanzados en esta fase.
 
 ## SMTP
@@ -45,3 +45,4 @@ Notas:
 
 ## CI
 - GitHub Actions ejecuta test + build en `main` y `next`.
+
