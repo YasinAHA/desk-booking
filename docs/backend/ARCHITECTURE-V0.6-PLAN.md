@@ -51,7 +51,7 @@ backend/src/
 - [x] Ajuste imports
 
 3. `application/usecases` -> `application/<feature>`
-- [ ] Auth: separar command/query handlers (transición aplicada: `application/auth/handlers/auth.usecase.ts`)
+- [x] Auth: separar command/query handlers (`application/auth/commands`, `application/auth/queries`, `application/auth/handlers`)
 - [ ] Reservations: separar command/query handlers
 - [ ] Desks: estructurar handlers/queries
 
@@ -73,7 +73,7 @@ backend/src/
 ## Fases recomendadas (sin big-bang)
 - [x] Fase 1: mover composition root + eliminar `any` críticos.
 - [x] Fase 2: renombre `value-objects` + imports.
-- [ ] Fase 3: refactor `application/auth` a command/query.
+- [x] Fase 3: refactor `application/auth` a command/query.
 - [ ] Fase 4: refactor `application/reservations`.
 - [ ] Fase 5: refactor `application/desks`.
 
@@ -82,6 +82,9 @@ backend/src/
 - [ ] Build TypeScript en verde.
 - [ ] Sin imports ilegales entre capas.
 - [ ] Docs actualizados (`TASKS`, `ARCHITECTURE`, `CHANGELOG` si aplica).
+
+## Notas de alcance
+- Mejoras de hardening arquitectónico detectadas durante el refactor (tipado opaco de transacciones, semántica rica de resultados, etc.) se registran en `docs/backend/TASKS.md` bajo `Backlog de hardening (post-refactor de capas)`.
 
 ## Preguntas abiertas (para acordar antes de ejecutar)
 - [x] `handlers` vs `usecases`: objetivo final `handlers`; transición con `usecases` permitida.

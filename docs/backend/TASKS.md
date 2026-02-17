@@ -18,7 +18,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [~] Fase 1 (auth): reorganizar módulos de `application` e `infrastructure` por feature manteniendo contratos actuales.
 - [x] Auth/infrastructure: mover adapters a `backend/src/infrastructure/auth/*` (repositories, security, policies).
 - [x] Auth/application (transición): mover `usecase` a `backend/src/application/auth/handlers/auth.usecase.ts`.
-- [ ] Auth/application (objetivo): separar `handlers` en `commands` y `queries` manteniendo contratos HTTP.
+- [x] Auth/application (objetivo): separar `handlers` en `commands` y `queries` manteniendo contratos HTTP.
 - [x] Fase 2: renombre `domain/value-objects` y ajuste de imports.
 - [ ] Fase 2 (reservations): misma estrategia, sin cambios funcionales.
 - [ ] Fase 3 (desks): misma estrategia, sin cambios funcionales.
@@ -29,6 +29,13 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Corregir flujo de refresh token para no emitir access token con payload parcial/vacío.
 - [x] Eliminar `any` en factories transaccionales de `composition/auth.container`.
 - [ ] Normalizar imports/extensiones inconsistentes.
+
+### Backlog de hardening (post-refactor de capas)
+- [ ] Endurecer `TransactionalContext` en `application` (tipo más opaco, sin fugas de detalles de infraestructura).
+- [ ] Revisar factories transaccionales para que todas tipen contra puertos de `application` y `TransactionalContext`.
+- [ ] Evolucionar `confirmEmail` de `boolean` a resultado semántico (`confirmed | invalid_token | expired | already_confirmed`).
+- [ ] Revisar y distribuir `ports` por feature cuando aporte claridad (mantener `common` solo para contratos realmente transversales).
+- [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
 
 ### Criterios de aceptacion
 - [ ] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
