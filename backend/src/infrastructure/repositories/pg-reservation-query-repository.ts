@@ -1,18 +1,18 @@
-import type {
+﻿import type {
 	ReservationQueryRepository,
 	ReservationRecord,
 } from "@application/ports/reservation-query-repository.js";
-import { createDeskId } from "@domain/valueObjects/desk-id.js";
-import { createOfficeId } from "@domain/valueObjects/office-id.js";
+import { createDeskId } from "@domain/value-objects/desk-id.js";
+import { createOfficeId } from "@domain/value-objects/office-id.js";
 import {
 	createReservationId,
 	reservationIdToString,
 	type ReservationId,
-} from "@domain/valueObjects/reservation-id.js";
+} from "@domain/value-objects/reservation-id.js";
 import {
 	userIdToString,
 	type UserId,
-} from "@domain/valueObjects/user-id.js";
+} from "@domain/value-objects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 
@@ -62,3 +62,4 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		}));
 	}
 }
+

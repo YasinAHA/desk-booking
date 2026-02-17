@@ -1,4 +1,4 @@
-import type { AuthPolicy } from "@application/ports/auth-policy.js";
+﻿import type { AuthPolicy } from "@application/ports/auth-policy.js";
 import type { EmailOutbox } from "@application/ports/email-outbox.js";
 import type { EmailVerificationRepository } from "@application/ports/email-verification-repository.js";
 import type { PasswordHasher } from "@application/ports/password-hasher.js";
@@ -9,9 +9,9 @@ import type {
 } from "@application/ports/transaction-manager.js";
 import type { UserRepository } from "@application/ports/user-repository.js";
 import { EmailVerificationService } from "@application/services/email-verification.service.js";
-import { createEmail, emailToString } from "@domain/valueObjects/email.js";
-import type { UserId } from "@domain/valueObjects/user-id.js";
-import { userIdToString } from "@domain/valueObjects/user-id.js";
+import { createEmail, emailToString } from "@domain/value-objects/email.js";
+import type { UserId } from "@domain/value-objects/user-id.js";
+import { userIdToString } from "@domain/value-objects/user-id.js";
 
 type AuthUser = {
 	id: string;
@@ -185,3 +185,4 @@ export class AuthUseCase {
 		await service.sendVerificationEmail(userId, email);
 	}
 }
+

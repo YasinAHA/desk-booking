@@ -1,4 +1,4 @@
-import { createUserId } from "@domain/valueObjects/user-id.js";
+﻿import { createUserId } from "@domain/value-objects/user-id.js";
 import type { DeskRepository } from "@application/ports/desk-repository.ts";
 
 export class DeskUseCase {
@@ -9,3 +9,4 @@ export class DeskUseCase {
 		return this.deskRepo.listForDate(date, userIdVO);
 	}
 }
+

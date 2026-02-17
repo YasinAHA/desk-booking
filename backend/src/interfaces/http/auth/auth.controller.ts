@@ -1,10 +1,10 @@
-import type { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
+﻿import type { AuthUseCase } from "@application/auth/handlers/auth.usecase.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
-import { validatePasswordPolicy } from "@domain/valueObjects/password-policy.js";
+import { validatePasswordPolicy } from "@domain/value-objects/password-policy.js";
 import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
@@ -258,3 +258,4 @@ export class AuthController {
 		}
 	}
 }
+

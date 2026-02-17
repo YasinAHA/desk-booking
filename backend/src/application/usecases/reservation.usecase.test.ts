@@ -1,13 +1,13 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { ReservationCommandRepository } from "@application/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository, ReservationRecord } from "@application/ports/reservation-query-repository.js";
 import { ReservationDateInPastError } from "@domain/entities/reservation.js";
-import { createDeskId } from "@domain/valueObjects/desk-id.js";
-import { createOfficeId } from "@domain/valueObjects/office-id.js";
-import { createReservationId } from "@domain/valueObjects/reservation-id.js";
-import { createUserId } from "@domain/valueObjects/user-id.js";
+import { createDeskId } from "@domain/value-objects/desk-id.js";
+import { createOfficeId } from "@domain/value-objects/office-id.js";
+import { createReservationId } from "@domain/value-objects/reservation-id.js";
+import { createUserId } from "@domain/value-objects/user-id.js";
 import { ReservationUseCase } from "./reservation.usecase.js";
 
 function mockCommandRepo(
@@ -122,3 +122,4 @@ test("ReservationUseCase.listForUser returns rows", async () => {
 	const result = await useCase.listForUser("user");
 	assert.deepEqual(result, rows);
 });
+

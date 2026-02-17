@@ -47,8 +47,8 @@ backend/src/
 - [x] Desks
 
 2. `domain/valueObjects` -> `domain/value-objects`
-- [ ] Renombre carpetas
-- [ ] Ajuste imports
+- [x] Renombre carpetas
+- [x] Ajuste imports
 
 3. `application/usecases` -> `application/<feature>`
 - [ ] Auth: separar command/query handlers (transición aplicada: `application/auth/handlers/auth.usecase.ts`)
@@ -72,7 +72,7 @@ backend/src/
 
 ## Fases recomendadas (sin big-bang)
 - [x] Fase 1: mover composition root + eliminar `any` críticos.
-- [ ] Fase 2: renombre `value-objects` + imports.
+- [x] Fase 2: renombre `value-objects` + imports.
 - [ ] Fase 3: refactor `application/auth` a command/query.
 - [ ] Fase 4: refactor `application/reservations`.
 - [ ] Fase 5: refactor `application/desks`.

@@ -1,4 +1,4 @@
-import type { DeskId } from "@domain/valueObjects/desk-id.js";
+﻿import type { DeskId } from "@domain/value-objects/desk-id.js";
 
 /**
  * Domain entity for Desk
@@ -17,3 +17,4 @@ export type Desk = {
 };
 
 export type DeskStatus = "active" | "maintenance" | "disabled";
+

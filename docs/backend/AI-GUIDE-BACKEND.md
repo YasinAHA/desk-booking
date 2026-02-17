@@ -1,4 +1,4 @@
-# AI Guide
+﻿# AI Guide
 
 Documento de referencia para mantener consistencia arquitectónica y decisiones de diseño.
 Acta como constitución técnica del repositorio desk-booking.
@@ -145,7 +145,7 @@ Si varios cambios deben ser atómicos (e.g., crear usuario + enviar email):
 
 #### Files & Directories
 - **Archivos:** `kebab-case` (e.g., `password-policy.ts`, `auth-policy.ts`, `email-confirmation-service.ts`)
-- **Directorios:** `camelCase` o descriptivos (e.g., `valueObjects/`, `usecases/`, `repositories/`)
+- **Directorios:** `camelCase` o descriptivos (e.g., `value-objects/`, `usecases/`, `repositories/`)
 - **Razón:** Estándar de la industria (Google, Angular, NestJS). Busca rápida con autocompletado.
 
 #### Classes & Interfaces
@@ -190,7 +190,7 @@ Si varios cambios deben ser atómicos (e.g., crear usuario + enviar email):
 backend/src/
 ├── domain/                     # Entidades, Value Objects (puras)
 │   ├── entities/
-│   └── valueObjects/
+│   └── value-objects/
 ├── application/                # Use cases, DTOs, ports
 │   ├── usecases/
 │   ├── ports/
@@ -299,3 +299,4 @@ it("PgUserRepository.save() persiste en DB", async () => {
 - [ ] ¿Se respetan SOLID principles?
 - [ ] ¿Se mantiene seguridad? (no enumeración de cuentas, secretos en env, etc).
 - [ ] ¿Se actualizó CHANGELOG.md?
+

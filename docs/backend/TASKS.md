@@ -19,6 +19,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Auth/infrastructure: mover adapters a `backend/src/infrastructure/auth/*` (repositories, security, policies).
 - [x] Auth/application (transición): mover `usecase` a `backend/src/application/auth/handlers/auth.usecase.ts`.
 - [ ] Auth/application (objetivo): separar `handlers` en `commands` y `queries` manteniendo contratos HTTP.
+- [x] Fase 2: renombre `domain/value-objects` y ajuste de imports.
 - [ ] Fase 2 (reservations): misma estrategia, sin cambios funcionales.
 - [ ] Fase 3 (desks): misma estrategia, sin cambios funcionales.
 - [ ] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
