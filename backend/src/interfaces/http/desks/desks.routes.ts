@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 
-import { buildDeskUseCase } from "./desks.container.js";
+import { buildDeskUseCase } from "@composition/desks.container.js";
 import { DeskController } from "./desks.controller.js";
 
 export const desksRoutes: FastifyPluginAsync = async app => {

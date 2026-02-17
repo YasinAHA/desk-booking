@@ -43,8 +43,8 @@ backend/src/
 ## Cambios candidatos (v0.6.0)
 1. `interfaces/http/*/*.container.ts` -> `composition/*.container.ts`
 - [x] Auth
-- [ ] Reservations
-- [ ] Desks
+- [x] Reservations
+- [x] Desks
 
 2. `domain/valueObjects` -> `domain/value-objects`
 - [ ] Renombre carpetas

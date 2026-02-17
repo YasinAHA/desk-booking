@@ -13,6 +13,8 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 ### Plan incremental
 - [x] Registrar decisión arquitectónica en `docs/DECISIONS.md` y ADR (modelo híbrido: capas + agrupación por feature).
 - [x] Auth: mover composition root a `backend/src/composition/auth.container.ts`.
+- [x] Reservations: mover composition root a `backend/src/composition/reservations.container.ts`.
+- [x] Desks: mover composition root a `backend/src/composition/desks.container.ts`.
 - [~] Fase 1 (auth): reorganizar módulos de `application` e `infrastructure` por feature manteniendo contratos actuales.
 - [x] Auth/infrastructure: mover adapters a `backend/src/infrastructure/auth/*` (repositories, security, policies).
 - [x] Auth/application (transición): mover `usecase` a `backend/src/application/auth/handlers/auth.usecase.ts`.

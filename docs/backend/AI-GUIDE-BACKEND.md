@@ -209,7 +209,9 @@ backend/src/
 │       ├── desks/
 │       └── reservations/
 ├── composition/                # Composition root / dependency injection
-│   └── auth.container.ts
+│   ├── auth.container.ts
+│   ├── reservations.container.ts
+│   └── desks.container.ts
 └── config/                     # Constantes, ENV
 ```
 
