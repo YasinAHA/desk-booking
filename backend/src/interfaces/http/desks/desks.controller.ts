@@ -1,4 +1,5 @@
-﻿import type { DeskUseCase } from "@application/desks/handlers/desk.usecase.js";
+﻿import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
+import type { ListDesksQuery } from "@application/desks/queries/list-desks.query.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -23,7 +24,7 @@ const listSchema = z.object({
  */
 export class DeskController {
 	constructor(
-		private readonly deskUseCase: DeskUseCase,
+		private readonly listDesksHandler: ListDesksHandler,
 		private readonly app: FastifyInstance
 	) {}
 
@@ -36,7 +37,8 @@ export class DeskController {
 
 		// Application logic
 		const userId = req.user.id;
-		const desks = await this.deskUseCase.listForDate(parse.data.date, userId);
+		const query: ListDesksQuery = { date: parse.data.date, userId };
+		const desks = await this.listDesksHandler.execute(query);
 
 		// Response mapping
 		return reply.send({
@@ -45,4 +47,3 @@ export class DeskController {
 		});
 	}
 }
-
