@@ -9,51 +9,36 @@ import {
 	ReservationDateInPastError,
 } from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
-import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 
-/**
- * Schemas for reservation request validation
- */
-const createSchema = z.object({
-	date: dateSchema,
-	desk_id: z.string().uuid(),
-	office_id: z.string().uuid().optional(),
-	source: z.enum(["user", "admin", "walk_in", "system"]).optional(),
-});
-
-const idParamSchema = z.object({
-	id: z.string().uuid(),
-});
+import {
+	mapCreateReservationResponse,
+	mapListUserReservationsResponse,
+} from "./reservations.mappers.js";
+import {
+	createReservationSchema,
+	reservationIdParamSchema,
+} from "./reservations.schemas.js";
 
 /**
  * ReservationController: Handles HTTP layer concerns for reservation operations
  * - Request validation
  * - Response mapping
  * - Error mapping (DateInPast, Conflict)
- * - Logging and rate limiting (via app instance)
- *
- * Note: Injected FastifyInstance for logger and rate limiting metadata.
- * Could be refactored to inject Logger + RateLimiter separately if interfaces grow.
  */
 export class ReservationController {
 	constructor(
 		private readonly createReservationHandler: CreateReservationHandler,
 		private readonly cancelReservationHandler: CancelReservationHandler,
-		private readonly listUserReservationsHandler: ListUserReservationsHandler,
-		private readonly app: FastifyInstance
+		private readonly listUserReservationsHandler: ListUserReservationsHandler
 	) {}
 
-	async create(req: FastifyRequest, reply: FastifyReply) {
-		// Validation
-		const parse = createSchema.safeParse(req.body);
+	async create(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+		const parse = createReservationSchema.safeParse(req.body);
 		if (!parse.success) {
-			this.app.log.warn({ body: req.body }, "Invalid reservation payload");
+			req.log.warn({ body: req.body }, "Invalid reservation payload");
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic
 		try {
 			const command: CreateReservationCommand = {
 				userId: req.user.id,
@@ -64,7 +49,6 @@ export class ReservationController {
 			};
 			const reservationId = await this.createReservationHandler.execute(command);
 
-			// Response mapping
 			req.log.info(
 				{
 					event: "reservation.create",
@@ -76,12 +60,8 @@ export class ReservationController {
 				"Reservation created"
 			);
 
-			return reply.send({
-				ok: true,
-				reservation_id: reservationId,
-			});
+			return reply.send(mapCreateReservationResponse(reservationId));
 		} catch (err) {
-			// Error mapping
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
 			}
@@ -94,14 +74,12 @@ export class ReservationController {
 		}
 	}
 
-	async cancel(req: FastifyRequest, reply: FastifyReply) {
-		// Validation
-		const parse = idParamSchema.safeParse(req.params);
+	async cancel(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+		const parse = reservationIdParamSchema.safeParse(req.params);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid id");
 		}
 
-		// Application logic
 		try {
 			const command: CancelReservationCommand = {
 				userId: req.user.id,
@@ -109,12 +87,10 @@ export class ReservationController {
 			};
 			const ok = await this.cancelReservationHandler.execute(command);
 
-			// Error mapping
 			if (!ok) {
 				throwHttpError(404, "NOT_FOUND", "Reservation not found");
 			}
 
-			// Response mapping
 			req.log.info(
 				{
 					event: "reservation.cancel",
@@ -126,7 +102,6 @@ export class ReservationController {
 
 			return reply.status(204).send();
 		} catch (err) {
-			// Error mapping
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
 			}
@@ -135,22 +110,10 @@ export class ReservationController {
 		}
 	}
 
-	async listForUser(req: FastifyRequest, reply: FastifyReply) {
-		// Application logic
+	async listForUser(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
 		const query: ListUserReservationsQuery = { userId: req.user.id };
 		const items = await this.listUserReservationsHandler.execute(query);
 
-		// Response mapping
-		return reply.send({
-			items: items.map(item => ({
-				reservation_id: item.id,
-				desk_id: item.deskId,
-				office_id: item.officeId,
-				desk_name: item.deskName,
-				reservation_date: item.reservationDate,
-				source: item.source,
-				cancelled_at: item.cancelledAt,
-			})),
-		});
+		return reply.send(mapListUserReservationsResponse(items));
 	}
 }

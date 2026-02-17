@@ -5,10 +5,10 @@ Estado: documento de ejecución priorizado para la v0.6.0.
 ## Contexto
 - El proyecto ya tiene avance funcional relevante.
 - Aún así, sigue en una etapa donde ajustar estructura es razonable.
-- Objetivo: definir bien capas y límites ahora para evitar refactor más costoso despues.
+- Objetivo: definir bien capas y límites ahora para evitar refactor más costoso después.
 
-## Decision base (a validar)
-- Enfoque recomendado: **layer-first en el core** + **agrupacion por feature dentro de capa**.
+## Decisión base (a validar)
+- Enfoque recomendado: **layer-first en el core** + **agrupación por feature dentro de capa**.
 - CQRS en `application` (commands/queries), no en infraestructura.
 - Adaptadores HTTP/DB fuera del core.
 - Composition root separado de `interfaces/http`.
@@ -62,7 +62,7 @@ backend/src/
 - [x] No crear tablas de negocio en `docker init`
 
 ## Decisiones concretas (aprobadas)
-- [x] Enfoque objetivo: layer-first en core + agrupacion por feature dentro de cada capa.
+- [x] Enfoque objetivo: layer-first en core + agrupación por feature dentro de cada capa.
 - [x] `composition root` fuera de `interfaces/http`.
 - [x] CQRS completo para `auth` y `reservations` en v0.6.0.
 - [x] CQRS parcial para `desks` en v0.6.0 (completar solo si aparece complejidad real de escritura).
@@ -145,6 +145,30 @@ backend/src/
 - [x] SQL init en v0.6.0: bootstrap mínimo y esquema de negocio en migraciones.
 - [ ] Si este documento temporal pasa a ADR/DECISION formal tras consenso.
 
+
+
+
+
+## Plan de cierre de interfaces/http (v0.6.0)
+
+Objetivo: finalizar la capa de interfaz HTTP con estructura por feature y responsabilidades separadas.
+
+### Decisión de ejecución
+- No abrir otro refactor estructural transversal fuera de HTTP en v0.6.0.
+- Ejecutar mejoras incrementales por feature (`desks` -> `reservations` -> `auth`).
+- Mantener compatibilidad funcional 100% (sin cambios de contrato externo).
+
+### Checklist operativo HTTP
+- [x] Mover validaciones de entrada a `interfaces/http/<feature>/schemas/*`.
+- [x] Mover transformaciones de salida a `interfaces/http/<feature>/mappers/*`.
+- [x] Introducir helper para `preHandler` autenticado y eliminar duplicación en rutas.
+- [x] Limitar dependencias de controladores a handlers + utilidades concretas (evitar `FastifyInstance` completo cuando no sea necesario).
+- [x] Normalizar imports y nomenclatura en toda la capa `interfaces/http`.
+
+### Definition of Done específico de HTTP
+- [x] `auth`, `reservations` y `desks` con estructura consistente por feature.
+- [x] Sin regresiones en tests de rutas.
+- [x] `npm -w backend run lint`, `lint:types`, `build`, `test` en verde.
 
 
 

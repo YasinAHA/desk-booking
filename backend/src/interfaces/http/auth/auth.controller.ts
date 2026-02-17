@@ -9,41 +9,12 @@ import {
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
-import { validatePasswordPolicy } from "@domain/auth/value-objects/password-policy.js";
 import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 
-/**
- * Schemas for auth request validation
- */
-const loginSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(1),
-});
-
-const verifySchema = z.object({
-	token: z.string().min(1),
-});
-
-const registerSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(8).refine(
-		(pwd) => {
-			try {
-				validatePasswordPolicy(pwd);
-				return true;
-			} catch {
-				return false;
-			}
-		},
-		"Password must be at least 12 characters with uppercase, lowercase, digit, and special char"
-	),
-	first_name: z.string().min(1),
-	last_name: z.string().min(1),
-	second_last_name: z.string().min(1).optional(),
-});
+import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
+import { loginSchema, registerSchema, verifySchema } from "./auth.schemas.js";
 
 export class AuthController {
 	constructor(
@@ -94,17 +65,13 @@ export class AuthController {
 
 		req.log.info({ event: "auth.login", userId: user.id }, "Login ok");
 
-		return reply.send({
-			accessToken,
-			refreshToken,
-			user: {
-				id: user.id,
-				email: user.email,
-				first_name: user.firstName,
-				last_name: user.lastName,
-				second_last_name: user.secondLastName,
-			},
-		});
+		return reply.send(
+			mapLoginResponse({
+				accessToken,
+				refreshToken,
+				user,
+			})
+		);
 	}
 
 	async register(req: FastifyRequest, reply: FastifyReply) {
@@ -170,16 +137,7 @@ export class AuthController {
 			const payload = await this.jwtTokenService.verifyAccessToken(parse.data.token);
 
 			req.log.info({ event: "auth.verify", userId: payload.id }, "Token verified OK");
-			return reply.send({
-				valid: true,
-				user: {
-					id: payload.id,
-					email: payload.email,
-					first_name: payload.firstName,
-					last_name: payload.lastName,
-					second_last_name: payload.secondLastName,
-				},
-			});
+			return reply.send(mapVerifyResponse(payload));
 		} catch (err) {
 			req.log.warn({ event: "auth.verify", error: err }, "Token verification failed");
 			throwHttpError(401, "UNAUTHORIZED", "Invalid token");
