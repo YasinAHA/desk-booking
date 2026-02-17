@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 
 import Fastify from "fastify";
@@ -47,11 +47,15 @@ test("POST /reservations returns 401 without token", async () => {
 	await app.close();
 });
 
-test("POST /reservations returns 409 on conflict", async () => {
-	const app = await buildTestApp(async () => {
-		const err = new Error("conflict") as Error & { code?: string };
-		err.code = "23505";
-		throw err;
+test("POST /reservations returns desk-specific conflict message", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
+			return { rows: [{ 1: 1 }] };
+		}
+		if (text.includes("where user_id = $1 and reservation_date = $2")) {
+			return { rows: [] };
+		}
+		return { rows: [] };
 	});
 
 	const res = await app.inject({
@@ -65,6 +69,35 @@ test("POST /reservations returns 409 on conflict", async () => {
 	});
 
 	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "DESK_ALREADY_RESERVED");
+	await app.close();
+});
+
+test("POST /reservations returns user/day-specific conflict message", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
+			return { rows: [] };
+		}
+		if (text.includes("where user_id = $1 and reservation_date = $2")) {
+			return { rows: [{ 1: 1 }] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-20",
+			desk_id: "11111111-1111-1111-1111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "USER_ALREADY_HAS_RESERVATION");
 	await app.close();
 });
 
@@ -103,3 +136,4 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 	assert.equal(res.statusCode, 400);
 	await app.close();
 });
+

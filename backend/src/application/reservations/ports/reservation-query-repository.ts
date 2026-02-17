@@ -20,6 +20,6 @@ export interface ReservationQueryRepository {
 		userId: UserId
 	): Promise<{ id: ReservationId; reservationDate: string } | null>;
 	listForUser(userId: UserId): Promise<ReservationRecord[]>;
+	hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean>;
+	hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean>;
 }
-
-

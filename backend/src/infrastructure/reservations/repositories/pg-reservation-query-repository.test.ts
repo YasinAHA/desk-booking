@@ -12,7 +12,10 @@ test("PgReservationQueryRepository.findActiveByIdForUser returns null when missi
 		query: async () => ({ rows: [] }),
 	});
 
-	const result = await repo.findActiveByIdForUser(createReservationId("res-1"), createUserId("user-1"));
+	const result = await repo.findActiveByIdForUser(
+		createReservationId("res-1"),
+		createUserId("user-1")
+	);
 	assert.equal(result, null);
 });
 
@@ -51,5 +54,34 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 	]);
 });
 
+test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns true when row exists", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (text, params) => {
+			assert.ok(text.includes("where user_id = $1 and reservation_date = $2"));
+			assert.deepEqual(params, ["user-1", "2026-02-20"]);
+			return { rows: [{ 1: 1 }] };
+		},
+	});
 
+	const result = await repo.hasActiveReservationForUserOnDate(
+		createUserId("user-1"),
+		"2026-02-20"
+	);
+	assert.equal(result, true);
+});
 
+test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns false when no rows", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (text, params) => {
+			assert.ok(text.includes("where desk_id = $1 and reservation_date = $2"));
+			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
+			return { rows: [] };
+		},
+	});
+
+	const result = await repo.hasActiveReservationForDeskOnDate(
+		createDeskId("desk-1"),
+		"2026-02-20"
+	);
+	assert.equal(result, false);
+});

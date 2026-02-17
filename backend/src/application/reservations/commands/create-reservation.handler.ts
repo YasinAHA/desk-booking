@@ -1,7 +1,9 @@
 ﻿import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/types.js";
 import {
+	DeskAlreadyReservedError,
 	ReservationDateInPastError,
+	UserAlreadyHasReservationError,
 	type ReservationSource,
 } from "@domain/reservations/entities/reservation.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
@@ -15,7 +17,7 @@ import {
 } from "@domain/reservations/value-objects/reservation-date.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
-type CreateReservationDependencies = Pick<ReservationDependencies, "commandRepo">;
+type CreateReservationDependencies = Pick<ReservationDependencies, "commandRepo" | "queryRepo">;
 
 export class CreateReservationHandler {
 	constructor(private readonly deps: CreateReservationDependencies) {}
@@ -40,14 +42,31 @@ export class CreateReservationHandler {
 			throw new ReservationDateInPastError();
 		}
 
+		const reservationDateString = reservationDateToString(reservationDate);
+
+		// Deterministic UX: check desk conflict first, then user/day conflict.
+		const deskAlreadyReserved = await this.deps.queryRepo.hasActiveReservationForDeskOnDate(
+			deskIdVO,
+			reservationDateString
+		);
+		if (deskAlreadyReserved) {
+			throw new DeskAlreadyReservedError();
+		}
+
+		const userAlreadyReserved = await this.deps.queryRepo.hasActiveReservationForUserOnDate(
+			userIdVO,
+			reservationDateString
+		);
+		if (userAlreadyReserved) {
+			throw new UserAlreadyHasReservationError();
+		}
+
 		return this.deps.commandRepo.create(
 			userIdVO,
-			reservationDateToString(reservationDate),
+			reservationDateString,
 			deskIdVO,
 			reservationSource,
 			officeIdVO
 		);
 	}
 }
-
-

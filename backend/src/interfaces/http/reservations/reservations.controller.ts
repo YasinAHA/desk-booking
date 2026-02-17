@@ -5,8 +5,10 @@ import type { CreateReservationCommand } from "@application/reservations/command
 import type { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
 import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import {
+	DeskAlreadyReservedError,
 	ReservationConflictError,
 	ReservationDateInPastError,
+	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 
@@ -64,6 +66,18 @@ export class ReservationController {
 		} catch (err) {
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
+			}
+
+			if (err instanceof DeskAlreadyReservedError) {
+				throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
+			}
+
+			if (err instanceof UserAlreadyHasReservationError) {
+				throwHttpError(
+					409,
+					"USER_ALREADY_HAS_RESERVATION",
+					"Ya tienes una reserva activa para ese día."
+				);
 			}
 
 			if (err instanceof ReservationConflictError) {

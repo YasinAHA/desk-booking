@@ -34,6 +34,20 @@ export class ReservationConflictError extends Error {
 	}
 }
 
+export class DeskAlreadyReservedError extends ReservationConflictError {
+	constructor() {
+		super();
+		this.name = "DeskAlreadyReservedError";
+	}
+}
+
+export class UserAlreadyHasReservationError extends ReservationConflictError {
+	constructor() {
+		super();
+		this.name = "UserAlreadyHasReservationError";
+	}
+}
+
 export class ReservationDateInPastError extends Error {
 	constructor() {
 		super("Reservation date is in the past");
@@ -43,5 +57,3 @@ export class ReservationDateInPastError extends Error {
 
 // Re-export from value object for convenience
 export { isReservationDateInPast } from "@domain/reservations/value-objects/reservation-date.js";
-
-

@@ -17,7 +17,7 @@ export function buildReservationHandlers(app: FastifyInstance): {
 	const queryRepo = new PgReservationQueryRepository(app.db);
 
 	return {
-		createReservationHandler: new CreateReservationHandler({ commandRepo }),
+		createReservationHandler: new CreateReservationHandler({ commandRepo, queryRepo }),
 		cancelReservationHandler: new CancelReservationHandler({ commandRepo, queryRepo }),
 		listUserReservationsHandler: new ListUserReservationsHandler({ queryRepo }),
 	};

@@ -2,7 +2,7 @@
 	ReservationQueryRepository,
 	ReservationRecord,
 } from "@application/reservations/ports/reservation-query-repository.js";
-import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createDeskId, deskIdToString, type DeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
 	createReservationId,
@@ -61,7 +61,24 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			cancelledAt: row.cancelled_at,
 		}));
 	}
+
+	async hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean> {
+		const result = await this.db.query(
+			"select 1 from reservations " +
+				"where user_id = $1 and reservation_date = $2 and status in ('reserved', 'checked_in') " +
+				"limit 1",
+			[userIdToString(userId), date]
+		);
+		return result.rows.length > 0;
+	}
+
+	async hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean> {
+		const result = await this.db.query(
+			"select 1 from reservations " +
+				"where desk_id = $1 and reservation_date = $2 and status in ('reserved', 'checked_in') " +
+				"limit 1",
+			[deskIdToString(deskId), date]
+		);
+		return result.rows.length > 0;
+	}
 }
-
-
-

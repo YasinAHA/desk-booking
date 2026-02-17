@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 
 import { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
@@ -25,6 +25,8 @@ function mockQueryRepo(
 	return {
 		findActiveByIdForUser: async () => null,
 		listForUser: async () => [],
+		hasActiveReservationForUserOnDate: async () => false,
+		hasActiveReservationForDeskOnDate: async () => false,
 		...overrides,
 	};
 }
