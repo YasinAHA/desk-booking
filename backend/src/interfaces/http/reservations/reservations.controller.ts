@@ -2,7 +2,7 @@
 import {
 	ReservationConflictError,
 	ReservationDateInPastError,
-} from "@domain/entities/reservation.js";
+} from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -141,4 +141,5 @@ export class ReservationController {
 		});
 	}
 }
+
 

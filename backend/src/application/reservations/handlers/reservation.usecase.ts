@@ -7,7 +7,7 @@ import type {
 } from "@application/reservations/handlers/reservation.types.js";
 import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
-import type { ReservationSource } from "@domain/entities/reservation.js";
+import type { ReservationSource } from "@domain/reservations/entities/reservation.js";
 
 export class ReservationUseCase {
 	private readonly createHandler: CreateReservationHandler;
@@ -54,3 +54,4 @@ export class ReservationUseCase {
 		return this.listHandler.execute(query);
 	}
 }
+

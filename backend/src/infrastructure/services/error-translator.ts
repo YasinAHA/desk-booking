@@ -1,5 +1,5 @@
-import type { ErrorTranslator } from "@application/ports/error-translator.js";
-import { ReservationConflictError } from "@domain/entities/reservation.js";
+﻿import type { ErrorTranslator } from "@application/ports/error-translator.js";
+import { ReservationConflictError } from "@domain/reservations/entities/reservation.js";
 
 /**
  * PostgreSQL error translator.
@@ -28,3 +28,4 @@ export class PgErrorTranslator implements ErrorTranslator {
 		return new Error(String(error));
 	}
 }
+

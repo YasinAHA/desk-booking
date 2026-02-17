@@ -1,6 +1,6 @@
-﻿import type { Email } from "@domain/value-objects/email.js";
-import type { PasswordHash } from "@domain/value-objects/password-hash.js";
-import type { UserId } from "@domain/value-objects/user-id.js";
+﻿import type { Email } from "@domain/auth/value-objects/email.js";
+import type { PasswordHash } from "@domain/auth/value-objects/password-hash.js";
+import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
 /**
  * Domain entity for User
@@ -74,4 +74,5 @@ export class User {
 		return !!this.passwordHash;
 	}
 }
+
 

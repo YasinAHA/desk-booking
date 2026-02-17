@@ -2,9 +2,9 @@
 import test from "node:test";
 
 import type { ErrorTranslator } from "@application/ports/error-translator.js";
-import { ReservationConflictError } from "@domain/entities/reservation.js";
-import { createDeskId } from "@domain/value-objects/desk-id.js";
-import { createUserId } from "@domain/value-objects/user-id.js";
+import { ReservationConflictError } from "@domain/reservations/entities/reservation.js";
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgReservationCommandRepository } from "@infrastructure/reservations/repositories/pg-reservation-command-repository.js";
 import { PgErrorTranslator } from "@infrastructure/services/error-translator.js";
 
@@ -33,6 +33,7 @@ test("PgReservationCommandRepository.create throws conflict on unique violation"
 		ReservationConflictError
 	);
 });
+
 
 
 

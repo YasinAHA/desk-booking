@@ -3,17 +3,17 @@ import type { ReservationCommandRepository } from "@application/ports/reservatio
 import {
 	deskIdToString,
 	type DeskId,
-} from "@domain/value-objects/desk-id.js";
-import { officeIdToString, type OfficeId } from "@domain/value-objects/office-id.js";
+} from "@domain/desks/value-objects/desk-id.js";
+import { officeIdToString, type OfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
 	createReservationId,
 	reservationIdToString,
 	type ReservationId,
-} from "@domain/value-objects/reservation-id.js";
+} from "@domain/reservations/value-objects/reservation-id.js";
 import {
 	userIdToString,
 	type UserId,
-} from "@domain/value-objects/user-id.js";
+} from "@domain/auth/value-objects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 
@@ -62,4 +62,5 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 		return (result.rowCount ?? 0) > 0;
 	}
 }
+
 

@@ -3,22 +3,22 @@
 	UserCreate,
 	UserRepository,
 } from "@application/ports/user-repository.js";
-import { User } from "@domain/entities/user.js";
+import { User } from "@domain/auth/entities/user.js";
 import {
 	createEmail,
 	emailToString,
 	type Email,
-} from "@domain/value-objects/email.js";
+} from "@domain/auth/value-objects/email.js";
 import {
 	createPasswordHash,
 	passwordHashToString,
 	type PasswordHash,
-} from "@domain/value-objects/password-hash.js";
+} from "@domain/auth/value-objects/password-hash.js";
 import {
 	createUserId,
 	type UserId,
 	userIdToString,
-} from "@domain/value-objects/user-id.js";
+} from "@domain/auth/value-objects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
 
@@ -131,4 +131,5 @@ export class PgUserRepository implements UserRepository {
 		return (result.rowCount ?? 0) > 0;
 	}
 }
+
 

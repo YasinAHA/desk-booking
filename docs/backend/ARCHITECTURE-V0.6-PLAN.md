@@ -78,7 +78,7 @@ backend/src/
 - [x] Fase 5: refactor `application/desks`.
 
 ## Pendientes para cerrar estructura objetivo
-- [ ] Reorganizar `domain` por feature (`domain/auth`, `domain/reservations`, `domain/desks`) y mantener entidades/value-objects/policies en su módulo.
+- [x] Reorganizar `domain` por feature (`domain/auth`, `domain/reservations`, `domain/desks`) y mantener entidades/value-objects/policies en su módulo.
 - [x] Reorganizar `infrastructure` de `reservations` y `desks` por feature (salir de `infrastructure/repositories/*` genérico).
 - [ ] Distribuir `application/ports` por feature cuando corresponda y dejar en `common` solo contratos transversales.
 - [ ] Revisar y retirar restos legacy (`application/usecases/*` remanentes) y alinear `README` internos de capa.

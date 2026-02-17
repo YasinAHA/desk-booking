@@ -1,4 +1,4 @@
-import type { ReservationSource } from "@domain/entities/reservation.js";
+﻿import type { ReservationSource } from "@domain/reservations/entities/reservation.js";
 
 export type CreateReservationCommand = {
 	userId: string;
@@ -7,3 +7,4 @@ export type CreateReservationCommand = {
 	source?: ReservationSource;
 	officeId?: string;
 };
+

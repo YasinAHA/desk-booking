@@ -1,8 +1,8 @@
 ﻿import type { DeskAvailability, DeskRepository } from "@application/ports/desk-repository.js";
-import { createDeskId } from "@domain/value-objects/desk-id.js";
-import { createOfficeId } from "@domain/value-objects/office-id.js";
-import { createReservationId } from "@domain/value-objects/reservation-id.js";
-import { userIdToString, type UserId } from "@domain/value-objects/user-id.js";
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
+import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
+import { userIdToString, type UserId } from "@domain/auth/value-objects/user-id.js";
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 
@@ -43,4 +43,5 @@ export class PgDeskRepository implements DeskRepository {
 		}));
 	}
 }
+
 

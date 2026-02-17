@@ -1,7 +1,7 @@
-﻿import { User } from "@domain/entities/user.js";
-import type { Email } from "@domain/value-objects/email.js";
-import type { PasswordHash } from "@domain/value-objects/password-hash.js";
-import type { UserId } from "@domain/value-objects/user-id.js";
+﻿import { User } from "@domain/auth/entities/user.js";
+import type { Email } from "@domain/auth/value-objects/email.js";
+import type { PasswordHash } from "@domain/auth/value-objects/password-hash.js";
+import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
 // Input DTO for user creation
 export type UserCreate = {
@@ -32,4 +32,5 @@ export interface UserRepository {
 	): Promise<void>;
 	confirmEmail(id: UserId): Promise<boolean>;
 }
+
 

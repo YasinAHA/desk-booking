@@ -1,14 +1,14 @@
-import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+﻿import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/handlers/reservation.types.js";
-import { ReservationDateInPastError } from "@domain/entities/reservation.js";
+import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
 	createReservationDate,
 	isReservationDateInPast,
-} from "@domain/value-objects/reservation-date.js";
-import { createReservationId } from "@domain/value-objects/reservation-id.js";
-import { createUserId } from "@domain/value-objects/user-id.js";
+} from "@domain/reservations/value-objects/reservation-date.js";
+import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
 type CancelReservationDependencies = Pick<
 	ReservationDependencies,
@@ -45,3 +45,4 @@ export class CancelReservationHandler {
 		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
 	}
 }
+

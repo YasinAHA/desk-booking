@@ -1,10 +1,10 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
-import { User } from "@domain/entities/user.js";
-import { createEmail } from "@domain/value-objects/email.js";
-import { createPasswordHash } from "@domain/value-objects/password-hash.js";
-import { createUserId } from "@domain/value-objects/user-id.js";
+import { User } from "@domain/auth/entities/user.js";
+import { createEmail } from "@domain/auth/value-objects/email.js";
+import { createPasswordHash } from "@domain/auth/value-objects/password-hash.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgUserRepository } from "./pg-user-repository.js";
 
 const baseUserRow = {
@@ -61,4 +61,5 @@ test("PgUserRepository.findAuthData includes passwordHash", async () => {
 	assert.equal(result?.user.isConfirmed(), false);
 	assert.deepEqual(result?.passwordHash, createPasswordHash("hash"));
 });
+
 

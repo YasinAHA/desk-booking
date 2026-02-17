@@ -1,19 +1,19 @@
-import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
+﻿import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/handlers/reservation.types.js";
 import {
 	ReservationDateInPastError,
 	type ReservationSource,
-} from "@domain/entities/reservation.js";
-import { createDeskId } from "@domain/value-objects/desk-id.js";
-import { createOfficeId } from "@domain/value-objects/office-id.js";
+} from "@domain/reservations/entities/reservation.js";
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
 	createReservationDate,
 	isReservationDateInPast,
 	reservationDateToString,
-} from "@domain/value-objects/reservation-date.js";
-import { createUserId } from "@domain/value-objects/user-id.js";
+} from "@domain/reservations/value-objects/reservation-date.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
 type CreateReservationDependencies = Pick<ReservationDependencies, "commandRepo">;
 
@@ -49,3 +49,4 @@ export class CreateReservationHandler {
 		);
 	}
 }
+

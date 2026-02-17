@@ -1,7 +1,7 @@
-import type { LoginQuery } from "@application/auth/queries/login.query.js";
+﻿import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import type { AuthDependencies, LoginResult } from "@application/auth/handlers/auth.types.js";
-import { createEmail, emailToString } from "@domain/value-objects/email.js";
-import { userIdToString } from "@domain/value-objects/user-id.js";
+import { createEmail, emailToString } from "@domain/auth/value-objects/email.js";
+import { userIdToString } from "@domain/auth/value-objects/user-id.js";
 
 type LoginDependencies = Pick<
 	AuthDependencies,
@@ -53,3 +53,4 @@ export class LoginHandler {
 		};
 	}
 }
+
