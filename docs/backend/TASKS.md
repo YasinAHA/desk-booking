@@ -40,10 +40,10 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Normalizar imports/extensiones inconsistentes.
 
 ### Backlog de hardening (post-refactor de capas)
-- [ ] Endurecer `TransactionalContext` en `application` (tipo más opaco, sin fugas de detalles de infraestructura).
-- [ ] Revisar factories transaccionales para que todas tipen contra puertos de `application` y `TransactionalContext`.
-- [ ] Evolucionar `confirmEmail` de `boolean` a resultado semántico (`confirmed | invalid_token | expired | already_confirmed`).
-- [ ] Revisar y distribuir `ports` por feature cuando aporte claridad (mantener `common` solo para contratos realmente transversales).
+- [x] Endurecer `TransactionalContext` en `application` (tipo más opaco, sin fugas de detalles de infraestructura).
+- [x] Revisar factories transaccionales para que todas tipen contra puertos de `application` y `TransactionalContext`.
+- [x] Evolucionar `confirmEmail` de `boolean` a resultado semántico (`confirmed | invalid_token | expired | already_confirmed`).
+- [x] Revisar y distribuir `ports` por feature cuando aporte claridad (mantener `common` solo para contratos realmente transversales).
 - [ ] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
 - [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
 
