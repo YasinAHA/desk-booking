@@ -50,10 +50,10 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
 
 ### Criterios de aceptación
-- [ ] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
-- [ ] Sin regresiones funcionales en auth/reservations/desks.
-- [ ] Tests backend pasando al 100% tras cada fase.
-- [ ] Documentación (AI-GUIDE/ARCHITECTURE/TASKS/CHANGELOG) actualizada al cierre.
+- [x] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
+- [x] Sin regresiones funcionales en auth/reservations/desks.
+- [x] Tests backend pasando al 100% tras cada fase.
+- [x] Documentación (AI-GUIDE/ARCHITECTURE/TASKS/CHANGELOG) actualizada al cierre.
 
 
 
@@ -74,9 +74,9 @@ Objetivo: cerrar la capa HTTP sin cambiar contratos funcionales, mejorando mante
 - [x] Paso 3: `auth` (partir controlador en schemas/mappers sin tocar endpoints).
 
 ### Regla de seguridad
-- [ ] Sin cambios de contrato HTTP (payloads, códigos, rutas).
-- [ ] Tests de rutas/controladores en verde tras cada paso.
-- [ ] `lint`, `lint:types` y `build` en verde por paso.
+- [x] Sin cambios de contrato HTTP (payloads, códigos, rutas).
+- [x] Tests de rutas/controladores en verde tras cada paso.
+- [x] `lint`, `lint:types` y `build` en verde por paso.
 
 ## v0.7.0 (Planificado) Recuperación y cambio de contraseña
 
