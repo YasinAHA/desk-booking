@@ -44,9 +44,9 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Revisar factories transaccionales para que todas tipen contra puertos de `application` y `TransactionalContext`.
 - [x] Evolucionar `confirmEmail` de `boolean` a resultado semántico (`confirmed | invalid_token | expired | already_confirmed`).
 - [x] Revisar y distribuir `ports` por feature cuando aporte claridad (mantener `common` solo para contratos realmente transversales).
-- [~] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
+- [x] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
 - [x] Auth: dividir test agregado en tests por unidad (`commands`/`queries`) y naming `kebab-case`.
-- [ ] Revisar `reservations` y `desks` para mantener el mismo patrón de granularidad por handler/route.
+- [x] Reservations y desks: mantener patrón de granularidad por handler/route (sin sobre-fragmentar tests de rutas).
 - [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
 
 ### Criterios de aceptación
