@@ -1,30 +1,34 @@
-/**
- * TransactionManager port - abstracts database transaction management
- * 
- * Allows use cases to execute multiple repository operations atomically.
- * Infrastructure layer provides the concrete implementation.
+﻿/**
+ * TransactionManager port - abstracts database transaction management.
+ *
+ * Application code works with an opaque TransactionalContext to avoid leaking
+ * infrastructure details (PoolClient, ORM transactions, etc.).
  */
 
-/**
- * Transactional context passed to callback
- * Contains a DB client that shares the same transaction
- */
-export type TransactionalContext = {
+type TransactionalDbClient = {
 	query: (text: string, params?: unknown[]) => Promise<any>;
 };
 
+const transactionalContextSymbol: unique symbol = Symbol("TransactionalContext");
+
+export type TransactionalContext = {
+	readonly [transactionalContextSymbol]: TransactionalDbClient;
+};
+
+export function createTransactionalContext(
+	dbClient: TransactionalDbClient
+): TransactionalContext {
+	return {
+		[transactionalContextSymbol]: dbClient,
+	};
+}
+
+export function getTransactionalDbClient(
+	context: TransactionalContext
+): TransactionalDbClient {
+	return context[transactionalContextSymbol];
+}
+
 export interface TransactionManager {
-	/**
-	 * Executes a callback within a database transaction.
-	 * The callback receives a transactional context (DB client) that must be used
-	 * to create repository instances for operations within the transaction.
-	 * 
-	 * All operations using this context share the same transaction.
-	 * If callback throws, transaction is rolled back automatically.
-	 * If callback succeeds, transaction is committed.
-	 * 
-	 * @param callback - Async function receiving transactional context
-	 * @returns The value returned by the callback
-	 */
 	runInTransaction<T>(callback: (tx: TransactionalContext) => Promise<T>): Promise<T>;
 }

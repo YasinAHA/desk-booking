@@ -3,7 +3,10 @@ import type { Pool } from "pg";
 
 import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
-import type { TransactionalContext } from "@application/common/ports/transaction-manager.js";
+import {
+	getTransactionalDbClient,
+	type TransactionalContext,
+} from "@application/common/ports/transaction-manager.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
 import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
 import { env } from "@config/env.js";
@@ -40,9 +43,10 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
 
-	const userRepoFactory = (tx: TransactionalContext) => new PgUserRepository(tx);
+	const userRepoFactory = (tx: TransactionalContext) =>
+		new PgUserRepository(getTransactionalDbClient(tx));
 	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
-		new PgEmailVerificationRepository(tx);
+		new PgEmailVerificationRepository(getTransactionalDbClient(tx));
 
 	const deps = {
 		authPolicy,

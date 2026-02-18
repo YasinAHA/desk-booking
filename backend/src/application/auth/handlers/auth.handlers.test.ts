@@ -11,7 +11,10 @@ import type { PasswordHasher } from "@application/auth/ports/password-hasher.js"
 import type { TokenService } from "@application/auth/ports/token-service.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
-import type { TransactionManager } from "@application/common/ports/transaction-manager.js";
+import {
+	createTransactionalContext,
+	type TransactionManager,
+} from "@application/common/ports/transaction-manager.js";
 import { User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import {
@@ -40,7 +43,7 @@ function mockEmailVerificationRepo(
 	return {
 		create: async () => {},
 		findByTokenHash: async () => null,
-		confirmEmailByTokenHash: async () => false,
+		confirmEmailByTokenHash: async () => "invalid_token",
 		consume: async () => {},
 		...overrides,
 	};
@@ -98,14 +101,16 @@ function buildAuthHandlers(
 	const confirmationBaseUrl = overrides?.confirmationBaseUrl ?? "http://localhost:3001";
 
 	const txManager: TransactionManager = {
-		runInTransaction: async <T>(callback: (tx: any) => Promise<T>): Promise<T> => {
-			const mockTx = { userRepo, emailVerificationRepo };
-			return callback(mockTx);
+		runInTransaction: async <T>(callback: (tx: import("@application/common/ports/transaction-manager.js").TransactionalContext) => Promise<T>): Promise<T> => {
+			const tx = createTransactionalContext({
+				query: async () => ({ rows: [], rowCount: 0 }),
+			});
+			return callback(tx);
 		},
 	};
 
-	const userRepoFactory = (tx: any) => tx.userRepo ?? userRepo;
-	const emailVerificationRepoFactory = (tx: any) => tx.emailVerificationRepo ?? emailVerificationRepo;
+	const userRepoFactory = () => userRepo;
+	const emailVerificationRepoFactory = () => emailVerificationRepo;
 
 	const deps = {
 		authPolicy,
@@ -358,25 +363,25 @@ test("RegisterHandler.execute inserts new user and sends email", async () => {
 	assert.equal(emailEnqueued, true);
 });
 
-test("ConfirmEmailHandler.execute returns false for invalid token", async () => {
+test("ConfirmEmailHandler.execute returns invalid_token for invalid token", async () => {
 	const handlers = buildAuthHandlers(
 		mockUserRepo(),
 		mockEmailVerificationRepo(),
 		mockEmailOutbox()
 	);
 
-	const ok = await handlers.confirmEmailHandler.execute({ token: "bad-token" });
-	assert.equal(ok, false);
+	const result = await handlers.confirmEmailHandler.execute({ token: "bad-token" });
+	assert.equal(result, "invalid_token");
 });
 
-test("ConfirmEmailHandler.execute marks user and verification", async () => {
+test("ConfirmEmailHandler.execute returns confirmed when user and verification are updated", async () => {
 	const token = "token-123";
 	const tokenService = buildTokenService();
 	const tokenHash = tokenService.hash(token);
 	const emailVerificationRepo = mockEmailVerificationRepo({
 		confirmEmailByTokenHash: async hash => {
 			assert.equal(hash, tokenHash);
-			return true;
+			return "confirmed";
 		},
 	});
 	const handlers = buildAuthHandlers(
@@ -386,6 +391,10 @@ test("ConfirmEmailHandler.execute marks user and verification", async () => {
 		{ tokenService }
 	);
 
-	const ok = await handlers.confirmEmailHandler.execute({ token });
-	assert.equal(ok, true);
+	const result = await handlers.confirmEmailHandler.execute({ token });
+	assert.equal(result, "confirmed");
 });
+
+
+
+

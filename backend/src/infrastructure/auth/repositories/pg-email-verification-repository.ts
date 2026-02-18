@@ -1,4 +1,5 @@
 ﻿import type {
+	ConfirmEmailResult,
 	EmailVerificationRecord,
 	EmailVerificationRepository,
 } from "@application/auth/ports/email-verification-repository.js";
@@ -47,25 +48,52 @@ export class PgEmailVerificationRepository implements EmailVerificationRepositor
 		return row ? mapVerificationRow(row) : null;
 	}
 
-	async confirmEmailByTokenHash(tokenHash: string): Promise<boolean> {
-		const result = await this.db.query(
-			"with verification as (" +
-				"select id, user_id from email_verifications " +
-				"where token_hash = $1 and consumed_at is null and expires_at > now()" +
-			"), consume as (" +
-				"update email_verifications set consumed_at = now() " +
-				"where id in (select id from verification) " +
-				"returning user_id" +
-			"), confirm as (" +
-				"update users set confirmed_at = now() " +
-				"where id in (select user_id from consume) " +
-				"and confirmed_at is null " +
-				"returning id" +
-			") " +
-			"select count(*)::int as confirmed_count from confirm",
+	async confirmEmailByTokenHash(tokenHash: string): Promise<ConfirmEmailResult> {
+		const verificationResult = await this.db.query(
+			"select ev.id, ev.user_id, ev.expires_at, ev.consumed_at, u.confirmed_at " +
+				"from email_verifications ev " +
+				"join users u on u.id = ev.user_id " +
+				"where ev.token_hash = $1 " +
+				"order by ev.created_at desc " +
+				"limit 1",
 			[tokenHash]
 		);
-		return (result.rows[0]?.confirmed_count ?? 0) > 0;
+
+		const verification = verificationResult.rows[0];
+		if (!verification) {
+			return "invalid_token";
+		}
+
+		const expiresAt = new Date(String(verification.expires_at));
+		if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+			return "expired";
+		}
+
+		if (verification.consumed_at || verification.confirmed_at) {
+			return "already_confirmed";
+		}
+
+		const consumeResult = await this.db.query(
+			"update email_verifications set consumed_at = now() " +
+				"where id = $1 and consumed_at is null and expires_at > now() " +
+				"returning user_id",
+			[verification.id]
+		);
+		if ((consumeResult.rowCount ?? 0) === 0) {
+			return "already_confirmed";
+		}
+
+		const confirmResult = await this.db.query(
+			"update users set confirmed_at = now() " +
+				"where id = $1 and confirmed_at is null " +
+				"returning id",
+			[verification.user_id]
+		);
+		if ((confirmResult.rowCount ?? 0) === 0) {
+			return "already_confirmed";
+		}
+
+		return "confirmed";
 	}
 
 	async consume(id: string): Promise<void> {
@@ -75,4 +103,3 @@ export class PgEmailVerificationRepository implements EmailVerificationRepositor
 		);
 	}
 }
-

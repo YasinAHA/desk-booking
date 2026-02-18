@@ -1,16 +1,14 @@
 ﻿import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
+import type {
+	ConfirmEmailResult,
+	EmailVerificationRepository,
+} from "@application/auth/ports/email-verification-repository.js";
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
-import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
 import { userIdToString, type UserId } from "@domain/auth/value-objects/user-id.js";
 
 /**
  * EmailVerificationService - Handles email verification workflow
- *
- * Responsibilities:
- * - Generate verification tokens
- * - Create verification records in DB
- * - Build and enqueue confirmation emails
  */
 export class EmailVerificationService {
 	constructor(
@@ -58,11 +56,8 @@ export class EmailVerificationService {
 		});
 	}
 
-	async confirmEmail(token: string): Promise<boolean> {
+	async confirmEmail(token: string): Promise<ConfirmEmailResult> {
 		const tokenHash = this.tokenService.hash(token);
 		return this.emailVerificationRepo.confirmEmailByTokenHash(tokenHash);
 	}
 }
-
-
-

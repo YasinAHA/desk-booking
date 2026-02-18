@@ -151,10 +151,16 @@ export class AuthController {
 		}
 
 		const command: ConfirmEmailCommand = { token };
-		const ok = await this.confirmEmailHandler.execute(command);
+		const result = await this.confirmEmailHandler.execute(command);
 
-		if (!ok) {
-			throwHttpError(400, "INVALID_TOKEN", "Invalid or expired token");
+		if (result === "invalid_token") {
+			throwHttpError(400, "INVALID_TOKEN", "Invalid token");
+		}
+		if (result === "expired") {
+			throwHttpError(400, "EXPIRED_TOKEN", "Expired token");
+		}
+		if (result === "already_confirmed") {
+			throwHttpError(409, "ALREADY_CONFIRMED", "Email already confirmed");
 		}
 
 		req.log.info({ event: "auth.confirm" }, "Email confirmed");
