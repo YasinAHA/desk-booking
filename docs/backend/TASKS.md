@@ -37,7 +37,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 ### Deuda técnica previa (alta prioridad)
 - [x] Corregir flujo de refresh token para no emitir access token con payload parcial/vacío.
 - [x] Eliminar `any` en factories transaccionales de `composition/auth.container`.
-- [ ] Normalizar imports/extensiones inconsistentes.
+- [x] Normalizar imports/extensiones inconsistentes.
 
 ### Backlog de hardening (post-refactor de capas)
 - [ ] Endurecer `TransactionalContext` en `application` (tipo más opaco, sin fugas de detalles de infraestructura).

@@ -1,6 +1,7 @@
 ﻿import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
 import type { ListDesksQuery } from "@application/desks/queries/list-desks.query.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
+import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { mapListDesksResponse } from "./desks.mappers.js";
 import { listDesksSchema } from "./desks.schemas.js";
@@ -14,7 +15,7 @@ import { listDesksSchema } from "./desks.schemas.js";
 export class DeskController {
 	constructor(private readonly listDesksHandler: ListDesksHandler) {}
 
-	async listForDate(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+	async listForDate(req: FastifyRequest, reply: FastifyReply) {
 		const parse = listDesksSchema.safeParse(req.query);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid date");

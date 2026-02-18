@@ -14,6 +14,7 @@ import { LoginHandler } from "@application/auth/queries/login.handler.js";
 import {
 	createTransactionalContext,
 	type TransactionManager,
+	type TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
 import { User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
@@ -101,7 +102,7 @@ function buildAuthHandlers(
 	const confirmationBaseUrl = overrides?.confirmationBaseUrl ?? "http://localhost:3001";
 
 	const txManager: TransactionManager = {
-		runInTransaction: async <T>(callback: (tx: import("@application/common/ports/transaction-manager.js").TransactionalContext) => Promise<T>): Promise<T> => {
+		runInTransaction: async <T>(callback: (tx: TransactionalContext) => Promise<T>): Promise<T> => {
 			const tx = createTransactionalContext({
 				query: async () => ({ rows: [], rowCount: 0 }),
 			});
@@ -394,6 +395,7 @@ test("ConfirmEmailHandler.execute returns confirmed when user and verification a
 	const result = await handlers.confirmEmailHandler.execute({ token });
 	assert.equal(result, "confirmed");
 });
+
 
 
 

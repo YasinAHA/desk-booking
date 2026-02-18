@@ -11,6 +11,7 @@ import {
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
+import type { FastifyReply, FastifyRequest } from "fastify";
 
 import {
 	mapCreateReservationResponse,
@@ -34,7 +35,7 @@ export class ReservationController {
 		private readonly listUserReservationsHandler: ListUserReservationsHandler
 	) {}
 
-	async create(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+	async create(req: FastifyRequest, reply: FastifyReply) {
 		const parse = createReservationSchema.safeParse(req.body);
 		if (!parse.success) {
 			req.log.warn({ body: req.body }, "Invalid reservation payload");
@@ -88,7 +89,7 @@ export class ReservationController {
 		}
 	}
 
-	async cancel(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+	async cancel(req: FastifyRequest, reply: FastifyReply) {
 		const parse = reservationIdParamSchema.safeParse(req.params);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid id");
@@ -124,7 +125,7 @@ export class ReservationController {
 		}
 	}
 
-	async listForUser(req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) {
+	async listForUser(req: FastifyRequest, reply: FastifyReply) {
 		const query: ListUserReservationsQuery = { userId: req.user.id };
 		const items = await this.listUserReservationsHandler.execute(query);
 
