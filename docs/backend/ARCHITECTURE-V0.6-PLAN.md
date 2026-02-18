@@ -138,6 +138,7 @@ backend/src/
 
 ## Notas de alcance
 - Mejoras de hardening arquitectónico detectadas durante el refactor (tipado opaco de transacciones, semántica rica de resultados, etc.) se registran en `docs/backend/TASKS.md` bajo `Backlog de hardening (post-refactor de capas)`.
+- Funcionalidad nueva de auth (recuperar/cambiar contraseña) queda fuera de alcance de v0.6.0 y se planifica en `docs/backend/TASKS.md` para v0.7.0.
 
 ## Preguntas abiertas (para acordar antes de ejecutar)
 - [x] `handlers` vs `usecases`: objetivo final `handlers`; transición con `usecases` permitida.
