@@ -5,7 +5,6 @@
 
 ## Arquitectura y planes
 - [ARCHITECTURE-BACKEND.md](ARCHITECTURE-BACKEND.md)
-- [ARCHITECTURE-V0.6-PLAN.md](ARCHITECTURE-V0.6-PLAN.md)
 
 ## Planificacion backend
 - [TASKS.md](TASKS.md)
@@ -19,6 +18,7 @@
 - [TOOLING.md](TOOLING.md)
 
 ## Histórico backend
+- [archive/ARCHITECTURE-V0.6-PLAN.md](archive/ARCHITECTURE-V0.6-PLAN.md)
 - [archive/TASKS-BACKEND-UPDATE.md](archive/TASKS-BACKEND-UPDATE.md)
 - [archive/TASK-REFACTOR.md](archive/TASK-REFACTOR.md)
 

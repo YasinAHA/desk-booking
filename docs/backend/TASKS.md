@@ -7,7 +7,7 @@ Este fichero contiene las tareas activas de backend.
 Objetivo: modularizar internamente por feature de forma incremental, sin big-bang y sin regresiones.
 
 ### Fuente prioritaria de ejecución
-- [ ] Ejecutar y mantener actualizado `docs/backend/ARCHITECTURE-V0.6-PLAN.md` como checklist operativo de v0.6.0.
+- [x] Ejecutar y mantener actualizado `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md` como checklist operativo de v0.6.0 (cerrado y archivado).
 - [ ] Reflejar en este fichero solo el estado resumido por fases/hitos y decisiones cerradas.
 
 ### Plan incremental

@@ -1,6 +1,14 @@
 ﻿# Architecture Checklist (v0.6.0)
 
-Estado: documento de ejecución priorizado para la v0.6.0.
+Estado: **cerrado y archivado** el 2026-02-18 tras completar el cierre operativo de v0.6.x.
+
+## Cierre y validación final (2026-02-18)
+- `npm -w backend run lint` OK
+- `npm -w backend run lint:types` OK
+- `npm -w backend run build` OK
+- `npm -w backend run test` OK (`63/63`)
+
+Este documento se conserva por trazabilidad histórica del refactor de capas v0.6.x.
 
 ## Contexto
 - El proyecto ya tiene avance funcional relevante.

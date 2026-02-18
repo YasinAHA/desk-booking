@@ -14,9 +14,9 @@ Monorepo con backend propio y frontend ligero:
 - `src/interfaces/http/types/*`: tipos y augmentations para Fastify.
 - `src/config/env.ts`: configuración compartida (env) usada por varias capas.
 - `src/interfaces/http/*`: rutas HTTP por feature (auth, desks, reservations).
-- `src/interfaces/http/*/*.container.ts`: wiring por feature (composition root).
+- `src/composition/*.container.ts`: wiring por feature (composition root).
 
-### Capas (v0.5.0)
+### Capas (v0.6.x)
 - `src/domain`: entidades y reglas de negocio puras (User, Desk, Reservation).
 - `src/application`: orquestacion por feature (commands, queries, handlers, ports, services).
 - `src/infrastructure`: adaptadores (DB, mailer, logger, etc.).
@@ -40,7 +40,8 @@ Monorepo con backend propio y frontend ligero:
 
 ### Base de datos
 - Postgres local vía Docker.
-- SQL de inicializacion en `docker/postgres/init/001_init.sql`.
+- Migraciones SQL como fuente de verdad en `db/migrations/`.
+- Bootstrap Docker mínimo (extensiones/roles si aplica), sin tablas de negocio.
 
 ### Outbox Pattern (side effects)
 - Cambios críticos se persisten en una sola transaccion junto con el outbox.
@@ -74,6 +75,6 @@ Monorepo con backend propio y frontend ligero:
 ## Notas de evolución
 - Rutas HTTP delgadas en `interfaces/http/`, con lógica en `application/<feature>`.
 - Entidades base en `domain/` para evolucionar reglas de negocio.
-- Migración por capas en curso (v0.5.0).
+- Refactor por capas y por feature completado en v0.6.x (detalle histórico en `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md`).
 
 
