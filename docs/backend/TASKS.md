@@ -8,7 +8,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 
 ### Fuente prioritaria de ejecución
 - [x] Ejecutar y mantener actualizado `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md` como checklist operativo de v0.6.0 (cerrado y archivado).
-- [ ] Reflejar en este fichero solo el estado resumido por fases/hitos y decisiones cerradas.
+- [x] Reflejar en este fichero solo el estado resumido por fases/hitos y decisiones cerradas.
 
 ### Plan incremental
 - [x] Registrar decisión arquitectónica en `docs/DECISIONS.md` y ADR (modelo híbrido: capas + agrupación por feature).
@@ -32,7 +32,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Reservations: eliminar `application/reservations/handlers/reservation.usecase.ts` y conectar handlers de command/query directos.
 - [x] Auth: eliminar `application/auth/handlers/auth.usecase.ts` y conectar handlers de command/query directos.
 - [x] Mantener `interfaces/http` como eje por feature y alinear nomenclatura/rutas de imports.
-- [ ] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
+- [x] Evitar movimientos transversales en una sola PR; una PR por feature con tests en verde.
 
 ### Deuda técnica previa (alta prioridad)
 - [x] Corregir flujo de refresh token para no emitir access token con payload parcial/vacío.

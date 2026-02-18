@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.0] - 2026-02-18
+
+### Changed
+- Backend architecture refactor closed under layer-first + feature grouping, with composition roots consolidated in `backend/src/composition/*`.
+- Application layer normalized to commands/queries/handlers by feature; legacy usecase facades removed.
+- HTTP interface layer reorganized by feature with extracted schemas/mappers and consistent imports/naming.
+- Documentation structure refined for monorepo maintenance; v0.6 execution plan archived in `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md`.
+- AI guides aligned to current workflow (`next` integration flow, quality gates, and versioned docs closure).
+
+### Fixed
+- Reservation conflict messaging differentiated between desk conflict and user/day conflict scenarios.
+- Transaction context usage hardened in application ports and transactional factories.
+- Auth confirm-email flow upgraded to semantic outcomes (`confirmed | invalid_token | expired | already_confirmed`).
+
+### Tests
+- Backend quality gates validated for release:
+  - `npm -w backend run lint` OK
+  - `npm -w backend run lint:types` OK
+  - `npm -w backend run build` OK
+  - `npm -w backend run test` OK (`63/63`)
+
+### Notes
+- v0.6.0 closes the backend architecture stabilization cycle.
+- Password recovery/change functionality is planned for v0.7.0 (tracked in `docs/backend/TASKS.md`).
+
+---
+
 ## [0.5.1] - 2026-02-16
 
 ### Changed
