@@ -10,6 +10,11 @@ export const AUTH_VERIFY_RATE_LIMIT = {
 	timeWindow: "1 minute",
 } as const;
 
+export const AUTH_REFRESH_RATE_LIMIT = {
+	max: 20,
+	timeWindow: "1 minute",
+} as const;
+
 export const AUTH_REGISTER_RATE_LIMIT = {
 	max: 5,
 	timeWindow: "10 minutes",

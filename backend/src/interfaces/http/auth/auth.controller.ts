@@ -6,6 +6,7 @@ import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
+	AUTH_REFRESH_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
@@ -125,11 +126,11 @@ export class AuthController {
 			reply.rateLimit(AUTH_VERIFY_RATE_LIMIT);
 		}
 
-		req.log.info({ event: "auth.verify", body: req.body }, "Verify request received");
+		req.log.info({ event: "auth.verify" }, "Verify request received");
 
 		const parse = verifySchema.safeParse(req.body);
 		if (!parse.success) {
-			req.log.warn({ event: "auth.verify", body: req.body }, "Invalid payload");
+			req.log.warn({ event: "auth.verify" }, "Invalid payload");
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
@@ -173,7 +174,7 @@ export class AuthController {
 
 	async refresh(req: FastifyRequest, reply: FastifyReply) {
 		if (reply.rateLimit) {
-			reply.rateLimit(AUTH_LOGIN_RATE_LIMIT);
+			reply.rateLimit(AUTH_REFRESH_RATE_LIMIT);
 		}
 
 		const parse = verifySchema.safeParse(req.body);
