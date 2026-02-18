@@ -1,4 +1,4 @@
-services:
+﻿services:
   postgres:
     image: postgres:18
     container_name: deskbooking_pg
@@ -32,24 +32,28 @@ services:
   outbox-worker:
     image: node:20
     container_name: deskbooking_outbox_worker
-    working_dir: /app/backend
+    working_dir: /app
     volumes:
       - ..:/app
+      - root_node_modules_worker:/app/node_modules
+      - backend_node_modules_worker:/app/backend/node_modules
     env_file:
       - ../backend/.env
     environment:
       DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
       SMTP_HOST: mailpit
-    command: sh -c "npm install && npm run worker:outbox"
+    command: sh -c "npm ci -w backend && npm -w backend run worker:outbox"
     depends_on:
       - postgres
       - mailpit
   backend:
     image: node:20
     container_name: deskbooking_backend
-    working_dir: /app/backend
+    working_dir: /app
     volumes:
       - ..:/app
+      - root_node_modules_backend:/app/node_modules
+      - backend_node_modules_backend:/app/backend/node_modules
     env_file:
       - ../backend/.env
     environment:
@@ -58,7 +62,7 @@ services:
       HOST: 0.0.0.0
     ports:
       - "3001:3001"
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm ci -w backend && npm -w backend run dev"
     depends_on:
       - postgres
       - mailpit
@@ -66,3 +70,8 @@ services:
 volumes:
   pgdata:
   pgadmin_data:
+  root_node_modules_worker:
+  backend_node_modules_worker:
+  root_node_modules_backend:
+  backend_node_modules_backend:
+

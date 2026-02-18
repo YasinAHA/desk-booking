@@ -1,12 +1,17 @@
-import type { FastifyPluginAsync } from "fastify";
+﻿import type { FastifyPluginAsync } from "fastify";
 
-import { buildAuthUseCase, buildJwtTokenService } from "./auth.container.js";
+import { buildAuthHandlers, buildJwtTokenService } from "@composition/auth.container.js";
 import { AuthController } from "./auth.controller.js";
 
 export const authRoutes: FastifyPluginAsync = async app => {
-	const authUseCase = buildAuthUseCase(app);
+	const handlers = buildAuthHandlers(app);
 	const jwtTokenService = buildJwtTokenService(app);
-	const controller = new AuthController(authUseCase, jwtTokenService);
+	const controller = new AuthController(
+		handlers.loginHandler,
+		handlers.registerHandler,
+		handlers.confirmEmailHandler,
+		jwtTokenService
+	);
 
 	app.post("/login", async (req, reply) => controller.login(req, reply));
 	app.post("/verify", async (req, reply) => controller.verify(req, reply));

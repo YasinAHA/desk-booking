@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import type { TokenRevocationRepository } from "@application/ports/token-revocation-repository.js";
+﻿import { randomUUID } from "node:crypto";
+import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
 import { env } from "@config/env.js";
 import { JwtProvider } from "./ports/jwt-provider.js";
 
@@ -22,6 +22,10 @@ export interface AccessTokenPayload {
 export interface RefreshTokenPayload {
 	jti: string;
 	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
 	type: "refresh";
 }
 
@@ -61,14 +65,16 @@ export class JwtTokenService {
 
 	/**
 	 * Create a signed refresh token for user
-	 * @param userId User ID to encode in token
+	 * @param payload User data to encode in token
 	 * @returns Signed JWT token string
 	 */
-	createRefreshToken(userId: string): string {
+	createRefreshToken(
+		payload: Omit<RefreshTokenPayload, "type" | "jti">
+	): string {
 		const jti = randomUUID();
 		return this.jwtProvider.sign(
 			{
-				id: userId,
+				...payload,
 				jti,
 				type: "refresh",
 			},
@@ -125,7 +131,15 @@ export class JwtTokenService {
 		}
 
 		const p = payload;
-		if (!("id" in p) || !("jti" in p) || p.type !== "refresh") {
+		if (
+			!("id" in p) ||
+			!("email" in p) ||
+			!("firstName" in p) ||
+			!("lastName" in p) ||
+			!("secondLastName" in p) ||
+			!("jti" in p) ||
+			p.type !== "refresh"
+		) {
 			throw new Error("Invalid refresh token structure");
 		}
 
@@ -156,3 +170,4 @@ export class JwtTokenService {
 		return this.verifyAccessToken(token);
 	}
 }
+

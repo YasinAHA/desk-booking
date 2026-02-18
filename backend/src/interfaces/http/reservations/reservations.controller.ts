@@ -1,62 +1,57 @@
-import type { ReservationUseCase } from "@application/usecases/reservation.usecase.js";
+﻿import type { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+import type { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
+import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
+import type { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
+import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import {
+	DeskAlreadyReservedError,
 	ReservationConflictError,
 	ReservationDateInPastError,
-} from "@domain/entities/reservation.js";
+	UserAlreadyHasReservationError,
+} from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
-import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
+import type { FastifyReply, FastifyRequest } from "fastify";
 
-/**
- * Schemas for reservation request validation
- */
-const createSchema = z.object({
-	date: dateSchema,
-	desk_id: z.string().uuid(),
-	office_id: z.string().uuid().optional(),
-	source: z.enum(["user", "admin", "walk_in", "system"]).optional(),
-});
-
-const idParamSchema = z.object({
-	id: z.string().uuid(),
-});
+import {
+	mapCreateReservationResponse,
+	mapListUserReservationsResponse,
+} from "./reservations.mappers.js";
+import {
+	createReservationSchema,
+	reservationIdParamSchema,
+} from "./reservations.schemas.js";
 
 /**
  * ReservationController: Handles HTTP layer concerns for reservation operations
  * - Request validation
  * - Response mapping
  * - Error mapping (DateInPast, Conflict)
- * - Logging and rate limiting (via app instance)
- *
- * Note: Injected FastifyInstance for logger and rate limiting metadata.
- * Could be refactored to inject Logger + RateLimiter separately if interfaces grow.
  */
 export class ReservationController {
 	constructor(
-		private readonly reservationUseCase: ReservationUseCase,
-		private readonly app: FastifyInstance
+		private readonly createReservationHandler: CreateReservationHandler,
+		private readonly cancelReservationHandler: CancelReservationHandler,
+		private readonly listUserReservationsHandler: ListUserReservationsHandler
 	) {}
 
 	async create(req: FastifyRequest, reply: FastifyReply) {
-		// Validation
-		const parse = createSchema.safeParse(req.body);
+		const parse = createReservationSchema.safeParse(req.body);
 		if (!parse.success) {
-			this.app.log.warn({ body: req.body }, "Invalid reservation payload");
+			req.log.warn({ body: req.body }, "Invalid reservation payload");
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		// Application logic
 		try {
-			const reservationId = await this.reservationUseCase.create(
-				req.user.id,
-				parse.data.date,
-				parse.data.desk_id,
-				parse.data.source,
-				parse.data.office_id
-			);
+			const command: CreateReservationCommand = {
+				userId: req.user.id,
+				date: parse.data.date,
+				deskId: parse.data.desk_id,
+				...(parse.data.source ? { source: parse.data.source } : {}),
+				...(parse.data.office_id ? { officeId: parse.data.office_id } : {}),
+			};
+			const reservationId = await this.createReservationHandler.execute(command);
 
-			// Response mapping
 			req.log.info(
 				{
 					event: "reservation.create",
@@ -68,14 +63,22 @@ export class ReservationController {
 				"Reservation created"
 			);
 
-			return reply.send({
-				ok: true,
-				reservation_id: reservationId,
-			});
+			return reply.send(mapCreateReservationResponse(reservationId));
 		} catch (err) {
-			// Error mapping
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
+			}
+
+			if (err instanceof DeskAlreadyReservedError) {
+				throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
+			}
+
+			if (err instanceof UserAlreadyHasReservationError) {
+				throwHttpError(
+					409,
+					"USER_ALREADY_HAS_RESERVATION",
+					"Ya tienes una reserva activa para ese día."
+				);
 			}
 
 			if (err instanceof ReservationConflictError) {
@@ -87,22 +90,22 @@ export class ReservationController {
 	}
 
 	async cancel(req: FastifyRequest, reply: FastifyReply) {
-		// Validation
-		const parse = idParamSchema.safeParse(req.params);
+		const parse = reservationIdParamSchema.safeParse(req.params);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid id");
 		}
 
-		// Application logic
 		try {
-			const ok = await this.reservationUseCase.cancel(req.user.id, parse.data.id);
+			const command: CancelReservationCommand = {
+				userId: req.user.id,
+				reservationId: parse.data.id,
+			};
+			const ok = await this.cancelReservationHandler.execute(command);
 
-			// Error mapping
 			if (!ok) {
 				throwHttpError(404, "NOT_FOUND", "Reservation not found");
 			}
 
-			// Response mapping
 			req.log.info(
 				{
 					event: "reservation.cancel",
@@ -114,7 +117,6 @@ export class ReservationController {
 
 			return reply.status(204).send();
 		} catch (err) {
-			// Error mapping
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
 			}
@@ -124,20 +126,9 @@ export class ReservationController {
 	}
 
 	async listForUser(req: FastifyRequest, reply: FastifyReply) {
-		// Application logic
-		const items = await this.reservationUseCase.listForUser(req.user.id);
+		const query: ListUserReservationsQuery = { userId: req.user.id };
+		const items = await this.listUserReservationsHandler.execute(query);
 
-		// Response mapping
-		return reply.send({
-			items: items.map(item => ({
-				reservation_id: item.id,
-				desk_id: item.deskId,
-				office_id: item.officeId,
-				desk_name: item.deskName,
-				reservation_date: item.reservationDate,
-				source: item.source,
-				cancelled_at: item.cancelledAt,
-			})),
-		});
+		return reply.send(mapListUserReservationsResponse(items));
 	}
 }
