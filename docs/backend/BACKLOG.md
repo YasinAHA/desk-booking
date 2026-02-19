@@ -1,41 +1,42 @@
-﻿# Backend Backlog (v0.7.0 proposed)
+﻿# Backend Backlog (v0.8.x+)
 
-Objetivo: consolidar seguridad, roles y preparacion para uso interno tras la modularizacion planificada en v0.6.0.
+Objetivo: registrar mejoras diferidas post-entrega para ejecutar después del hito `2026-02-23`.
 
-Nota: estas propuestas se moveran a `docs/backend/TASKS.md` una vez cerrada la v0.6.0.
+Nota: este backlog no compite con `docs/backend/TASKS.md` mientras estemos en modo entrega.
 
-## 1) Seguridad y sesiones
-- [x] HTTP security headers (helmet) implementado en v0.5.0
-- [x] JWT_REFRESH_SECRET required (sin defaults inseguros) implementado en v0.5.0
-- [x] Password policy enforced (12+ chars, complexity, no patterns) implementado en v0.5.0
-- [x] Docs/SECURITY.md (Security by Design/Default principles) implementado en v0.5.0
-- [ ] Refresh token en cookie httpOnly (en lugar de localStorage).
-- [ ] Revocacion de tokens en refresh endpoint (verificar token revocation).
+## 1) Hardening de auth y sesiones (diferido)
+- [ ] Session family para refresh rotation (detección real de reuse).
+- [ ] Gestión de sesiones de usuario:
+  - `GET /auth/sessions`
+  - `DELETE /auth/sessions/:id`
+  - `DELETE /auth/sessions` (logout global)
+- [ ] Unificar políticas anti-abuso/rate limit para `login`, `refresh`, `forgot`, `reset`, `change-password`.
 - [ ] PII logging filter (emails no deben ir a logs en producción).
-- [ ] CSRF tokens para operaciones mutables (POST/DELETE).
-- [ ] Duracion corta de access token + renovacion transparente (opcional).
+- [ ] CSRF tokens para operaciones mutables (POST/DELETE) cuando aplique por canal cliente.
 
-## 2) Roles y permisos
+## 2) Operación y observabilidad
+- [ ] Limpieza automática de `token_revocation` y `password_resets` expirados.
+- [ ] Logs estructurados con correlation/request ID.
+- [ ] Métricas básicas por ruta (latencia, errores) y eventos de seguridad trazables.
+
+## 3) Contrato y robustez API
+- [ ] Catálogo estable de códigos de error (sin dependencia de mensajes SQL).
+- [ ] Endurecer respuestas y semántica de errores en flujos críticos de auth/reservas.
+
+## 4) Roles, admin y auditoría
 - [ ] Modelo de roles (user/admin) y checks en backend.
-- [ ] UI minima para admin (activar/desactivar desks, ver reservas).
-
-## 3) Admin y auditoria
-- [ ] Registro de acciones criticas (audit log basico).
-- [ ] Export de reservas (CSV) para gestion interna.
-
-## 4) Observabilidad y ops
-- [ ] Logs con contexto de usuario (sin PII sensible).
-- [ ] Metricas basicas (latencia y errores por ruta).
+- [ ] Registro de acciones críticas (audit log básico).
+- [ ] Export de reservas (CSV) para gestión interna.
 
 ## 5) Producto y UX
-- [ ] Vista mensual o semanal de ocupacion.
+- [ ] Vista mensual o semanal de ocupación.
 - [ ] Filtros en historial de reservas.
+- [ ] Calendario de festivos.
 
 ## 6) Deploy y CI/CD
-- [ ] Pipeline de despliegue para entorno de corrección (manual o semiautomatico).
+- [ ] Pipeline de despliegue para entorno de corrección (manual o semiautomático).
 - [ ] Checklist de release (migraciones + seeds + smoke tests).
 
-## 7) Docs
+## 7) Documentación
 - [ ] Documento de roles y permisos.
-- [ ] Guia de despliegue interno (borrador).
-
+- [ ] Guía de despliegue interno (borrador).
