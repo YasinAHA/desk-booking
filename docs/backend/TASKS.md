@@ -107,7 +107,7 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [x] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
 - [x] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
 - [x] Añadir `POST /auth/change-password` para usuario autenticado (requiere contraseña actual).
-- [ ] Invalidar sesiones/tokens activas tras `reset-password` y `change-password`.
+- [x] Invalidar sesiones/tokens activas tras `reset-password` y `change-password`.
 
 ### Seguridad y anti-enumeración
 - [x] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.

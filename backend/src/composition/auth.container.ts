@@ -22,6 +22,7 @@ import { PgEmailVerificationRepository } from "@infrastructure/auth/repositories
 import { PgPasswordResetRepository } from "@infrastructure/auth/repositories/pg-password-reset-repository.js";
 import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/pg-token-revocation-repository.js";
 import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
+import { PgUserSessionRepository } from "@infrastructure/auth/repositories/pg-user-session-repository.js";
 import { Argon2PasswordHasher } from "@infrastructure/auth/security/argon2-password-hasher.js";
 import { Sha256TokenService } from "@infrastructure/auth/security/sha256-token-service.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
@@ -93,7 +94,8 @@ export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const dbApp = app as AppWithDb;
 	const jwtProvider = new FastifyJwtProvider(app);
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
-	return new JwtTokenService(jwtProvider, tokenRevocationRepository, {
+	const userSessionRepository = new PgUserSessionRepository(dbApp.db.pool);
+	return new JwtTokenService(jwtProvider, tokenRevocationRepository, userSessionRepository, {
 		accessTokenTtl: env.JWT_EXPIRATION,
 		refreshTokenTtl: env.JWT_REFRESH_EXPIRATION,
 	});

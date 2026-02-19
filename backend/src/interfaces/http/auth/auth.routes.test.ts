@@ -538,3 +538,168 @@ test("POST /auth/change-password returns 200 with valid current password", async
 	assert.equal(updated, true);
 	await app.close();
 });
+
+test("POST /auth/reset-password invalidates previous refresh tokens", async () => {
+	const loginHash = await argon2.hash("123456");
+	let tokenValidAfter: Date | null = null;
+	const app = await buildTestApp(async text => {
+		if (text.includes("from users where email = $1")) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: loginHash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+
+		if (text.includes("SELECT 1 FROM token_revocation WHERE jti = $1")) {
+			return { rows: [], rowCount: 0 };
+		}
+
+		if (text.includes("select token_valid_after from users where id = $1")) {
+			return { rows: [{ token_valid_after: tokenValidAfter }] };
+		}
+
+		if (text.includes("from password_resets")) {
+			return {
+				rows: [
+					{
+						id: "reset-1",
+						user_id: "user-1",
+						expires_at: "2099-01-01T00:00:00.000Z",
+						consumed_at: null,
+					},
+				],
+			};
+		}
+
+		if (text.includes("update password_resets set consumed_at = now()")) {
+			return { rows: [{ user_id: "user-1" }], rowCount: 1 };
+		}
+
+		if (text.includes("update users set password_hash = $1, token_valid_after = now(), updated_at = now()")) {
+			tokenValidAfter = new Date();
+			return { rows: [], rowCount: 1 };
+		}
+
+		return { rows: [], rowCount: 0 };
+	});
+
+	const loginRes = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { email: "admin@camerfirma.com", password: "123456" },
+	});
+	assert.equal(loginRes.statusCode, 200);
+	const loginBody = getJsonRecord(loginRes);
+	const initialRefreshToken = getRequiredString(loginBody, "refreshToken");
+
+	const resetRes = await app.inject({
+		method: "POST",
+		url: "/auth/reset-password",
+		payload: {
+			token: "raw-token",
+			password: "ValidPass123!",
+		},
+	});
+	assert.equal(resetRes.statusCode, 200);
+
+	const refreshRes = await app.inject({
+		method: "POST",
+		url: "/auth/refresh",
+		payload: { token: initialRefreshToken },
+	});
+	assert.equal(refreshRes.statusCode, 401);
+
+	await app.close();
+});
+
+test("POST /auth/change-password invalidates previous refresh tokens", async () => {
+	const oldHash = await argon2.hash("123456");
+	let tokenValidAfter: Date | null = null;
+	const app = await buildTestApp(async text => {
+		if (text.includes("from users where email = $1")) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: oldHash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+
+		if (text.includes("SELECT 1 FROM token_revocation WHERE jti = $1")) {
+			return { rows: [], rowCount: 0 };
+		}
+
+		if (text.includes("select token_valid_after from users where id = $1")) {
+			return { rows: [{ token_valid_after: tokenValidAfter }] };
+		}
+
+		if (text.includes("from users where id = $1")) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: oldHash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+
+		if (text.includes("update users set password_hash = $1, token_valid_after = now(), updated_at = now()")) {
+			tokenValidAfter = new Date();
+			return { rows: [], rowCount: 1 };
+		}
+
+		return { rows: [], rowCount: 0 };
+	});
+
+	const loginRes = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { email: "admin@camerfirma.com", password: "123456" },
+	});
+	assert.equal(loginRes.statusCode, 200);
+	const loginBody = getJsonRecord(loginRes);
+	const accessToken = getRequiredString(loginBody, "accessToken");
+	const initialRefreshToken = getRequiredString(loginBody, "refreshToken");
+
+	const changeRes = await app.inject({
+		method: "POST",
+		url: "/auth/change-password",
+		headers: { Authorization: `Bearer ${accessToken}` },
+		payload: {
+			current_password: "123456",
+			new_password: "ValidPass123!",
+		},
+	});
+	assert.equal(changeRes.statusCode, 200);
+
+	const refreshRes = await app.inject({
+		method: "POST",
+		url: "/auth/refresh",
+		payload: { token: initialRefreshToken },
+	});
+	assert.equal(refreshRes.statusCode, 401);
+
+	await app.close();
+});

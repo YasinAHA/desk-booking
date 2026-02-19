@@ -9,6 +9,10 @@ declare module "@fastify/jwt" {
             firstName: string;
             lastName: string;
             secondLastName: string | null;
+            jti?: string;
+            iat?: number;
+            exp?: number;
+            type?: "access" | "refresh";
         };
         user: {
             id: string;

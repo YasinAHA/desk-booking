@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AuthSessionTokenService } from "@application/auth/ports/auth-session-token-service.js";
 import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
+import type { UserSessionRepository } from "@application/auth/ports/user-session-repository.js";
 import { JwtProvider } from "./ports/jwt-provider.js";
 
 /**
@@ -14,6 +15,7 @@ export interface AccessTokenPayload {
 	lastName: string;
 	secondLastName: string | null;
 	type: "access";
+	iat: number;
 }
 
 /**
@@ -27,6 +29,7 @@ export interface RefreshTokenPayload {
 	lastName: string;
 	secondLastName: string | null;
 	type: "refresh";
+	iat: number;
 	exp: number;
 }
 
@@ -75,6 +78,7 @@ function isAccessTokenPayload(payload: unknown): payload is AccessTokenPayload {
 		typeof payload.lastName === "string" &&
 		isStringOrNull(payload.secondLastName) &&
 		typeof payload.jti === "string" &&
+		isPositiveNumber(payload.iat) &&
 		payload.type === "access"
 	);
 }
@@ -91,6 +95,7 @@ function isRefreshTokenPayload(payload: unknown): payload is RefreshTokenPayload
 		typeof payload.lastName === "string" &&
 		isStringOrNull(payload.secondLastName) &&
 		typeof payload.jti === "string" &&
+		isPositiveNumber(payload.iat) &&
 		isPositiveNumber(payload.exp) &&
 		payload.type === "refresh"
 	);
@@ -107,6 +112,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 	constructor(
 		private readonly jwtProvider: JwtProvider,
 		private readonly tokenRevocationRepository: TokenRevocationRepository,
+		private readonly userSessionRepository: UserSessionRepository,
 		private readonly ttlConfig: JwtTokenTtlConfig
 	) {}
 
@@ -115,7 +121,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @param payload User data to encode in token
 	 * @returns Signed JWT token string
 	 */
-	createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti">): string {
+	createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti" | "iat">): string {
 		const jti = randomUUID();
 		return this.jwtProvider.sign(
 			{
@@ -135,7 +141,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @returns Signed JWT token string
 	 */
 	createRefreshToken(
-		payload: Omit<RefreshTokenPayload, "type" | "jti" | "exp">
+		payload: Omit<RefreshTokenPayload, "type" | "jti" | "iat" | "exp">
 	): string {
 		const jti = randomUUID();
 		return this.jwtProvider.sign(
@@ -168,6 +174,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 			throw new RevokedTokenError("Token has been revoked");
 		}
 
+		await this.assertIssuedAfterTokenValidAfter(payload.id, payload.iat);
 		return payload;
 	}
 
@@ -189,7 +196,23 @@ export class JwtTokenService implements AuthSessionTokenService {
 			throw new RevokedTokenError("Refresh token has been revoked");
 		}
 
+		await this.assertIssuedAfterTokenValidAfter(payload.id, payload.iat);
 		return payload;
+	}
+
+	private async assertIssuedAfterTokenValidAfter(
+		userId: string,
+		issuedAtSeconds: number
+	): Promise<void> {
+		const tokenValidAfter = await this.userSessionRepository.getTokenValidAfter(userId);
+		if (!tokenValidAfter) {
+			return;
+		}
+
+		const issuedAtMs = issuedAtSeconds * 1000;
+		if (issuedAtMs < tokenValidAfter.getTime()) {
+			throw new RevokedTokenError("Token has been invalidated by password change");
+		}
 	}
 
 	getRefreshTokenExpiresAt(payload: RefreshTokenPayload): Date {
@@ -205,11 +228,4 @@ export class JwtTokenService implements AuthSessionTokenService {
 		await this.tokenRevocationRepository.revoke(jti, userId, expiresAt);
 	}
 
-	/**
-	 * Verify access token (old method name for backward compatibility during transition)
-	 * @deprecated Use verifyAccessToken instead
-	 */
-	verifyToken(token: string): Promise<AccessTokenPayload> {
-		return this.verifyAccessToken(token);
-	}
 }

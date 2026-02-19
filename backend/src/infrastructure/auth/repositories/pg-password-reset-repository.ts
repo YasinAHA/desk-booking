@@ -94,7 +94,7 @@ export class PgPasswordResetRepository implements PasswordResetRepository {
 		}
 
 		await this.db.query(
-			"update users set password_hash = $1, updated_at = now() " +
+			"update users set password_hash = $1, token_valid_after = now(), updated_at = now() " +
 				"where id = $2",
 			[
 				passwordHashToString(passwordHash),
