@@ -60,7 +60,7 @@ export class PgDeskRepository implements DeskRepository {
 		const result = await this.db.query(
 			"select d.id, d.office_id, d.code, d.name, d.status, " +
 				"(r.id is not null) as is_reserved, " +
-				"(r.user_id = $2) as is_mine, " +
+				"coalesce((r.user_id = $2), false) as is_mine, " +
 				"r.id as reservation_id, " +
 				"case when r.user_id is null then null else concat_ws(' ', u.first_name, u.last_name, u.second_last_name) end as occupant_name " +
 				"from desks d " +

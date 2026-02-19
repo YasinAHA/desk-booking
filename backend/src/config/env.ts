@@ -25,6 +25,7 @@ const envSchema = z.object({
         .string()
         .default("Desk Booking <no-reply@camerfirma.com>"),
     APP_BASE_URL: z.string().url().default("http://localhost:3001"),
+    FRONTEND_BASE_URL: z.string().url().default("http://localhost:5500"),
     CORS_ORIGINS: z.string().default(""),
     DB_SSL: z.preprocess(
         value => {

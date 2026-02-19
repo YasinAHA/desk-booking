@@ -126,7 +126,10 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [ ] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
 - [ ] Documentar payloads/respuestas en `docs/API.md`.
 - [x] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
-
+- [x] Flujo producción reset password sin copia manual de token (autocaptura en frontend desde URL).
+- [x] Mover token de `query string` a `URL fragment` (`#token=`) para reducir exposición en logs/intermediarios.
+- [x] Mantener formulario de pegado manual de token solo como fallback de desarrollo/soporte.
+ 
 ### Validación
 - [x] Tests unitarios de handlers (casos felices y errores de seguridad).
 - [x] Tests de integración HTTP para tokens inválidos/expirados/reutilizados.

@@ -76,7 +76,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		passwordResetRepoFactory,
 		emailOutbox,
 		confirmationBaseUrl: env.APP_BASE_URL,
-		passwordResetBaseUrl: env.APP_BASE_URL,
+		passwordResetBaseUrl: env.FRONTEND_BASE_URL,
 	};
 
 	return {

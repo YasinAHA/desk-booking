@@ -100,6 +100,17 @@ h1 {
 	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
+.card hr {
+	border: 0;
+	border-top: 1px solid var(--border);
+	margin: 16px 0;
+}
+
+.card h3 {
+	margin: 4px 0 0;
+	font-size: 16px;
+}
+
 .form {
 	display: grid;
 	gap: 12px;
@@ -109,6 +120,10 @@ h1 {
 	display: flex;
 	gap: 8px;
 	margin-bottom: 12px;
+}
+
+.tabs-secondary {
+	margin-top: 10px;
 }
 
 .tab {
@@ -169,6 +184,17 @@ input {
 	background: transparent;
 	border: 1px solid var(--accent);
 	color: var(--accent);
+}
+
+.btn-link {
+	background: transparent;
+	border: 0;
+	padding: 0;
+	text-align: left;
+	color: var(--accent);
+	font-size: 12px;
+	cursor: pointer;
+	text-decoration: underline;
 }
 
 .grid {

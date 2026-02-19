@@ -89,6 +89,7 @@ test("ForgotPasswordHandler.execute returns OK for unknown user (anti-enumeratio
 test("ForgotPasswordHandler.execute creates reset and enqueues email for existing user", async () => {
 	let created = false;
 	let enqueued = false;
+	let emailBody = "";
 	const user = new User(
 		createUserId("user-1"),
 		createEmail("user@camerfirma.com"),
@@ -108,6 +109,7 @@ test("ForgotPasswordHandler.execute creates reset and enqueues email for existin
 	const emailOutbox: EmailOutbox = {
 		enqueue: async message => {
 			enqueued = true;
+			emailBody = message.body;
 			assert.equal(message.type, "password_reset");
 			assert.equal(message.to, "user@camerfirma.com");
 		},
@@ -121,4 +123,6 @@ test("ForgotPasswordHandler.execute creates reset and enqueues email for existin
 	assert.deepEqual(result, { status: "OK" });
 	assert.equal(created, true);
 	assert.equal(enqueued, true);
+	assert.match(emailBody, /#token=raw-token/);
+	assert.doesNotMatch(emailBody, /\?token=/);
 });

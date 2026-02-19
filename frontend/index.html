@@ -24,7 +24,7 @@
 			<header class="header">
 				<div>
 					<h1>Desk Booking</h1>
-					<p class="subtitle">Frontend minimo para v0.5.0</p>
+					<p class="subtitle">Frontend mínimo para evolución v0.7.x</p>
 				</div>
 				<button id="logoutBtn" class="btn btn-ghost" disabled>Logout</button>
 			</header>
@@ -67,7 +67,12 @@
 					</label>
 					<label>
 						Password
-						<input type="password" id="registerPassword" required placeholder="Mín 12 caracteres con mayús, dígito, carácter especial" />
+						<input
+							type="password"
+							id="registerPassword"
+							required
+							placeholder="Mín. 12 caracteres con mayús., dígito y carácter especial"
+						/>
 						<small id="passwordRequirements" class="password-requirements">
 							<div>✗ Mínimo 12 caracteres</div>
 							<div>✗ Al menos 1 mayúscula</div>
@@ -77,6 +82,51 @@
 						</small>
 					</label>
 					<button type="submit" class="btn">Registrarse</button>
+				</form>
+
+				<hr />
+				<h3>Recuperación de contraseña</h3>
+				<div class="tabs tabs-secondary">
+					<button id="tabForgot" class="tab active" type="button">Olvidé contraseña</button>
+					<button id="tabReset" class="tab" type="button">Tengo token</button>
+				</div>
+
+				<form id="forgotPasswordForm" class="form" data-panel="forgot">
+					<label>
+						Email
+						<input type="email" id="forgotEmailInput" required placeholder="user@company.com" />
+					</label>
+					<button type="submit" class="btn btn-ghost">Enviar enlace de recuperación</button>
+				</form>
+
+				<form id="resetPasswordForm" class="form hidden" data-panel="reset">
+					<label id="resetTokenLabel">
+						Token
+						<input type="text" id="resetTokenInput" required placeholder="Token recibido por email" />
+					</label>
+					<button id="toggleManualTokenBtn" class="btn-link hidden" type="button">
+						Introducir token manualmente
+					</button>
+					<label>
+						Nueva contraseña
+						<input type="password" id="resetPasswordInput" required placeholder="Nueva contraseña segura" />
+					</label>
+					<button type="submit" class="btn btn-ghost">Restablecer contraseña</button>
+				</form>
+			</section>
+
+			<section class="card hidden" id="changePasswordSection">
+				<h2>Seguridad de cuenta</h2>
+				<form id="changePasswordForm" class="form">
+					<label>
+						Contraseña actual
+						<input type="password" id="currentPasswordInput" required placeholder="Tu contraseña actual" />
+					</label>
+					<label>
+						Nueva contraseña
+						<input type="password" id="newPasswordInput" required placeholder="Nueva contraseña segura" />
+					</label>
+					<button type="submit" class="btn btn-ghost">Actualizar contraseña</button>
 				</form>
 			</section>
 

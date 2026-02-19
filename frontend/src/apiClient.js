@@ -26,6 +26,8 @@ function shouldSkipAutoRefresh(path) {
 		path === "/auth/login" ||
 		path === "/auth/register" ||
 		path === "/auth/verify" ||
+		path === "/auth/forgot-password" ||
+		path === "/auth/reset-password" ||
 		path === "/auth/refresh"
 	);
 }
@@ -132,6 +134,31 @@ export async function register(email, password, firstName, lastName, secondLastN
 			first_name: firstName,
 			last_name: lastName,
 			second_last_name: secondLastName || undefined,
+		}),
+	});
+}
+
+export async function forgotPassword(email) {
+	return request("/auth/forgot-password", {
+		method: "POST",
+		body: JSON.stringify({ email }),
+	});
+}
+
+export async function resetPassword(token, password) {
+	return request("/auth/reset-password", {
+		method: "POST",
+		body: JSON.stringify({ token, password }),
+	});
+}
+
+export async function changePassword(currentPassword, newPassword, token) {
+	return request("/auth/change-password", {
+		method: "POST",
+		headers: authHeaders(token),
+		body: JSON.stringify({
+			current_password: currentPassword,
+			new_password: newPassword,
 		}),
 	});
 }
