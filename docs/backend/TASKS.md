@@ -82,6 +82,12 @@ Objetivo: cerrar la capa HTTP sin cambiar contratos funcionales, mejorando mante
 
 Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, anti-enumeración y UX consistente.
 
+### Hardening previo (prioridad alta)
+- [ ] Implementar refresh token rotation real en `POST /auth/refresh`:
+- [ ] Revocar el refresh token usado (`jti`) en `token_revocation`.
+- [ ] Emitir nuevo `accessToken` y nuevo `refreshToken` en cada refresh exitoso.
+- [ ] Ajustar tests unitarios/integración de auth para cubrir rotación y revocación.
+
 ### Alcance funcional
 - [ ] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
 - [ ] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
