@@ -304,3 +304,237 @@ test("POST /auth/refresh rejects reused revoked refresh token", async () => {
 
 	await app.close();
 });
+
+test("POST /auth/forgot-password returns generic OK and enqueues reset for existing user", async () => {
+	const hash = await argon2.hash("123456");
+	let resetCreated = false;
+	let emailQueued = false;
+	const app = await buildTestApp(async text => {
+		if (text.includes("from users where email = $1")) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: hash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+
+		if (text.includes("insert into password_resets")) {
+			resetCreated = true;
+			return { rows: [], rowCount: 1 };
+		}
+
+		if (text.includes("INSERT INTO email_outbox")) {
+			emailQueued = true;
+			return { rows: [], rowCount: 1 };
+		}
+
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/forgot-password",
+		payload: { email: "admin@camerfirma.com" },
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.equal(resetCreated, true);
+	assert.equal(emailQueued, true);
+	await app.close();
+});
+
+test("POST /auth/forgot-password returns generic OK for unknown user", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/forgot-password",
+		payload: { email: "unknown@camerfirma.com" },
+	});
+
+	assert.equal(res.statusCode, 200);
+	await app.close();
+});
+
+test("POST /auth/reset-password returns 200 for valid token", async () => {
+	let passwordUpdated = false;
+	const app = await buildTestApp(async text => {
+		if (text.includes("from password_resets")) {
+			return {
+				rows: [
+					{
+						id: "reset-1",
+						user_id: "user-1",
+						expires_at: "2099-01-01T00:00:00.000Z",
+						consumed_at: null,
+					},
+				],
+			};
+		}
+		if (text.includes("update password_resets set consumed_at = now()")) {
+			return { rows: [{ user_id: "user-1" }], rowCount: 1 };
+		}
+		if (text.includes("update users set password_hash = $1")) {
+			passwordUpdated = true;
+			return { rows: [], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/reset-password",
+		payload: {
+			token: "raw-token",
+			password: "ValidPass123!",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.equal(passwordUpdated, true);
+	await app.close();
+});
+
+test("POST /auth/reset-password returns INVALID_TOKEN when token does not exist", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("from password_resets")) {
+			return { rows: [] };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/reset-password",
+		payload: {
+			token: "missing-token",
+			password: "ValidPass123!",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	const body = getJsonRecord(res);
+	assert.equal(getRequiredString(body, "code"), "INVALID_TOKEN");
+	await app.close();
+});
+
+test("POST /auth/reset-password returns EXPIRED_TOKEN for expired reset token", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("from password_resets")) {
+			return {
+				rows: [
+					{
+						id: "reset-1",
+						user_id: "user-1",
+						expires_at: "2020-01-01T00:00:00.000Z",
+						consumed_at: null,
+					},
+				],
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/reset-password",
+		payload: {
+			token: "expired-token",
+			password: "ValidPass123!",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	const body = getJsonRecord(res);
+	assert.equal(getRequiredString(body, "code"), "EXPIRED_TOKEN");
+	await app.close();
+});
+
+test("POST /auth/reset-password returns TOKEN_ALREADY_USED when token was consumed", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("from password_resets")) {
+			return {
+				rows: [
+					{
+						id: "reset-1",
+						user_id: "user-1",
+						expires_at: "2099-01-01T00:00:00.000Z",
+						consumed_at: "2026-02-01T00:00:00.000Z",
+					},
+				],
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/reset-password",
+		payload: {
+			token: "used-token",
+			password: "ValidPass123!",
+		},
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = getJsonRecord(res);
+	assert.equal(getRequiredString(body, "code"), "TOKEN_ALREADY_USED");
+	await app.close();
+});
+
+test("POST /auth/change-password returns 200 with valid current password", async () => {
+	const oldHash = await argon2.hash("123456");
+	let updated = false;
+	const app = await buildTestApp(async text => {
+		if (text.includes("from users where id = $1")) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: oldHash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+		if (text.includes("update users set password_hash = $1")) {
+			updated = true;
+			return { rows: [], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const token = app.jwt.sign({
+		id: "user-1",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "User",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/change-password",
+		headers: { Authorization: `Bearer ${token}` },
+		payload: {
+			current_password: "123456",
+			new_password: "ValidPass123!",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.equal(updated, true);
+	await app.close();
+});

@@ -62,4 +62,22 @@ test("PgUserRepository.findAuthData includes passwordHash", async () => {
 	assert.deepEqual(result?.passwordHash, createPasswordHash("hash"));
 });
 
+test("PgUserRepository.updatePassword updates hash by user id", async () => {
+	let receivedParams: unknown[] | undefined;
+	const repo = new PgUserRepository({
+		query: async (text, params) => {
+			assert.ok(text.includes("update users set password_hash = $1"));
+			receivedParams = params;
+			return { rows: [], rowCount: 1 };
+		},
+	});
+
+	await repo.updatePassword(
+		createUserId("user-1"),
+		createPasswordHash("hash:new-pass")
+	);
+
+	assert.deepEqual(receivedParams, ["hash:new-pass", "user-1"]);
+});
+
 

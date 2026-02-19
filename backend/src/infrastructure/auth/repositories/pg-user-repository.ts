@@ -169,6 +169,17 @@ export class PgUserRepository implements UserRepository {
 		);
 	}
 
+	async updatePassword(id: UserId, passwordHash: PasswordHash): Promise<void> {
+		await this.db.query(
+			"update users set password_hash = $1, updated_at = now() " +
+				"where id = $2",
+			[
+				passwordHashToString(passwordHash),
+				userIdToString(id),
+			]
+		);
+	}
+
 	async confirmEmail(id: UserId): Promise<boolean> {
 		const result = await this.db.query(
 			"update users set confirmed_at = now() " +

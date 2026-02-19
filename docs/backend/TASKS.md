@@ -104,33 +104,33 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [x] Ajustar tests unitarios/integración de auth para cubrir rotación y revocación.
 
 ### Alcance funcional
-- [ ] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
-- [ ] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
-- [ ] Añadir `POST /auth/change-password` para usuario autenticado (requiere contraseña actual).
+- [x] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
+- [x] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
+- [x] Añadir `POST /auth/change-password` para usuario autenticado (requiere contraseña actual).
 - [ ] Invalidar sesiones/tokens activas tras `reset-password` y `change-password`.
 
 ### Seguridad y anti-enumeración
-- [ ] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.
+- [x] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.
 - [ ] Aplicar rate limit por IP y por email (o hash de email) en endpoints de recuperación.
-- [ ] Evitar reutilización de token y validar expiración estricta.
+- [x] Evitar reutilización de token y validar expiración estricta.
 - [ ] Registrar eventos de seguridad (`password_reset_requested`, `password_reset_completed`, intentos inválidos).
 - [ ] Evitar filtrado por timing apreciable entre casos válidos e inválidos cuando aplique.
 
 ### Arquitectura y datos
-- [ ] Definir puertos y handlers CQRS en `application/auth` para recuperación/cambio de contraseña.
-- [ ] Crear repositorio/tabla de reset tokens hasheados (nunca token en claro persistido).
-- [ ] Mantener reglas de dominio y errores de aplicación sin depender de traducción de errores SQL para lógica principal.
-- [ ] Añadir migración dedicada para reset tokens y política de limpieza/expiración.
+- [x] Definir puertos y handlers CQRS en `application/auth` para recuperación/cambio de contraseña.
+- [x] Crear repositorio/tabla de reset tokens hasheados (nunca token en claro persistido).
+- [x] Mantener reglas de dominio y errores de aplicación sin depender de traducción de errores SQL para lógica principal.
+- [x] Añadir migración dedicada para reset tokens y política de limpieza/expiración.
 
 ### UX y contrato API
 - [ ] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
 - [ ] Documentar payloads/respuestas en `docs/API.md`.
-- [ ] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
+- [x] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
 
 ### Validación
-- [ ] Tests unitarios de handlers (casos felices y errores de seguridad).
-- [ ] Tests de integración HTTP para tokens inválidos/expirados/reutilizados.
-- [ ] `lint`, `lint:types`, `build` y `test` en verde.
+- [x] Tests unitarios de handlers (casos felices y errores de seguridad).
+- [x] Tests de integración HTTP para tokens inválidos/expirados/reutilizados.
+- [x] `lint`, `lint:types`, `build` y `test` en verde.
 
 
 

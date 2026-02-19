@@ -3,7 +3,8 @@
 export class DomainAuthPolicy implements AuthPolicy {
 	constructor(
 		private readonly allowedDomains: string[],
-		private readonly emailVerificationTtlMs: number
+		private readonly emailVerificationTtlMs: number,
+		private readonly passwordResetTtlMs: number
 	) {}
 
 	isAllowedEmail(email: string): boolean {
@@ -13,6 +14,10 @@ export class DomainAuthPolicy implements AuthPolicy {
 
 	getEmailVerificationTtlMs(): number {
 		return this.emailVerificationTtlMs;
+	}
+
+	getPasswordResetTtlMs(): number {
+		return this.passwordResetTtlMs;
 	}
 }
 

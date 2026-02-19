@@ -2,6 +2,7 @@
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
+import type { PasswordResetRepository, ResetPasswordResult } from "@application/auth/ports/password-reset-repository.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
 import type {
 	TransactionManager,
@@ -27,10 +28,21 @@ export type RegisterResult =
 	| { status: "ALREADY_CONFIRMED" }
 	| { status: "DOMAIN_NOT_ALLOWED" };
 
+export type ForgotPasswordResult = { status: "OK" };
+
+export type ChangePasswordResult =
+	| { status: "OK" }
+	| { status: "INVALID_CREDENTIALS" };
+
+export type ResetPasswordHandlerResult = ResetPasswordResult;
+
 export type UserRepoFactory = (tx: TransactionalContext) => UserRepository;
 export type EmailVerificationRepoFactory = (
 	tx: TransactionalContext
 ) => EmailVerificationRepository;
+export type PasswordResetRepoFactory = (
+	tx: TransactionalContext
+) => PasswordResetRepository;
 
 export type AuthDependencies = {
 	authPolicy: AuthPolicy;
@@ -40,6 +52,8 @@ export type AuthDependencies = {
 	userRepo: UserRepository;
 	userRepoFactory: UserRepoFactory;
 	emailVerificationRepoFactory: EmailVerificationRepoFactory;
+	passwordResetRepoFactory: PasswordResetRepoFactory;
 	emailOutbox: EmailOutbox;
 	confirmationBaseUrl: string;
+	passwordResetBaseUrl: string;
 };

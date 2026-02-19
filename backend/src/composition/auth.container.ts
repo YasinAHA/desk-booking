@@ -1,23 +1,30 @@
-﻿import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
+import { ChangePasswordHandler } from "@application/auth/commands/change-password.handler.js";
 import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
+import { ForgotPasswordHandler } from "@application/auth/commands/forgot-password.handler.js";
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
+import { ResetPasswordHandler } from "@application/auth/commands/reset-password.handler.js";
+import { LoginHandler } from "@application/auth/queries/login.handler.js";
 import {
 	getTransactionalDbClient,
 	type TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
-import { LoginHandler } from "@application/auth/queries/login.handler.js";
-import { AUTH_EMAIL_VERIFICATION_TTL_MS } from "@config/constants.js";
+import {
+	AUTH_EMAIL_VERIFICATION_TTL_MS,
+	AUTH_PASSWORD_RESET_TTL_MS,
+} from "@config/constants.js";
 import { env } from "@config/env.js";
-import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
 import { DomainAuthPolicy } from "@infrastructure/auth/policies/domain-auth-policy.js";
 import { PgEmailOutbox } from "@infrastructure/auth/repositories/pg-email-outbox.js";
 import { PgEmailVerificationRepository } from "@infrastructure/auth/repositories/pg-email-verification-repository.js";
+import { PgPasswordResetRepository } from "@infrastructure/auth/repositories/pg-password-reset-repository.js";
 import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/pg-token-revocation-repository.js";
 import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
 import { Argon2PasswordHasher } from "@infrastructure/auth/security/argon2-password-hasher.js";
 import { Sha256TokenService } from "@infrastructure/auth/security/sha256-token-service.js";
+import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
 import { FastifyJwtProvider } from "@interfaces/http/auth/adapters/fastify-jwt-provider.js";
 import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 
@@ -35,6 +42,9 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	loginHandler: LoginHandler;
 	registerHandler: RegisterHandler;
 	confirmEmailHandler: ConfirmEmailHandler;
+	forgotPasswordHandler: ForgotPasswordHandler;
+	resetPasswordHandler: ResetPasswordHandler;
+	changePasswordHandler: ChangePasswordHandler;
 } {
 	const dbApp = app as AppWithDb;
 	const passwordHasher = new Argon2PasswordHasher();
@@ -42,6 +52,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	const authPolicy = new DomainAuthPolicy(
 		env.ALLOWED_EMAIL_DOMAINS,
 		AUTH_EMAIL_VERIFICATION_TTL_MS,
+		AUTH_PASSWORD_RESET_TTL_MS
 	);
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
@@ -51,6 +62,8 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		new PgUserRepository(getTransactionalDbClient(tx));
 	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
 		new PgEmailVerificationRepository(getTransactionalDbClient(tx));
+	const passwordResetRepoFactory = (tx: TransactionalContext) =>
+		new PgPasswordResetRepository(getTransactionalDbClient(tx));
 
 	const deps = {
 		authPolicy,
@@ -60,14 +73,19 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		userRepo,
 		userRepoFactory,
 		emailVerificationRepoFactory,
+		passwordResetRepoFactory,
 		emailOutbox,
 		confirmationBaseUrl: env.APP_BASE_URL,
+		passwordResetBaseUrl: env.APP_BASE_URL,
 	};
 
 	return {
 		loginHandler: new LoginHandler(deps),
 		registerHandler: new RegisterHandler(deps),
 		confirmEmailHandler: new ConfirmEmailHandler(deps),
+		forgotPasswordHandler: new ForgotPasswordHandler(deps),
+		resetPasswordHandler: new ResetPasswordHandler(deps),
+		changePasswordHandler: new ChangePasswordHandler(deps),
 	};
 }
 

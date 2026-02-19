@@ -1,12 +1,21 @@
 import type { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import type { ConfirmEmailCommand } from "@application/auth/commands/confirm-email.command.js";
+import type { ForgotPasswordHandler } from "@application/auth/commands/forgot-password.handler.js";
+import type { ForgotPasswordCommand } from "@application/auth/commands/forgot-password.command.js";
 import type { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import type { RegisterCommand } from "@application/auth/commands/register.command.js";
+import type { ResetPasswordHandler } from "@application/auth/commands/reset-password.handler.js";
+import type { ResetPasswordCommand } from "@application/auth/commands/reset-password.command.js";
+import type { ChangePasswordHandler } from "@application/auth/commands/change-password.handler.js";
+import type { ChangePasswordCommand } from "@application/auth/commands/change-password.command.js";
 import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import {
+	AUTH_CHANGE_PASSWORD_RATE_LIMIT,
+	AUTH_FORGOT_PASSWORD_RATE_LIMIT,
 	AUTH_LOGIN_RATE_LIMIT,
+	AUTH_RESET_PASSWORD_RATE_LIMIT,
 	AUTH_REFRESH_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
@@ -15,13 +24,23 @@ import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
-import { loginSchema, registerSchema, verifySchema } from "./auth.schemas.js";
+import {
+	changePasswordSchema,
+	forgotPasswordSchema,
+	loginSchema,
+	registerSchema,
+	resetPasswordSchema,
+	verifySchema,
+} from "./auth.schemas.js";
 
 export class AuthController {
 	constructor(
 		private readonly loginHandler: LoginHandler,
 		private readonly registerHandler: RegisterHandler,
 		private readonly confirmEmailHandler: ConfirmEmailHandler,
+		private readonly forgotPasswordHandler: ForgotPasswordHandler,
+		private readonly resetPasswordHandler: ResetPasswordHandler,
+		private readonly changePasswordHandler: ChangePasswordHandler,
 		private readonly authSessionLifecycleService: AuthSessionLifecycleService
 	) {}
 
@@ -180,5 +199,82 @@ export class AuthController {
 		} catch {
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");
 		}
+	}
+
+	async forgotPassword(req: FastifyRequest, reply: FastifyReply) {
+		if (reply.rateLimit) {
+			reply.rateLimit(AUTH_FORGOT_PASSWORD_RATE_LIMIT);
+		}
+
+		const parse = forgotPasswordSchema.safeParse(req.body);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+
+		const command: ForgotPasswordCommand = {
+			email: parse.data.email.toLowerCase(),
+		};
+		await this.forgotPasswordHandler.execute(command);
+		return reply.send({ ok: true });
+	}
+
+	async resetPassword(req: FastifyRequest, reply: FastifyReply) {
+		if (reply.rateLimit) {
+			reply.rateLimit(AUTH_RESET_PASSWORD_RATE_LIMIT);
+		}
+
+		const parse = resetPasswordSchema.safeParse(req.body);
+		if (!parse.success) {
+			const passwordError = parse.error.issues.find(issue => issue.path.includes("password"));
+			if (passwordError) {
+				throwHttpError(400, "WEAK_PASSWORD", passwordError.message);
+			}
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+
+		const command: ResetPasswordCommand = {
+			token: parse.data.token,
+			password: parse.data.password,
+		};
+		const result = await this.resetPasswordHandler.execute(command);
+
+		if (result === "invalid_token") {
+			throwHttpError(400, "INVALID_TOKEN", "Invalid token");
+		}
+		if (result === "expired") {
+			throwHttpError(400, "EXPIRED_TOKEN", "Expired token");
+		}
+		if (result === "already_used") {
+			throwHttpError(409, "TOKEN_ALREADY_USED", "Token already used");
+		}
+
+		return reply.send({ ok: true });
+	}
+
+	async changePassword(req: FastifyRequest, reply: FastifyReply) {
+		if (reply.rateLimit) {
+			reply.rateLimit(AUTH_CHANGE_PASSWORD_RATE_LIMIT);
+		}
+
+		const parse = changePasswordSchema.safeParse(req.body);
+		if (!parse.success) {
+			const passwordError = parse.error.issues.find(issue => issue.path.includes("new_password"));
+			if (passwordError) {
+				throwHttpError(400, "WEAK_PASSWORD", passwordError.message);
+			}
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+
+		const command: ChangePasswordCommand = {
+			userId: req.user.id,
+			currentPassword: parse.data.current_password,
+			newPassword: parse.data.new_password,
+		};
+		const result = await this.changePasswordHandler.execute(command);
+		if (result.status !== "OK") {
+			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
+		}
+
+		return reply.send({ ok: true });
 	}
 }
