@@ -10,11 +10,38 @@ process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 const { reservationsRoutes } = await import("./reservations.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+
+type TransactionClient = {
+	query: (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+	release: () => void;
+};
+
+type MockPool = {
+	query: DbQuery;
+	connect: () => Promise<TransactionClient>;
+};
 
 async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });
-	app.decorate("db", { query });
+	const mockPool: MockPool = {
+		query: async (text: string, params?: unknown[]) => query(text, params),
+		connect: async () => ({
+			query: async (text: string, params?: unknown[]) => {
+				if (text === "BEGIN" || text === "COMMIT" || text === "ROLLBACK") {
+					return { rows: [], rowCount: 0 };
+				}
+				return query(text, params);
+			},
+			release: () => {},
+		}),
+	};
+	app.decorate("db", { query, pool: mockPool });
 	await app.register(registerAuthPlugin);
 	await app.register(reservationsRoutes, { prefix: "/reservations" });
 	await app.ready();
@@ -101,12 +128,31 @@ test("POST /reservations returns user/day-specific conflict message", async () =
 	await app.close();
 });
 
+test("POST /reservations returns DATE_INVALID for invalid calendar date", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-31",
+			desk_id: "11111111-1111-1111-1111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "DATE_INVALID");
+	await app.close();
+});
+
 test("DELETE /reservations/:id returns 404 when not found", async () => {
 	const app = await buildTestApp(async text => {
 		if (text.startsWith("select id, reservation_date")) {
 			return { rows: [] };
 		}
-		return { rowCount: 0 };
+		return { rows: [], rowCount: 0 };
 	});
 
 	const res = await app.inject({
@@ -124,7 +170,7 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 		if (text.startsWith("select id, reservation_date")) {
 			return { rows: [{ reservation_date: "2020-01-01", id: "res-1" }] };
 		}
-		return { rowCount: 0 };
+		return { rows: [], rowCount: 0 };
 	});
 
 	const res = await app.inject({

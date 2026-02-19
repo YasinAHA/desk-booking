@@ -5,6 +5,7 @@ Guía operativa para cambios de backend.
 ## Fuentes de verdad (orden de prioridad)
 - [TASKS.md](TASKS.md)
 - [ARCHITECTURE-BACKEND.md](ARCHITECTURE-BACKEND.md)
+- [../architecture-audit/ARCHITECTURE-AUDIT-v0.X.md](../architecture-audit/ARCHITECTURE-AUDIT-v0.X.md)
 - [../DECISIONS.md](../DECISIONS.md)
 - [../../CHANGELOG.md](../../CHANGELOG.md)
 - Histórico v0.6.x: [archive/ARCHITECTURE-V0.6-PLAN.md](archive/ARCHITECTURE-V0.6-PLAN.md)

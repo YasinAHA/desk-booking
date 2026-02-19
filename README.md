@@ -1,16 +1,17 @@
 # Desk Booking Platform
 
-Plataforma interna de reserva de escritorios para entorno corporativo. El proyecto forma parte de un TFM y evoluciona con foco en arquitectura mantenible, seguridad y operacion real.
+Plataforma interna de reserva de escritorios para entorno corporativo. El proyecto forma parte de un TFM y evoluciona con foco en arquitectura mantenible, seguridad y operación real.
 
-Estado del repo: `v0.5.x` (consolidacion tecnica y refactor por capas).
+Estado del repo: `v0.7.0` en cierre técnico sobre rama `next` (hardening de auth/sesiones + recuperación de contraseña).
+Validación backend actual: `lint`, `lint:types`, `build` y `test` en verde (`96/96`).
 
 ## Objetivo
 
 - Backend desacoplado (Clean Architecture + SOLID).
 - Persistencia en PostgreSQL con migraciones y seeds por entorno.
-- Autenticacion JWT con access/refresh token.
-- Confirmacion de email con patron outbox + worker asincrono.
-- Base de seguridad y observabilidad para endurecimiento en `v0.6.0+`.
+- Autenticación JWT con access/refresh token.
+- Confirmación de email y recuperación de contraseña con patrón outbox.
+- Base de seguridad y observabilidad para evolución `v0.8.0+`.
 
 ## Estructura
 
@@ -37,9 +38,9 @@ desk-booking/
 - npm
 - Docker + Docker Compose
 
-## Arranque rapido
+## Arranque rápido
 
-### Opcion A: local mixto (DB en Docker, API desde host)
+### Opción A: local mixto (DB en Docker, API desde host)
 
 1. Instalar dependencias:
 
@@ -56,7 +57,14 @@ npm run dev:db
 3. Configurar entorno:
 
 - Copiar `backend/.env.example` a `backend/.env`.
-- Ajustar como minimo: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ALLOWED_EMAIL_DOMAINS`, `CORS_ORIGINS`.
+- Ajustar como mínimo:
+  - `DATABASE_URL`
+  - `JWT_SECRET`
+  - `JWT_REFRESH_SECRET`
+  - `ALLOWED_EMAIL_DOMAINS`
+  - `CORS_ORIGINS`
+  - `APP_BASE_URL`
+  - `FRONTEND_BASE_URL`
 
 4. Migrar y poblar datos:
 
@@ -74,16 +82,16 @@ npm run dev:api
 6. Verificar:
 
 - Healthcheck: `GET http://localhost:3001/health`
-- Metricas: `GET http://localhost:3001/metrics`
+- Métricas: `GET http://localhost:3001/metrics`
 - Mailpit UI: `http://localhost:8025`
 
-### Opcion B: Docker completo
+### Opción B: Docker completo
 
-`npm run dev:db` tambien levanta `backend` y `outbox-worker` en contenedores segun `docker/docker-compose.yml`.
+`npm run dev:db` también levanta `backend` y `outbox-worker` en contenedores según `docker/docker-compose.yml`.
 
-## Scripts utiles
+## Scripts útiles
 
-En raiz:
+En raíz:
 
 - `npm run dev:db`
 - `npm run dev:api`
@@ -108,6 +116,9 @@ En backend:
 - `POST /auth/verify`
 - `POST /auth/logout`
 - `GET /auth/confirm?token=...`
+- `POST /auth/forgot-password`
+- `POST /auth/reset-password`
+- `POST /auth/change-password`
 - `GET /desks?date=YYYY-MM-DD`
 - `POST /reservations`
 - `DELETE /reservations/:id`
@@ -119,26 +130,24 @@ Contrato detallado: [docs/backend/API.md](docs/backend/API.md)
 
 ## Variables de entorno clave
 
-Ademas de las tipicas (`DATABASE_URL`, `JWT_SECRET`), el backend usa:
+Además de las típicas (`DATABASE_URL`, `JWT_SECRET`), el backend usa:
 
 - `HOST`, `PORT`, `DB_SSL`, `DB_POOL_MAX`
 - `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION`, `JWT_ISSUER`, `JWT_AUDIENCE`
 - `EMAIL_MODE`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
 - `OUTBOX_POLL_INTERVAL_MS`, `OUTBOX_BATCH_SIZE`, `OUTBOX_MAX_ATTEMPTS`, `OUTBOX_BACKOFF_BASE_MS`, `OUTBOX_BACKOFF_MAX_MS`
-- `APP_BASE_URL`, `CORS_ORIGINS`, `ALLOWED_EMAIL_DOMAINS`
+- `APP_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`, `ALLOWED_EMAIL_DOMAINS`
 
 Referencia completa: `backend/.env.example`
 
-## Documentacion principal
+## Documentación principal
 
 - Arquitectura (global): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Arquitectura backend: [docs/backend/ARCHITECTURE-BACKEND.md](docs/backend/ARCHITECTURE-BACKEND.md)
-- API: [docs/backend/API.md](docs/backend/API.md)
-- Seguridad: [docs/backend/SECURITY.md](docs/backend/SECURITY.md)
-- Tooling: [docs/backend/TOOLING.md](docs/backend/TOOLING.md)
-- Deployment: [docs/backend/DEPLOYMENT.md](docs/backend/DEPLOYMENT.md)
-- Tareas globales: [docs/TASKS.md](docs/TASKS.md)
-- Backlog global: [docs/BACKLOG.md](docs/BACKLOG.md)
+- API backend: [docs/backend/API.md](docs/backend/API.md)
+- Seguridad backend: [docs/backend/SECURITY.md](docs/backend/SECURITY.md)
+- Tooling backend: [docs/backend/TOOLING.md](docs/backend/TOOLING.md)
+- Deployment backend: [docs/backend/DEPLOYMENT.md](docs/backend/DEPLOYMENT.md)
 - Tareas backend: [docs/backend/TASKS.md](docs/backend/TASKS.md)
 - Backlog backend: [docs/backend/BACKLOG.md](docs/backend/BACKLOG.md)
 - Issues conocidos: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md)
@@ -150,3 +159,4 @@ Yassine Ait El Hadj Ahajtan
 ## Licencia
 
 MIT
+

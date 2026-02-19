@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.7.0] - 2026-02-19
+
+### Added
+- Password recovery flow: `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/change-password`.
+- Reset tokens storage via `password_resets` table and migration `005_password_resets.sql`.
+- Session invalidation after password reset/change using `users.token_valid_after` and migration `006_user_token_valid_after.sql`.
+- Recovery hardening:
+  - rate limit by IP and identifier hash (email/token),
+  - security audit logs for recovery/change-password events,
+  - minimum response time in forgot-password to reduce timing signal.
+- Frontend recovery UX:
+  - reset token autocapture from URL,
+  - token handling moved to URL fragment (`#token=`),
+  - URL cleanup after capture,
+  - manual token field kept as fallback.
+
+### Changed
+- Refresh token lifecycle hardened and aligned with active session invalidation rules.
+- `JwtTokenService` verification tightened with strict payload guards and token validity checks.
+- API documentation updated in `docs/backend/API.md` with current recovery contract and `429 TOO_MANY_REQUESTS`.
+- Backend tasks updated and v0.7.0 checklist functionally completed.
+
+### Fixed
+- `/desks` 500 regression caused by nullable `is_mine` SQL expression (`coalesce(..., false)`).
+- Password reset links now target frontend URL correctly (instead of backend route).
+
+### Tests
+- Backend quality gates validated:
+  - `npm -w backend run lint` OK
+  - `npm -w backend run lint:types` OK
+  - `npm -w backend run build` OK
+  - `npm -w backend run test` OK (`96/96`)
+
+### Notes
+- v0.7.0 closes the password recovery/session hardening block.
+- Next planning target: v0.8.0 scope definition.
+
+---
+
 ## [0.6.0] - 2026-02-18
 
 ### Changed

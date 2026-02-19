@@ -112,7 +112,56 @@ Response 200:
 	"refreshToken": "jwt_refresh"
 }
 ```
+Nota: en cada refresh exitoso se emite un **nuevo** `refreshToken` (rotation). El token de refresh usado queda revocado.
 Errores: 400, 401
+
+#### `POST /auth/forgot-password`
+Request:
+```json
+{
+	"email": "user@company.com"
+}
+```
+Response 200:
+```json
+{ "ok": true }
+```
+Nota: la respuesta es generica (misma salida exista o no exista la cuenta) para evitar enumeracion.
+Nota: aplica rate limit por IP y por identificador (hash de email).
+Errores: 400, 429 (`TOO_MANY_REQUESTS`)
+
+#### `POST /auth/reset-password`
+Request:
+```json
+{
+	"token": "reset_token",
+	"password": "NewStrongPassword123!"
+}
+```
+Response 200:
+```json
+{ "ok": true }
+```
+Nota: el token de recuperacion es de un solo uso y expira.
+Nota: aplica rate limit por IP y por identificador (hash de token).
+Errores: 400 (`INVALID_TOKEN`, `EXPIRED_TOKEN`, `WEAK_PASSWORD`), 409 (`TOKEN_ALREADY_USED`), 429 (`TOO_MANY_REQUESTS`)
+
+#### `POST /auth/change-password`
+Header:
+`Authorization: Bearer <access_token>`
+Request:
+```json
+{
+	"current_password": "CurrentPassword123!",
+	"new_password": "NewStrongPassword123!"
+}
+```
+Response 200:
+```json
+{ "ok": true }
+```
+Errores: 400 (`WEAK_PASSWORD`), 401 (`INVALID_CREDENTIALS`, `UNAUTHORIZED`)
+Nota: tras `reset-password` y `change-password` se invalidan sesiones/tokens activos previos.
 
 #### `POST /auth/logout`
 Response 204 (sin body)
@@ -160,7 +209,7 @@ Response 200:
 }
 ```
 Errores: 400, 401, 409
-> Nota: 400 incluye `DATE_IN_PAST` cuando la fecha es anterior a hoy.
+> Nota: 400 incluye `DATE_INVALID` (fecha inválida de calendario) y `DATE_IN_PAST` (fecha anterior a hoy).
 
 #### `DELETE /reservations/:id`
 Response 204 (sin body)

@@ -9,6 +9,10 @@ declare module "@fastify/jwt" {
             firstName: string;
             lastName: string;
             secondLastName: string | null;
+            jti?: string;
+            iat?: number;
+            exp?: number;
+            type?: "access" | "refresh";
         };
         user: {
             id: string;
@@ -23,7 +27,10 @@ declare module "@fastify/jwt" {
 declare module "fastify" {
     interface FastifyInstance {
         db: {
-            query: (text: string, params?: unknown[]) => Promise<any>;
+            query: (text: string, params?: unknown[]) => Promise<{
+                rows: unknown[];
+                rowCount?: number | null;
+            }>;
         };
         requireAuth: preHandlerHookHandler;
     }

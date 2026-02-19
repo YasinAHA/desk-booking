@@ -1,6 +1,11 @@
-﻿import type { EmailMessage, EmailOutbox } from "@application/auth/ports/email-outbox.js";
+import type { EmailMessage, EmailOutbox } from "@application/auth/ports/email-outbox.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbClient = {
 	query: DbQuery;
@@ -8,7 +13,7 @@ type DbClient = {
 
 /**
  * PostgreSQL implementation of EmailOutbox
- * 
+ *
  * Stores email messages in the database for asynchronous processing.
  * This provides transactional consistency, retryability, and auditability.
  */
@@ -23,4 +28,3 @@ export class PgEmailOutbox implements EmailOutbox {
 		);
 	}
 }
-

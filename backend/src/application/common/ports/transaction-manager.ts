@@ -5,8 +5,13 @@
  * infrastructure details (PoolClient, ORM transactions, etc.).
  */
 
+type TransactionQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
 type TransactionalDbClient = {
-	query: (text: string, params?: unknown[]) => Promise<any>;
+	query: (text: string, params?: unknown[]) => Promise<TransactionQueryResult>;
 };
 
 const transactionalContextSymbol: unique symbol = Symbol("TransactionalContext");

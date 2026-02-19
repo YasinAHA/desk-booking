@@ -28,6 +28,7 @@ function mockUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {
 			throw new Error("createUser not mocked");
 		},
 		updateCredentials: async () => {},
+		updatePassword: async () => {},
 		confirmEmail: async () => false,
 		...overrides,
 	};
@@ -67,14 +68,15 @@ function buildTokenService(): TokenService {
 }
 
 function buildAuthPolicy(overrides: Partial<AuthPolicy> = {}): AuthPolicy {
-	return {
+	const basePolicy: AuthPolicy = {
 		isAllowedEmail: email => {
 			const domain = email.split("@")[1]?.toLowerCase();
 			return domain === "camerfirma.com";
 		},
 		getEmailVerificationTtlMs: () => 60_000,
-		...overrides,
+		getPasswordResetTtlMs: () => 60_000,
 	};
+	return { ...basePolicy, ...overrides };
 }
 
 function buildRegisterHandler(

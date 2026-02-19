@@ -20,10 +20,11 @@ test("createReservationDate rejects date with slashes", () => {
 	);
 });
 
-test("createReservationDate accepts date with single digit month and day", () => {
-	const date = createReservationDate("2026-2-5");
-	// Value is normalized as-is (we could normalize to zero-padded if needed)
-	assert.equal(reservationDateToString(date), "2026-2-5");
+test("createReservationDate rejects date with single digit month/day", () => {
+	assert.throws(
+		() => createReservationDate("2026-2-5"),
+		InvalidReservationDateError
+	);
 });
 
 test("createReservationDate rejects non-date string", () => {

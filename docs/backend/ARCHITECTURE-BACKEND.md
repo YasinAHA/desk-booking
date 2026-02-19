@@ -24,7 +24,7 @@ Monorepo con backend propio y frontend ligero:
 
 ### Guardrails de arquitectura
 - `application` solo depende de `domain` y `ports`.
-- `usecases` no dependen de otros usecases.
+- `handlers`/servicios de `application` no dependen de `interfaces` ni de `infrastructure`.
 - Errores de negocio se modelan como tipos en `domain` y se traducen en `interfaces`.
 - Serialización/formatos se resuelven en `infrastructure`.
 - Constantes de negocio y límites compartidos en `src/config/constants.ts`.
@@ -76,5 +76,13 @@ Monorepo con backend propio y frontend ligero:
 - Rutas HTTP delgadas en `interfaces/http/`, con lógica en `application/<feature>`.
 - Entidades base en `domain/` para evolucionar reglas de negocio.
 - Refactor por capas y por feature completado en v0.6.x (detalle histórico en `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md`).
+- Seguimiento de deuda arquitectónica activa en `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` y aterrizado en `docs/backend/TASKS.md`.
+
+## Seguimiento de mejoras arquitectónicas
+- Cualquier mejora detectada durante implementación se registra primero en:
+  - `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` (hallazgos + estado).
+  - `docs/backend/TASKS.md` (si requiere ejecución en iteración activa).
+- Las mejoras cerradas se reflejan en este documento como estado consolidado de arquitectura backend.
+- Evitar tareas meta abiertas en `TASKS` sin aterrizar en hallazgos concretos.
 
 

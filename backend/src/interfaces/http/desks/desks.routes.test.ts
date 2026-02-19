@@ -10,7 +10,12 @@ process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 const { desksRoutes } = await import("./desks.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });

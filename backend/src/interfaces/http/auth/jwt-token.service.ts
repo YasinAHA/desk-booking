@@ -1,6 +1,7 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import type { AuthSessionTokenService } from "@application/auth/ports/auth-session-token-service.js";
 import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
-import { env } from "@config/env.js";
+import type { UserSessionRepository } from "@application/auth/ports/user-session-repository.js";
 import { JwtProvider } from "./ports/jwt-provider.js";
 
 /**
@@ -14,6 +15,7 @@ export interface AccessTokenPayload {
 	lastName: string;
 	secondLastName: string | null;
 	type: "access";
+	iat: number;
 }
 
 /**
@@ -27,9 +29,77 @@ export interface RefreshTokenPayload {
 	lastName: string;
 	secondLastName: string | null;
 	type: "refresh";
+	iat: number;
+	exp: number;
 }
 
 export type JwtPayload = AccessTokenPayload | RefreshTokenPayload;
+
+export interface JwtTokenTtlConfig {
+	accessTokenTtl: string | number;
+	refreshTokenTtl: string | number;
+}
+
+export class InvalidTokenError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "InvalidTokenError";
+	}
+}
+
+export class RevokedTokenError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "RevokedTokenError";
+	}
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
+function isStringOrNull(value: unknown): value is string | null {
+	return typeof value === "string" || value === null;
+}
+
+function isPositiveNumber(value: unknown): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function isAccessTokenPayload(payload: unknown): payload is AccessTokenPayload {
+	if (!isRecord(payload)) {
+		return false;
+	}
+
+	return (
+		typeof payload.id === "string" &&
+		typeof payload.email === "string" &&
+		typeof payload.firstName === "string" &&
+		typeof payload.lastName === "string" &&
+		isStringOrNull(payload.secondLastName) &&
+		typeof payload.jti === "string" &&
+		isPositiveNumber(payload.iat) &&
+		payload.type === "access"
+	);
+}
+
+function isRefreshTokenPayload(payload: unknown): payload is RefreshTokenPayload {
+	if (!isRecord(payload)) {
+		return false;
+	}
+
+	return (
+		typeof payload.id === "string" &&
+		typeof payload.email === "string" &&
+		typeof payload.firstName === "string" &&
+		typeof payload.lastName === "string" &&
+		isStringOrNull(payload.secondLastName) &&
+		typeof payload.jti === "string" &&
+		isPositiveNumber(payload.iat) &&
+		isPositiveNumber(payload.exp) &&
+		payload.type === "refresh"
+	);
+}
 
 /**
  * JwtTokenService: Encapsulates JWT token creation and verification logic
@@ -38,10 +108,12 @@ export type JwtPayload = AccessTokenPayload | RefreshTokenPayload;
  * - Handles both access and refresh token lifecycle
  * - Includes expiration and revocation checking
  */
-export class JwtTokenService {
+export class JwtTokenService implements AuthSessionTokenService {
 	constructor(
 		private readonly jwtProvider: JwtProvider,
-		private readonly tokenRevocationRepository: TokenRevocationRepository
+		private readonly tokenRevocationRepository: TokenRevocationRepository,
+		private readonly userSessionRepository: UserSessionRepository,
+		private readonly ttlConfig: JwtTokenTtlConfig
 	) {}
 
 	/**
@@ -49,7 +121,7 @@ export class JwtTokenService {
 	 * @param payload User data to encode in token
 	 * @returns Signed JWT token string
 	 */
-	createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti">): string {
+	createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti" | "iat">): string {
 		const jti = randomUUID();
 		return this.jwtProvider.sign(
 			{
@@ -58,7 +130,7 @@ export class JwtTokenService {
 				type: "access",
 			},
 			{
-				expiresIn: env.JWT_EXPIRATION,
+				expiresIn: this.ttlConfig.accessTokenTtl,
 			}
 		);
 	}
@@ -69,7 +141,7 @@ export class JwtTokenService {
 	 * @returns Signed JWT token string
 	 */
 	createRefreshToken(
-		payload: Omit<RefreshTokenPayload, "type" | "jti">
+		payload: Omit<RefreshTokenPayload, "type" | "jti" | "iat" | "exp">
 	): string {
 		const jti = randomUUID();
 		return this.jwtProvider.sign(
@@ -79,7 +151,7 @@ export class JwtTokenService {
 				type: "refresh",
 			},
 			{
-				expiresIn: env.JWT_REFRESH_EXPIRATION,
+				expiresIn: this.ttlConfig.refreshTokenTtl,
 			}
 		);
 	}
@@ -92,30 +164,18 @@ export class JwtTokenService {
 	async verifyAccessToken(token: string): Promise<AccessTokenPayload> {
 		const payload = this.jwtProvider.verify(token);
 
-		if (!payload || typeof payload !== "object") {
-			throw new Error("Invalid token");
-		}
-
-		const p = payload ;
-		if (
-			!("id" in p) ||
-			!("email" in p) ||
-			!("firstName" in p) ||
-			!("lastName" in p) ||
-			!("secondLastName" in p) ||
-			!("jti" in p) ||
-			p.type !== "access"
-		) {
-			throw new Error("Invalid token structure");
+		if (!isAccessTokenPayload(payload)) {
+			throw new InvalidTokenError("Invalid token structure");
 		}
 
 		// Check revocation blacklist
-		const isRevoked = await this.tokenRevocationRepository.isRevoked(String(p.jti));
+		const isRevoked = await this.tokenRevocationRepository.isRevoked(payload.jti);
 		if (isRevoked) {
-			throw new Error("Token has been revoked");
+			throw new RevokedTokenError("Token has been revoked");
 		}
 
-		return payload as unknown as AccessTokenPayload;
+		await this.assertIssuedAfterTokenValidAfter(payload.id, payload.iat);
+		return payload;
 	}
 
 	/**
@@ -126,32 +186,38 @@ export class JwtTokenService {
 	async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
 		const payload = this.jwtProvider.verify(token);
 
-		if (!payload || typeof payload !== "object") {
-			throw new Error("Invalid refresh token");
-		}
-
-		const p = payload;
-		if (
-			!("id" in p) ||
-			!("email" in p) ||
-			!("firstName" in p) ||
-			!("lastName" in p) ||
-			!("secondLastName" in p) ||
-			!("jti" in p) ||
-			p.type !== "refresh"
-		) {
-			throw new Error("Invalid refresh token structure");
+		if (!isRefreshTokenPayload(payload)) {
+			throw new InvalidTokenError("Invalid refresh token structure");
 		}
 
 		// Check revocation blacklist
-		const isRevoked = await this.tokenRevocationRepository.isRevoked(String(p.jti));
+		const isRevoked = await this.tokenRevocationRepository.isRevoked(payload.jti);
 		if (isRevoked) {
-			throw new Error("Refresh token has been revoked");
+			throw new RevokedTokenError("Refresh token has been revoked");
 		}
 
-		return payload as unknown as RefreshTokenPayload;
+		await this.assertIssuedAfterTokenValidAfter(payload.id, payload.iat);
+		return payload;
 	}
 
+	private async assertIssuedAfterTokenValidAfter(
+		userId: string,
+		issuedAtSeconds: number
+	): Promise<void> {
+		const tokenValidAfter = await this.userSessionRepository.getTokenValidAfter(userId);
+		if (!tokenValidAfter) {
+			return;
+		}
+
+		const issuedAtMs = issuedAtSeconds * 1000;
+		if (issuedAtMs < tokenValidAfter.getTime()) {
+			throw new RevokedTokenError("Token has been invalidated by password change");
+		}
+	}
+
+	getRefreshTokenExpiresAt(payload: RefreshTokenPayload): Date {
+		return new Date(payload.exp * 1000);
+	}
 	/**
 	 * Revoke a token by adding its JTI to the blacklist
 	 * @param jti JWT ID to revoke
@@ -162,12 +228,4 @@ export class JwtTokenService {
 		await this.tokenRevocationRepository.revoke(jti, userId, expiresAt);
 	}
 
-	/**
-	 * Verify access token (old method name for backward compatibility during transition)
-	 * @deprecated Use verifyAccessToken instead
-	 */
-	verifyToken(token: string): Promise<AccessTokenPayload> {
-		return this.verifyAccessToken(token);
-	}
 }
-

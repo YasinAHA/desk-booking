@@ -15,11 +15,32 @@ import {
 	type UserId,
 } from "@domain/auth/value-objects/user-id.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbClient = {
 	query: DbQuery;
 };
+
+type ReservationIdRow = {
+	id: string;
+};
+
+function isReservationIdRow(value: unknown): value is ReservationIdRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	const row = value as Record<string, unknown>;
+	return typeof row.id === "string";
+}
+
+function toReservationIdRow(value: unknown): ReservationIdRow | null {
+	return isReservationIdRow(value) ? value : null;
+}
 
 export class PgReservationCommandRepository implements ReservationCommandRepository {
 	constructor(
@@ -46,7 +67,11 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 					officeId ? officeIdToString(officeId) : null,
 				]
 			);
-			return createReservationId(result.rows[0]?.id as string);
+				const row = toReservationIdRow(result.rows[0]);
+				if (!row) {
+					throw new Error("Invalid reservation insert result");
+				}
+			return createReservationId(row.id);
 		} catch (err) {
 			throw this.errorTranslator.translateError(err);
 		}

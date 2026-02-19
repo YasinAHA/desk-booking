@@ -1,11 +1,13 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
+import { createTransactionalContext, type TransactionManager } from "@application/common/ports/transaction-manager.js";
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import {
 	DeskAlreadyReservedError,
+	ReservationDateInvalidError,
 	ReservationDateInPastError,
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
@@ -37,6 +39,17 @@ function mockQueryRepo(
 	};
 }
 
+function mockTxManager(): TransactionManager {
+	return {
+		runInTransaction: async callback => {
+			const tx = createTransactionalContext({
+				query: async () => ({ rows: [], rowCount: 0 }),
+			});
+			return callback(tx);
+		},
+	};
+}
+
 test("CreateReservationHandler.execute throws on past date", async () => {
 	const commandRepo = mockCommandRepo({
 		create: async () => {
@@ -44,7 +57,11 @@ test("CreateReservationHandler.execute throws on past date", async () => {
 		},
 	});
 	const queryRepo = mockQueryRepo();
-	const handler = new CreateReservationHandler({ commandRepo, queryRepo });
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+	});
 
 	await assert.rejects(
 		() =>
@@ -57,13 +74,41 @@ test("CreateReservationHandler.execute throws on past date", async () => {
 	);
 });
 
+test("CreateReservationHandler.execute throws on invalid calendar date", async () => {
+	const commandRepo = mockCommandRepo({
+		create: async () => {
+			throw new Error("Repo should not be called");
+		},
+	});
+	const queryRepo = mockQueryRepo();
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+	});
+
+	await assert.rejects(
+		() =>
+			handler.execute({
+				userId: "user",
+				date: "2026-02-31",
+				deskId: "desk",
+			}),
+		ReservationDateInvalidError
+	);
+});
+
 test("CreateReservationHandler.execute throws desk conflict before user/day conflict", async () => {
 	const commandRepo = mockCommandRepo();
 	const queryRepo = mockQueryRepo({
 		hasActiveReservationForDeskOnDate: async () => true,
 		hasActiveReservationForUserOnDate: async () => true,
 	});
-	const handler = new CreateReservationHandler({ commandRepo, queryRepo });
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+	});
 
 	await assert.rejects(
 		() =>
@@ -82,7 +127,11 @@ test("CreateReservationHandler.execute throws user/day conflict when desk is fre
 		hasActiveReservationForDeskOnDate: async () => false,
 		hasActiveReservationForUserOnDate: async () => true,
 	});
-	const handler = new CreateReservationHandler({ commandRepo, queryRepo });
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+	});
 
 	await assert.rejects(
 		() =>
@@ -110,7 +159,11 @@ test("CreateReservationHandler.execute inserts and returns id", async () => {
 		hasActiveReservationForDeskOnDate: async () => false,
 		hasActiveReservationForUserOnDate: async () => false,
 	});
-	const handler = new CreateReservationHandler({ commandRepo, queryRepo });
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+	});
 
 	const id = await handler.execute({
 		userId: "user",

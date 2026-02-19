@@ -5,11 +5,6 @@ import { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
-import {
-	createTransactionalContext,
-	type TransactionManager,
-	type TransactionalContext,
-} from "@application/common/ports/transaction-manager.js";
 import { User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import { createPasswordHash, passwordHashToString } from "@domain/auth/value-objects/password-hash.js";
@@ -24,6 +19,7 @@ function mockUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {
 			throw new Error("createUser not mocked");
 		},
 		updateCredentials: async () => {},
+		updatePassword: async () => {},
 		confirmEmail: async () => false,
 		...overrides,
 	};
@@ -37,14 +33,15 @@ function buildPasswordHasher(): PasswordHasher {
 }
 
 function buildAuthPolicy(overrides: Partial<AuthPolicy> = {}): AuthPolicy {
-	return {
+	const basePolicy: AuthPolicy = {
 		isAllowedEmail: email => {
 			const domain = email.split("@")[1]?.toLowerCase();
 			return domain === "camerfirma.com";
 		},
 		getEmailVerificationTtlMs: () => 60_000,
-		...overrides,
+		getPasswordResetTtlMs: () => 60_000,
 	};
+	return { ...basePolicy, ...overrides };
 }
 
 function buildLoginHandler(
@@ -52,23 +49,12 @@ function buildLoginHandler(
 	overrides?: {
 		passwordHasher?: PasswordHasher;
 		authPolicy?: AuthPolicy;
-		txManager?: TransactionManager;
 	}
 ): LoginHandler {
-	const txManager: TransactionManager = {
-		runInTransaction: async <T>(callback: (tx: TransactionalContext) => Promise<T>): Promise<T> => {
-			const tx = createTransactionalContext({
-				query: async () => ({ rows: [], rowCount: 0 }),
-			});
-			return callback(tx);
-		},
-	};
-
 	return new LoginHandler({
 		authPolicy: overrides?.authPolicy ?? buildAuthPolicy(),
 		passwordHasher: overrides?.passwordHasher ?? buildPasswordHasher(),
-		txManager: overrides?.txManager ?? txManager,
-		userRepoFactory: () => userRepo,
+		userRepo,
 	});
 }
 

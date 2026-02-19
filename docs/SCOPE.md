@@ -26,16 +26,23 @@ Linea de desarrollo para refinar arquitectura, seguridad y aspectos operacionale
 - Rate limiting y CORS.
 - Migraciones y seeds versionadas.
 
-### v0.5.0 (Current)
+### v0.5.0 (Completed)
 - [x] Schema migration v1.0.0 (office/floor/zone/desk hierarchy).
 - [x] User names refactored (first_name/last_name/second_last_name, Spanish naming).
 - [x] Desk status enum (active/maintenance/disabled).
 - [x] Reservation metadata (source, office_id).
 - [x] Email outbox pattern with worker.
 - [x] SOLID/Clean Architecture refactor (domain -> application -> infrastructure -> interfaces).
-- [x] 55 tests (auth, reservation, desk, repository, routes).
+- [x] 63 tests al cierre de v0.6.0 (auth, reservation, desk, repository, routes).
 
-### v0.6.0-v0.9.0 (Planned)
+### v0.6.0 (Completed)
+- [x] Refactor arquitectónico por capas + agrupación por feature completado.
+- [x] Composition root consolidado en `backend/src/composition/*`.
+- [x] Interfaces HTTP reestructuradas por feature con schemas/mappers.
+- [x] Criterios de aceptación de calidad cerrados (`lint`, `lint:types`, `build`, `test`).
+- [x] 65 tests actuales tras hardening inicial de v0.7.0.
+
+### v0.7.0-v0.9.0 (Planned)
 - Seguridad y sesiones (refresh token cookie httpOnly).
 - Roles y permisos administrativos.
 - Auditoria y export de datos.

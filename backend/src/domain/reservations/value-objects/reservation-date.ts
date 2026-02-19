@@ -11,6 +11,11 @@ export class InvalidReservationDateError extends Error {
 }
 
 export function createReservationDate(value: string): ReservationDate {
+	const strictDateFormat = /^\d{4}-\d{2}-\d{2}$/;
+	if (!strictDateFormat.test(value)) {
+		throw new InvalidReservationDateError("Date must be in strict YYYY-MM-DD format");
+	}
+
 	const parts = value.split("-");
 	if (parts.length !== 3) {
 		throw new InvalidReservationDateError("Date must be in YYYY-MM-DD format");

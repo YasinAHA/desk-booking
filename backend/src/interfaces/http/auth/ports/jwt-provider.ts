@@ -29,8 +29,8 @@ export interface JwtProvider {
 	 * Verify and decode a JWT token
 	 * @param token JWT token string to verify
 	 * @param options Verification options (issuer, audience, custom secret)
-	 * @returns Decoded payload as object
+	 * @returns Decoded payload (must be narrowed by caller)
 	 * @throws If token is invalid or verification fails
 	 */
-	verify(token: string, options?: VerifyOptions): Record<string, unknown>;
+	verify(token: string, options?: VerifyOptions): unknown;
 }

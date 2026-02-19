@@ -20,13 +20,64 @@ import {
 	userIdToString,
 } from "@domain/auth/value-objects/user-id.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbClient = {
 	query: DbQuery;
 };
 
-function mapToDomainUser(row: any): User {
+const USER_SELECT_FIELDS =
+	"id, email, password_hash, first_name, last_name, second_last_name, confirmed_at";
+
+type UserRow = {
+	id: string;
+	email: string;
+	password_hash: string;
+	first_name: string;
+	last_name: string;
+	second_last_name: string | null;
+	confirmed_at: string | Date | null;
+};
+
+function parseConfirmedAt(value: string | Date | null): string | null {
+	if (value === null) {
+		return null;
+	}
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+	return value;
+}
+
+function isUserRow(value: unknown): value is UserRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const row = value as Record<string, unknown>;
+	return (
+		typeof row.id === "string" &&
+		typeof row.email === "string" &&
+		typeof row.password_hash === "string" &&
+		typeof row.first_name === "string" &&
+		typeof row.last_name === "string" &&
+		(typeof row.second_last_name === "string" || row.second_last_name === null) &&
+		(typeof row.confirmed_at === "string" ||
+			row.confirmed_at instanceof Date ||
+			row.confirmed_at === null)
+	);
+}
+
+function toUserRow(value: unknown): UserRow | null {
+	return isUserRow(value) ? value : null;
+}
+
+function mapToDomainUser(row: UserRow): User {
 	return new User(
 		createUserId(row.id),
 		createEmail(row.email),
@@ -34,20 +85,12 @@ function mapToDomainUser(row: any): User {
 		row.last_name,
 		row.second_last_name,
 		createPasswordHash(row.password_hash),
-		row.confirmed_at,
+		parseConfirmedAt(row.confirmed_at),
 	);
 }
 
-function mapUserAuthData(row: any): UserAuthData {
-	const domainUser = new User(
-		createUserId(row.id),
-		createEmail(row.email),
-		row.first_name,
-		row.last_name,
-		row.second_last_name,
-		createPasswordHash(row.password_hash),
-		row.confirmed_at,
-	);
+function mapUserAuthData(row: UserRow): UserAuthData {
+	const domainUser = mapToDomainUser(row);
 	return {
 		user: domainUser,
 		passwordHash: createPasswordHash(row.password_hash),
@@ -59,38 +102,38 @@ export class PgUserRepository implements UserRepository {
 
 	async findByEmail(email: Email): Promise<User | null> {
 		const result = await this.db.query(
-			"select id, email, password_hash, first_name, last_name, second_last_name, confirmed_at " +
+			`select ${USER_SELECT_FIELDS} ` +
 				"from users where email = $1",
 			[emailToString(email)]
 		);
-		const row = result.rows[0];
+		const row = toUserRow(result.rows[0]);
 		return row ? mapToDomainUser(row) : null;
 	}
 
 	async findAuthData(email: Email): Promise<UserAuthData | null> {
 		const result = await this.db.query(
-			"select id, email, password_hash, first_name, last_name, second_last_name, confirmed_at " +
+			`select ${USER_SELECT_FIELDS} ` +
 				"from users where email = $1",
 			[emailToString(email)]
 		);
-		const row = result.rows[0];
+		const row = toUserRow(result.rows[0]);
 		return row ? mapUserAuthData(row) : null;
 	}
 
 	async findById(id: UserId): Promise<User | null> {
 		const result = await this.db.query(
-			"select id, email, password_hash, first_name, last_name, second_last_name, confirmed_at " +
+			`select ${USER_SELECT_FIELDS} ` +
 				"from users where id = $1",
 			[userIdToString(id)]
 		);
-		const row = result.rows[0];
+		const row = toUserRow(result.rows[0]);
 		return row ? mapToDomainUser(row) : null;
 	}
 
 	async createUser(input: UserCreate): Promise<User> {
 		const result = await this.db.query(
 			"insert into users (email, password_hash, first_name, last_name, second_last_name) " +
-				"values ($1, $2, $3, $4, $5) returning id, email, password_hash, first_name, last_name, second_last_name, confirmed_at",
+				`values ($1, $2, $3, $4, $5) returning ${USER_SELECT_FIELDS}`,
 			[
 				emailToString(input.email),
 				passwordHashToString(input.passwordHash),
@@ -99,7 +142,11 @@ export class PgUserRepository implements UserRepository {
 				input.secondLastName,
 			]
 		);
-		return mapToDomainUser(result.rows[0]);
+		const row = toUserRow(result.rows[0]);
+		if (!row) {
+			throw new Error("Invalid user insert result");
+		}
+		return mapToDomainUser(row);
 	}
 
 	async updateCredentials(
@@ -117,6 +164,17 @@ export class PgUserRepository implements UserRepository {
 				firstName,
 				lastName,
 				secondLastName,
+				userIdToString(id),
+			]
+		);
+	}
+
+	async updatePassword(id: UserId, passwordHash: PasswordHash): Promise<void> {
+		await this.db.query(
+			"update users set password_hash = $1, token_valid_after = now(), updated_at = now() " +
+				"where id = $2",
+			[
+				passwordHashToString(passwordHash),
 				userIdToString(id),
 			]
 		);

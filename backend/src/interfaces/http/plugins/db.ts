@@ -4,7 +4,12 @@ import { Pool } from "pg";
 
 import { env } from "@config/env.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbDecorated = {
     query: DbQuery;
@@ -32,7 +37,13 @@ const dbPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 
     const db: DbDecorated = {
         pool,
-        query: (text: string, params?: unknown[]) => pool.query(text, params),
+        query: async (text: string, params?: unknown[]) => {
+            const result = await pool.query(text, params);
+            return {
+                rows: result.rows as unknown[],
+                rowCount: result.rowCount,
+            };
+        },
     };
 
     app.decorate("db", db);

@@ -14,11 +14,70 @@ import {
 	type UserId,
 } from "@domain/auth/value-objects/user-id.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbClient = {
 	query: DbQuery;
 };
+
+type ActiveReservationRow = {
+	id: string;
+	reservation_date: string;
+};
+
+type ReservationRecordRow = {
+	id: string;
+	desk_id: string;
+	office_id: string;
+	desk_name: string;
+	reservation_date: string;
+	source: ReservationRecord["source"];
+	cancelled_at: string | null;
+};
+
+function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const row = value as Record<string, unknown>;
+	return typeof row.id === "string" && typeof row.reservation_date === "string";
+}
+
+function toActiveReservationRow(value: unknown): ActiveReservationRow | null {
+	return isActiveReservationRow(value) ? value : null;
+}
+
+function isReservationRecordRow(value: unknown): value is ReservationRecordRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const row = value as Record<string, unknown>;
+	return (
+		typeof row.id === "string" &&
+		typeof row.desk_id === "string" &&
+		typeof row.office_id === "string" &&
+		typeof row.desk_name === "string" &&
+		typeof row.reservation_date === "string" &&
+		(row.source === "user" ||
+			row.source === "admin" ||
+			row.source === "walk_in" ||
+			row.source === "system") &&
+		(typeof row.cancelled_at === "string" || row.cancelled_at === null)
+	);
+}
+
+function toReservationRecordRows(rows: unknown[]): ReservationRecordRow[] {
+	return rows
+		.map(row => (isReservationRecordRow(row) ? row : null))
+		.filter((row): row is ReservationRecordRow => row !== null);
+}
 
 export class PgReservationQueryRepository implements ReservationQueryRepository {
 	constructor(private readonly db: DbClient) {}
@@ -33,10 +92,10 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 				"where id = $1 and user_id = $2 and status in ('reserved', 'checked_in')",
 			[reservationIdToString(reservationId), userIdToString(userId)]
 		);
-		const row = result.rows[0];
-		if (!row) {
-			return null;
-		}
+			const row = toActiveReservationRow(result.rows[0]);
+			if (!row) {
+				return null;
+			}
 		return { id: createReservationId(row.id), reservationDate: row.reservation_date };
 	}
 
@@ -51,9 +110,9 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			[userIdToString(userId)]
 		);
 
-		return result.rows.map(row => ({
-			id: createReservationId(row.id),
-			deskId: createDeskId(row.desk_id),
+			return toReservationRecordRows(result.rows).map(row => ({
+				id: createReservationId(row.id),
+				deskId: createDeskId(row.desk_id),
 			officeId: createOfficeId(row.office_id),
 			deskName: row.desk_name,
 			reservationDate: row.reservation_date,

@@ -47,7 +47,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
 - [x] Auth: dividir test agregado en tests por unidad (`commands`/`queries`) y naming `kebab-case`.
 - [x] Reservations y desks: mantener patrón de granularidad por handler/route (sin sobre-fragmentar tests de rutas).
-- [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
+- [x] Mover mejoras arquitectónicas detectadas durante implementación a seguimiento permanente en `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` y `docs/backend/ARCHITECTURE-BACKEND.md`.
 
 ### Criterios de aceptación
 - [x] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
@@ -82,34 +82,58 @@ Objetivo: cerrar la capa HTTP sin cambiar contratos funcionales, mejorando mante
 
 Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, anti-enumeración y UX consistente.
 
+### Deuda arquitectónica abierta (derivada de audit v0.X)
+- [x] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
+- [x] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
+- [x] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
+- [x] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
+- [x] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
+- [x] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
+- [x] Infrastructure repositories: eliminar `any` en row mappings (`auth`, `reservations`, `desks`).
+  - [x] `auth`: tipado explícito aplicado en `pg-user-repository`, `pg-email-verification-repository` y `pg-email-outbox`.
+  - [x] `reservations`: tipado explícito aplicado en `pg-reservation-command-repository` y `pg-reservation-query-repository`.
+  - [x] `desks`: tipado explícito aplicado en `pg-desk-repository`.
+- [x] HTTP/Fastify typing: quitar `(req as any).body` en `app.ts` con parser tipado.
+- [x] Token revocation repo: sustituir `Error` genérico por error tipado con `cause`.
+- [x] Auth query path: revisar/eliminar transacción en `LoginHandler` si no hay requisito de consistencia documentado.
+
+### Hardening previo (prioridad alta)
+- [x] Implementar refresh token rotation real en `POST /auth/refresh`.
+- [x] Revocar el refresh token usado (`jti`) en `token_revocation`.
+- [x] Emitir nuevo `accessToken` y nuevo `refreshToken` en cada refresh exitoso.
+- [x] Ajustar tests unitarios/integración de auth para cubrir rotación y revocación.
+
 ### Alcance funcional
-- [ ] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
-- [ ] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
-- [ ] Añadir `POST /auth/change-password` para usuario autenticado (requiere contraseña actual).
-- [ ] Invalidar sesiones/tokens activas tras `reset-password` y `change-password`.
+- [x] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).
+- [x] Añadir `POST /auth/reset-password` con token de un solo uso y expiración.
+- [x] Añadir `POST /auth/change-password` para usuario autenticado (requiere contraseña actual).
+- [x] Invalidar sesiones/tokens activas tras `reset-password` y `change-password`.
 
 ### Seguridad y anti-enumeración
-- [ ] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.
-- [ ] Aplicar rate limit por IP y por email (o hash de email) en endpoints de recuperación.
-- [ ] Evitar reutilización de token y validar expiración estricta.
-- [ ] Registrar eventos de seguridad (`password_reset_requested`, `password_reset_completed`, intentos inválidos).
-- [ ] Evitar filtrado por timing apreciable entre casos válidos e inválidos cuando aplique.
+- [x] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.
+- [x] Aplicar rate limit por IP y por email (o hash de email) en endpoints de recuperación.
+- [x] Evitar reutilización de token y validar expiración estricta.
+- [x] Registrar eventos de seguridad (`password_reset_requested`, `password_reset_completed`, intentos inválidos).
+- [x] Evitar filtrado por timing apreciable entre casos válidos e inválidos cuando aplique.
 
 ### Arquitectura y datos
-- [ ] Definir puertos y handlers CQRS en `application/auth` para recuperación/cambio de contraseña.
-- [ ] Crear repositorio/tabla de reset tokens hasheados (nunca token en claro persistido).
-- [ ] Mantener reglas de dominio y errores de aplicación sin depender de traducción de errores SQL para lógica principal.
-- [ ] Añadir migración dedicada para reset tokens y política de limpieza/expiración.
+- [x] Definir puertos y handlers CQRS en `application/auth` para recuperación/cambio de contraseña.
+- [x] Crear repositorio/tabla de reset tokens hasheados (nunca token en claro persistido).
+- [x] Mantener reglas de dominio y errores de aplicación sin depender de traducción de errores SQL para lógica principal.
+- [x] Añadir migración dedicada para reset tokens y política de limpieza/expiración.
 
 ### UX y contrato API
-- [ ] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
-- [ ] Documentar payloads/respuestas en `docs/API.md`.
-- [ ] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
-
+- [x] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
+- [x] Documentar payloads/respuestas en `docs/backend/API.md`.
+- [x] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
+- [x] Flujo producción reset password sin copia manual de token (autocaptura en frontend desde URL).
+- [x] Mover token de `query string` a `URL fragment` (`#token=`) para reducir exposición en logs/intermediarios.
+- [x] Mantener formulario de pegado manual de token solo como fallback de desarrollo/soporte.
+ 
 ### Validación
-- [ ] Tests unitarios de handlers (casos felices y errores de seguridad).
-- [ ] Tests de integración HTTP para tokens inválidos/expirados/reutilizados.
-- [ ] `lint`, `lint:types`, `build` y `test` en verde.
+- [x] Tests unitarios de handlers (casos felices y errores de seguridad).
+- [x] Tests de integración HTTP para tokens inválidos/expirados/reutilizados.
+- [x] `lint`, `lint:types`, `build` y `test` en verde.
 
 
 

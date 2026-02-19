@@ -30,6 +30,7 @@ export interface UserRepository {
 		lastName: string,
 		secondLastName: string | null
 	): Promise<void>;
+	updatePassword(id: UserId, passwordHash: PasswordHash): Promise<void>;
 	confirmEmail(id: UserId): Promise<boolean>;
 }
 
