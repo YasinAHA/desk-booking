@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { AuthSessionTokenService } from "@application/auth/ports/auth-session-token-service.js";
 import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
 import { JwtProvider } from "./ports/jwt-provider.js";
 
@@ -102,7 +103,7 @@ function isRefreshTokenPayload(payload: unknown): payload is RefreshTokenPayload
  * - Handles both access and refresh token lifecycle
  * - Includes expiration and revocation checking
  */
-export class JwtTokenService {
+export class JwtTokenService implements AuthSessionTokenService {
 	constructor(
 		private readonly jwtProvider: JwtProvider,
 		private readonly tokenRevocationRepository: TokenRevocationRepository,

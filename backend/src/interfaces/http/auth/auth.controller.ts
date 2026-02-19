@@ -4,13 +4,13 @@ import type { RegisterHandler } from "@application/auth/commands/register.handle
 import type { RegisterCommand } from "@application/auth/commands/register.command.js";
 import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
+import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REFRESH_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
-import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
@@ -22,7 +22,7 @@ export class AuthController {
 		private readonly loginHandler: LoginHandler,
 		private readonly registerHandler: RegisterHandler,
 		private readonly confirmEmailHandler: ConfirmEmailHandler,
-		private readonly jwtTokenService: JwtTokenService
+		private readonly authSessionLifecycleService: AuthSessionLifecycleService
 	) {}
 
 	async login(req: FastifyRequest, reply: FastifyReply) {
@@ -48,31 +48,17 @@ export class AuthController {
 			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
 		}
 
-		const user = result.user;
-		const accessToken = this.jwtTokenService.createAccessToken({
-			id: user.id,
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			secondLastName: user.secondLastName,
-		});
-		const refreshToken = this.jwtTokenService.createRefreshToken({
-			id: user.id,
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			secondLastName: user.secondLastName,
-		});
+			const session = this.authSessionLifecycleService.issueForUser(result.user);
 
-		req.log.info({ event: "auth.login", userId: user.id }, "Login ok");
+			req.log.info({ event: "auth.login", userId: session.user.id }, "Login ok");
 
-		return reply.send(
-			mapLoginResponse({
-				accessToken,
-				refreshToken,
-				user,
-			})
-		);
+			return reply.send(
+				mapLoginResponse({
+					accessToken: session.accessToken,
+					refreshToken: session.refreshToken,
+					user: session.user,
+				})
+			);
 	}
 
 	async register(req: FastifyRequest, reply: FastifyReply) {
@@ -135,7 +121,7 @@ export class AuthController {
 		}
 
 		try {
-			const payload = await this.jwtTokenService.verifyAccessToken(parse.data.token);
+			const payload = await this.authSessionLifecycleService.verifyAccessToken(parse.data.token);
 
 			req.log.info({ event: "auth.verify", userId: payload.id }, "Token verified OK");
 			return reply.send(mapVerifyResponse(payload));
@@ -183,33 +169,13 @@ export class AuthController {
 		}
 
 		try {
-			const refreshPayload = await this.jwtTokenService.verifyRefreshToken(parse.data.token);
-			await this.jwtTokenService.revoke(
-				refreshPayload.jti,
-				refreshPayload.id,
-				this.jwtTokenService.getRefreshTokenExpiresAt(refreshPayload)
-			);
+			const session = await this.authSessionLifecycleService.rotateRefreshToken(parse.data.token);
 
-			const accessToken = this.jwtTokenService.createAccessToken({
-				id: refreshPayload.id,
-				email: refreshPayload.email,
-				firstName: refreshPayload.firstName,
-				lastName: refreshPayload.lastName,
-				secondLastName: refreshPayload.secondLastName,
-			});
-			const refreshToken = this.jwtTokenService.createRefreshToken({
-				id: refreshPayload.id,
-				email: refreshPayload.email,
-				firstName: refreshPayload.firstName,
-				lastName: refreshPayload.lastName,
-				secondLastName: refreshPayload.secondLastName,
-			});
-
-			req.log.info({ event: "auth.refresh", userId: refreshPayload.id }, "Token refreshed");
+			req.log.info({ event: "auth.refresh", userId: session.userId }, "Token refreshed");
 
 			return reply.send({
-				accessToken,
-				refreshToken,
+				accessToken: session.accessToken,
+				refreshToken: session.refreshToken,
 			});
 		} catch {
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");

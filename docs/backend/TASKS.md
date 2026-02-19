@@ -87,7 +87,7 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [x] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
 - [ ] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
 - [x] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
-- [ ] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
+- [x] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
 - [x] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
 - [x] Infrastructure repositories: eliminar `any` en row mappings (`auth`, `reservations`, `desks`).
   - [x] `auth`: tipado explícito aplicado en `pg-user-repository`, `pg-email-verification-repository` y `pg-email-outbox`.
