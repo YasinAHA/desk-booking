@@ -85,7 +85,7 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 ### Deuda arquitectónica abierta (derivada de audit v0.X)
 - [x] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
 - [x] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
-- [ ] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
+- [x] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
 - [x] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
 - [x] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
 - [x] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
