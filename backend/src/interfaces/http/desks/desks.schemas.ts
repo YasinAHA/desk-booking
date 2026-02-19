@@ -4,3 +4,7 @@ import { z } from "zod";
 export const listDesksSchema = z.object({
 	date: dateSchema,
 });
+
+export const deskIdParamSchema = z.object({
+	id: z.string().uuid(),
+});
