@@ -60,6 +60,16 @@ Monorepo con backend propio y frontend ligero:
 - Confirmacion por email en registro.
 - Restricciones de integridad en DB (índices unicos por dia).
 
+## Reglas normativas de check-in QR
+- `qr_public_id` de `desks` es estable (QR fijo por mesa) y se considera identificador público operativo.
+- La regeneración de `qr_public_id` es una acción administrativa excepcional y debe invalidar inmediatamente el QR anterior.
+- Tras regeneración de `qr_public_id`, es obligatorio reemplazar la señalética física del desk.
+- `POST /reservations/check-in/qr` solo es válido si existe una reserva del usuario para el desk y la fecha, con estado activo (`reserved`).
+- La ventana de check-in se evalúa con la política de oficina (`checkin_allowed_from`, `checkin_cutoff_time`) y timezone de la oficina.
+- Si una reserva permanece en `reserved` y supera `checkin_cutoff_time`, debe transicionar a `no_show`.
+- Una reserva en `no_show` deja de ser activa y el desk pasa a ser elegible para `walk_in`.
+- `walk_in` solo es válido si no existe reserva activa (`reserved`/`checked_in`) para el desk en la fecha y el usuario no acapara otra reserva activa incompatible.
+
 ## Observabilidad
 - Logs estructurados por request con `request id`.
 - Trazas basicas en operaciones criticas (auth y reservas).

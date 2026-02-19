@@ -85,4 +85,12 @@ Release estable para uso interno en una unica organización.
 ## Nota
 Piloto / best-effort. Si hay incidencias, se puede usar la app anterior.
 
+## Reglas operativas (normativas) para QR y walk-in
+- El QR de cada mesa es fijo (`qr_public_id` estable por desk) y está pensado para uso físico permanente.
+- Si un QR se regenera, el QR anterior queda inválido de forma inmediata y debe sustituirse la pegatina física.
+- El check-in por QR requiere reserva válida del usuario para ese desk y esa fecha, dentro de la ventana de check-in definida por política.
+- Si no se realiza check-in antes de `checkin_cutoff_time`, la reserva debe pasar a `no_show`.
+- Una reserva en `no_show` libera el desk para `walk_in` en esa fecha.
+- `walk_in` solo está permitido cuando no existe reserva activa (`reserved`/`checked_in`) para ese desk y fecha.
+
 
