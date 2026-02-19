@@ -78,4 +78,11 @@ Monorepo con backend propio y frontend ligero:
 - Refactor por capas y por feature completado en v0.6.x (detalle histórico en `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md`).
 - Seguimiento de deuda arquitectónica activa en `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` y aterrizado en `docs/backend/TASKS.md`.
 
+## Seguimiento de mejoras arquitectónicas
+- Cualquier mejora detectada durante implementación se registra primero en:
+  - `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` (hallazgos + estado).
+  - `docs/backend/TASKS.md` (si requiere ejecución en iteración activa).
+- Las mejoras cerradas se reflejan en este documento como estado consolidado de arquitectura backend.
+- Evitar tareas meta abiertas en `TASKS` sin aterrizar en hallazgos concretos.
+
 

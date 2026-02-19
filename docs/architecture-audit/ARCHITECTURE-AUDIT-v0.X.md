@@ -116,3 +116,8 @@ Status legend: `Resolved` | `Partial` | `Open`
 - Avoid `any`/`Promise<any>` in layer contracts.
 - Use typed errors for domain/application/infra boundaries.
 - Preserve HTTP contracts while refactoring internals incrementally.
+
+## 6) Governance
+- Este fichero es la fuente viva para hallazgos arquitectónicos detectados durante implementación.
+- Cada hallazgo nuevo debe registrarse aquí con estado (`Open`, `Partial`, `Resolved`) antes de abrir tarea técnica.
+- `docs/backend/TASKS.md` solo debe contener ejecución de mejoras concretas, no tareas meta abiertas.

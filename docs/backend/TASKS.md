@@ -47,7 +47,7 @@ Objetivo: modularizar internamente por feature de forma incremental, sin big-ban
 - [x] Reorganizar tests por capa/feature para mejorar mantenibilidad (`application/*`, `infrastructure/*`, `interfaces/http/*`).
 - [x] Auth: dividir test agregado en tests por unidad (`commands`/`queries`) y naming `kebab-case`.
 - [x] Reservations y desks: mantener patrón de granularidad por handler/route (sin sobre-fragmentar tests de rutas).
-- [ ] Mover aquí cualquier mejora arquitectónica detectada durante implementación para ejecutarla tras cerrar el refactor de capas.
+- [x] Mover mejoras arquitectónicas detectadas durante implementación a seguimiento permanente en `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` y `docs/backend/ARCHITECTURE-BACKEND.md`.
 
 ### Criterios de aceptación
 - [x] Sin imports ilegales entre capas (application no depende de infrastructure/interfaces).
