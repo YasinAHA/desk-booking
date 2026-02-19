@@ -14,16 +14,20 @@ import { AuthSessionLifecycleService } from "@application/auth/services/auth-ses
 import {
 	AUTH_CHANGE_PASSWORD_RATE_LIMIT,
 	AUTH_FORGOT_PASSWORD_RATE_LIMIT,
+	AUTH_FORGOT_PASSWORD_IDENTIFIER_RATE_LIMIT,
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_RESET_PASSWORD_RATE_LIMIT,
+	AUTH_RESET_PASSWORD_IDENTIFIER_RATE_LIMIT,
 	AUTH_REFRESH_RATE_LIMIT,
 	AUTH_REGISTER_RATE_LIMIT,
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
+import { createHash } from "node:crypto";
 
 import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
+import { RecoveryRateLimiter } from "./recovery-rate-limiter.js";
 import {
 	changePasswordSchema,
 	forgotPasswordSchema,
@@ -32,6 +36,21 @@ import {
 	resetPasswordSchema,
 	verifySchema,
 } from "./auth.schemas.js";
+
+const forgotPasswordIdentifierLimiter = new RecoveryRateLimiter(
+	AUTH_FORGOT_PASSWORD_IDENTIFIER_RATE_LIMIT.max,
+	AUTH_FORGOT_PASSWORD_IDENTIFIER_RATE_LIMIT.timeWindowMs
+);
+const resetPasswordIdentifierLimiter = new RecoveryRateLimiter(
+	AUTH_RESET_PASSWORD_IDENTIFIER_RATE_LIMIT.max,
+	AUTH_RESET_PASSWORD_IDENTIFIER_RATE_LIMIT.timeWindowMs
+);
+
+function hashSensitive(value: string): string {
+	return createHash("sha256")
+		.update(value)
+		.digest("hex");
+}
 
 export class AuthController {
 	constructor(
@@ -214,7 +233,21 @@ export class AuthController {
 		const command: ForgotPasswordCommand = {
 			email: parse.data.email.toLowerCase(),
 		};
+		const emailHash = hashSensitive(command.email);
+		const allowed = forgotPasswordIdentifierLimiter.consume(emailHash);
+		if (!allowed) {
+			req.log.warn(
+				{ event: "security.password_reset_requested", reason: "identifier_rate_limited", email_hash: emailHash },
+				"Password reset request rate-limited by identifier"
+			);
+			throwHttpError(429, "TOO_MANY_REQUESTS", "Too many requests");
+		}
+
 		await this.forgotPasswordHandler.execute(command);
+		req.log.info(
+			{ event: "security.password_reset_requested", email_hash: emailHash },
+			"Password reset request processed"
+		);
 		return reply.send({ ok: true });
 	}
 
@@ -236,18 +269,44 @@ export class AuthController {
 			token: parse.data.token,
 			password: parse.data.password,
 		};
+		const tokenHash = hashSensitive(command.token);
+		const allowed = resetPasswordIdentifierLimiter.consume(tokenHash);
+		if (!allowed) {
+			req.log.warn(
+				{ event: "security.password_reset_failed", reason: "identifier_rate_limited", token_hash: tokenHash },
+				"Password reset attempt rate-limited by token"
+			);
+			throwHttpError(429, "TOO_MANY_REQUESTS", "Too many requests");
+		}
+
 		const result = await this.resetPasswordHandler.execute(command);
 
 		if (result === "invalid_token") {
+			req.log.warn(
+				{ event: "security.password_reset_failed", reason: "invalid_token", token_hash: tokenHash },
+				"Password reset failed: invalid token"
+			);
 			throwHttpError(400, "INVALID_TOKEN", "Invalid token");
 		}
 		if (result === "expired") {
+			req.log.warn(
+				{ event: "security.password_reset_failed", reason: "expired_token", token_hash: tokenHash },
+				"Password reset failed: expired token"
+			);
 			throwHttpError(400, "EXPIRED_TOKEN", "Expired token");
 		}
 		if (result === "already_used") {
+			req.log.warn(
+				{ event: "security.password_reset_failed", reason: "already_used", token_hash: tokenHash },
+				"Password reset failed: token already used"
+			);
 			throwHttpError(409, "TOKEN_ALREADY_USED", "Token already used");
 		}
 
+		req.log.info(
+			{ event: "security.password_reset_completed", token_hash: tokenHash },
+			"Password reset completed"
+		);
 		return reply.send({ ok: true });
 	}
 
@@ -272,9 +331,17 @@ export class AuthController {
 		};
 		const result = await this.changePasswordHandler.execute(command);
 		if (result.status !== "OK") {
+			req.log.warn(
+				{ event: "security.change_password_failed", userId: command.userId, reason: "invalid_credentials" },
+				"Change password failed"
+			);
 			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
 		}
 
+		req.log.info(
+			{ event: "security.change_password_completed", userId: command.userId },
+			"Password changed successfully"
+		);
 		return reply.send({ ok: true });
 	}
 }

@@ -111,10 +111,10 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 
 ### Seguridad y anti-enumeración
 - [x] Mantener mensaje y código de respuesta equivalentes para cuenta existente/no existente en `forgot-password`.
-- [ ] Aplicar rate limit por IP y por email (o hash de email) en endpoints de recuperación.
+- [x] Aplicar rate limit por IP y por email (o hash de email) en endpoints de recuperación.
 - [x] Evitar reutilización de token y validar expiración estricta.
-- [ ] Registrar eventos de seguridad (`password_reset_requested`, `password_reset_completed`, intentos inválidos).
-- [ ] Evitar filtrado por timing apreciable entre casos válidos e inválidos cuando aplique.
+- [x] Registrar eventos de seguridad (`password_reset_requested`, `password_reset_completed`, intentos inválidos).
+- [x] Evitar filtrado por timing apreciable entre casos válidos e inválidos cuando aplique.
 
 ### Arquitectura y datos
 - [x] Definir puertos y handlers CQRS en `application/auth` para recuperación/cambio de contraseña.
