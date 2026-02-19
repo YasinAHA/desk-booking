@@ -11,3 +11,8 @@ export const createReservationSchema = z.object({
 export const reservationIdParamSchema = z.object({
 	id: z.string().uuid(),
 });
+
+export const checkInByQrSchema = z.object({
+	date: dateSchema,
+	qr_public_id: z.string().min(10),
+});

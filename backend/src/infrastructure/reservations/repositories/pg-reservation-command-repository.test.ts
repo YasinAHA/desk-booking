@@ -91,3 +91,20 @@ test("PgReservationCommandRepository.create throws generic conflict on unknown u
 		ReservationConflictError
 	);
 });
+
+test("PgReservationCommandRepository.checkInByQr returns semantic status", async () => {
+	const repo = new PgReservationCommandRepository(
+		{
+			query: async () => ({ rows: [{ result: "already_checked_in" }] }),
+		},
+		new PgErrorTranslator()
+	);
+
+	const result = await repo.checkInByQr(
+		createUserId("user-1"),
+		"2026-02-20",
+		"qr-public-id"
+	);
+
+	assert.equal(result, "already_checked_in");
+});

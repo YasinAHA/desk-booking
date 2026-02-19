@@ -9,6 +9,15 @@ export function mapCreateReservationResponse(reservationId: string) {
 	};
 }
 
+export function mapQrCheckInResponse(
+	status: "checked_in" | "already_checked_in"
+) {
+	return {
+		ok: true,
+		status,
+	};
+}
+
 export function mapListUserReservationsResponse(items: ListUserReservationsItems) {
 	return {
 		items: items.map(item => ({

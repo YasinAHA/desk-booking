@@ -57,6 +57,10 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns true when row exists", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async (text, params) => {
+			if (text.includes("set status = 'no_show'")) {
+				assert.deepEqual(params, ["2026-02-20"]);
+				return { rows: [], rowCount: 0 };
+			}
 			assert.ok(text.includes("where user_id = $1 and reservation_date = $2"));
 			assert.deepEqual(params, ["user-1", "2026-02-20"]);
 			return { rows: [{ 1: 1 }] };
@@ -73,6 +77,10 @@ test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns tru
 test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns false when no rows", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async (text, params) => {
+			if (text.includes("set status = 'no_show'")) {
+				assert.deepEqual(params, ["2026-02-20"]);
+				return { rows: [], rowCount: 0 };
+			}
 			assert.ok(text.includes("where desk_id = $1 and reservation_date = $2"));
 			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
 			return { rows: [] };

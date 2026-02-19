@@ -6,6 +6,7 @@ import {
 	type TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
 import { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import { CheckInByQrHandler } from "@application/reservations/commands/check-in-by-qr.handler.js";
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
@@ -26,6 +27,7 @@ type AppWithDb = FastifyInstance & {
 export function buildReservationHandlers(app: FastifyInstance): {
 	createReservationHandler: CreateReservationHandler;
 	cancelReservationHandler: CancelReservationHandler;
+	checkInByQrHandler: CheckInByQrHandler;
 	listUserReservationsHandler: ListUserReservationsHandler;
 } {
 	const dbApp = app as AppWithDb;
@@ -47,6 +49,7 @@ export function buildReservationHandlers(app: FastifyInstance): {
 			queryRepoFactory,
 		}),
 		cancelReservationHandler: new CancelReservationHandler({ commandRepo, queryRepo }),
+		checkInByQrHandler: new CheckInByQrHandler({ commandRepo }),
 		listUserReservationsHandler: new ListUserReservationsHandler({ queryRepo }),
 	};
 }

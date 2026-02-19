@@ -23,6 +23,7 @@ function mockCommandRepo(
 			throw new Error("create not mocked");
 		},
 		cancel: async () => false,
+		checkInByQr: async () => "not_found",
 		...overrides,
 	};
 }

@@ -183,3 +183,88 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 	await app.close();
 });
 
+test("POST /reservations/check-in/qr returns 401 without token", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations/check-in/qr",
+		payload: {
+			date: "2026-02-20",
+			qr_public_id: "qr-public-id-001",
+		},
+	});
+
+	assert.equal(res.statusCode, 401);
+	await app.close();
+});
+
+test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("with target as")) {
+			return { rows: [{ result: "checked_in" }] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations/check-in/qr",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-20",
+			qr_public_id: "qr-public-id-001",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.ok, true);
+	assert.equal(body.status, "checked_in");
+	await app.close();
+});
+
+test("POST /reservations/check-in/qr returns 404 when reservation is not found", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("with target as")) {
+			return { rows: [{ result: "not_found" }] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations/check-in/qr",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-20",
+			qr_public_id: "qr-public-id-001",
+		},
+	});
+
+	assert.equal(res.statusCode, 404);
+	await app.close();
+});
+
+test("POST /reservations/check-in/qr returns 409 when reservation is not active", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("with target as")) {
+			return { rows: [{ result: "not_active" }] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations/check-in/qr",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-20",
+			qr_public_id: "qr-public-id-001",
+		},
+	});
+
+	assert.equal(res.statusCode, 409);
+	await app.close();
+});
+
