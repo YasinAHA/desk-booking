@@ -359,7 +359,7 @@ forgotPasswordForm.addEventListener("submit", async event => {
 		await forgotPassword(forgotEmailInput.value);
 		forgotPasswordForm.reset();
 		setStatus(
-			"Si el email existe y está confirmado, te hemos enviado instrucciones de recuperación.",
+			"Si existe una cuenta compatible, recibirás instrucciones de recuperación.",
 			"success"
 		);
 	} catch (err) {

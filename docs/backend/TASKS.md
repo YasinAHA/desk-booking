@@ -123,8 +123,8 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [x] Añadir migración dedicada para reset tokens y política de limpieza/expiración.
 
 ### UX y contrato API
-- [ ] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
-- [ ] Documentar payloads/respuestas en `docs/API.md`.
+- [x] Mensajería neutra y clara en recuperación para minimizar enumeración sin degradar UX.
+- [x] Documentar payloads/respuestas en `docs/backend/API.md`.
 - [x] Mantener coherencia con política actual de auth (respuestas genéricas donde aplique).
 - [x] Flujo producción reset password sin copia manual de token (autocaptura en frontend desde URL).
 - [x] Mover token de `query string` a `URL fragment` (`#token=`) para reducir exposición en logs/intermediarios.
