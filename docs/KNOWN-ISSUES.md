@@ -3,7 +3,7 @@
 Tareas backend activas: ver [backend/TASKS.md](backend/TASKS.md).
 Backlog backend: ver [backend/BACKLOG.md](backend/BACKLOG.md).
 
-## v0.5.0 Status
+## v0.6.0 Status
 - [x] Schema v1.0.0 implemented (office/floor/zone/desk hierarchy)
 - [x] User names refactored (first_name/last_name/second_last_name)
 - [x] Email outbox pattern with worker implemented
@@ -20,7 +20,7 @@ Backlog backend: ver [backend/BACKLOG.md](backend/BACKLOG.md).
 - Swagger/OpenAPI: postponed for v0.8.0 (documentation automation)
 - AI-GUIDE.md: see [AI-GUIDE.md](AI-GUIDE.md) for development workflow
 
-## Security (v0.5.0)
+## Security (v0.6.0)
 - [x] Tokens with access/refresh flow (`/auth/refresh`)
 - [x] Email confirmation required before login
 - [x] Password hashed with Argon2

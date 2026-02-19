@@ -24,7 +24,7 @@ Monorepo con backend propio y frontend ligero:
 
 ### Guardrails de arquitectura
 - `application` solo depende de `domain` y `ports`.
-- `usecases` no dependen de otros usecases.
+- `handlers`/servicios de `application` no dependen de `interfaces` ni de `infrastructure`.
 - Errores de negocio se modelan como tipos en `domain` y se traducen en `interfaces`.
 - Serialización/formatos se resuelven en `infrastructure`.
 - Constantes de negocio y límites compartidos en `src/config/constants.ts`.

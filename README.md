@@ -1,8 +1,9 @@
 # Desk Booking Platform
 
-Plataforma interna de reserva de escritorios para entorno corporativo. El proyecto forma parte de un TFM y evoluciona con foco en arquitectura mantenible, seguridad y operacion real.
+Plataforma interna de reserva de escritorios para entorno corporativo. El proyecto forma parte de un TFM y evoluciona con foco en arquitectura mantenible, seguridad y operación real.
 
-Estado del repo: `v0.5.x` (consolidacion tecnica y refactor por capas).
+Estado del repo: `v0.6.0` cerrado (estabilización arquitectónica) y arranque de `v0.7.x`.
+Validación backend en cierre v0.6.0: `lint`, `lint:types`, `build` y `test` en verde (`63/63`).
 
 ## Objetivo
 
@@ -10,7 +11,7 @@ Estado del repo: `v0.5.x` (consolidacion tecnica y refactor por capas).
 - Persistencia en PostgreSQL con migraciones y seeds por entorno.
 - Autenticacion JWT con access/refresh token.
 - Confirmacion de email con patron outbox + worker asincrono.
-- Base de seguridad y observabilidad para endurecimiento en `v0.6.0+`.
+- Base de seguridad y observabilidad para endurecimiento en `v0.7.0+`.
 
 ## Estructura
 

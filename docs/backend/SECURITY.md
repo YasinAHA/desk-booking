@@ -38,13 +38,13 @@ Las configuraciones por defecto son seguras, no inseguras.
 
 ---
 
-## Security Features (v0.5.0)
+## Security Features (v0.6.x)
 
 ### Authentication
 
 **JWT with Refresh Token Pattern**
 - Access token: 15m expiration (short-lived)
-- Refresh token: 7d expiration (stored in localStorage, v0.6.0: cookie httpOnly)
+- Refresh token: 7d expiration
 - Token ID (jti): unique per token for revocation
 - Token type claim: distinguishes access vs refresh
 
@@ -68,7 +68,7 @@ Las configuraciones por defecto son seguras, no inseguras.
 
 ### Authorization
 
-**Role-based (v0.5.0)**
+**Role-based (v0.6.x)**
 - `user`: can reserve desks for themselves
 - `admin`: can manage desks, view all reservations (not yet implemented, v0.7.0)
 
@@ -120,7 +120,7 @@ Las configuraciones por defecto son seguras, no inseguras.
 
 ---
 
-## Security Decisions (v0.5.0)
+## Security Decisions (v0.6.x)
 
 | Decision | Rationale | Trade-off |
 |----------|-----------|-----------|
@@ -134,16 +134,12 @@ Las configuraciones por defecto son seguras, no inseguras.
 
 ---
 
-## Known Gaps & Future Work (v0.6.0+)
+## Known Gaps & Future Work (v0.7.0+)
 
-### v0.6.0 (Hardening)
-- [ ] Refresh token in cookie httpOnly (removes XSS + CSRF surface)
+- [ ] Refresh token rotation estricta (revocar refresh usado + emitir refresh nuevo)
+- [ ] Refresh token en cookie httpOnly (removes XSS + CSRF surface)
 - [ ] CSRF tokens for state-changing operations (POST/DELETE)
-- [ ] PII logging filter (no emails in logs)
-- [ ] Token revocation verification in refresh endpoint
 - [ ] Admin UI with role enforcement
-
-### v0.7.0+
 - [ ] 2FA (TOTP/SMS)
 - [ ] Audit logging (user actions, admin actions)
 - [ ] Rate limiting per user (instead of per IP)
@@ -163,7 +159,7 @@ Las configuraciones por defecto son seguras, no inseguras.
 All security features are covered by unit + integration tests:
 ```bash
 npm -w backend run test
-# 55 tests passing (auth, reservation, desk, repository, routes)
+# 63 tests passing (auth, reservation, desk, repository, routes)
 ```
 
 Test coverage includes:
