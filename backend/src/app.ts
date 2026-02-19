@@ -1,7 +1,7 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 
 import { ZodError } from "zod";
@@ -16,6 +16,22 @@ import { registerAuthPlugin } from "@interfaces/http/plugins/auth.js";
 import { registerDbPlugin } from "@interfaces/http/plugins/db.js";
 import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies.js";
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
+
+type RequestWithUnknownBody = FastifyRequest & {
+	body: unknown;
+};
+
+function tryParseBody(body: unknown): unknown {
+	if (typeof body !== "string" || body.length === 0) {
+		return body;
+	}
+
+	try {
+		return JSON.parse(body);
+	} catch {
+		return body;
+	}
+}
 
 export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({
@@ -57,14 +73,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     });
 
     // --- Ensure body is always parsed (handle cases where it might be a string) ---
-    app.addHook("preValidation", (req, reply, done) => {
-        if (typeof req.body === "string" && req.body.length > 0) {
-            try {
-                (req as any).body = JSON.parse(req.body);
-            } catch {
-                // Let Fastify error handler deal with parse errors
-            }
-        }
+    app.addHook("preValidation", (req, _reply, done) => {
+        const parsedBody = tryParseBody(req.body);
+        (req as RequestWithUnknownBody).body = parsedBody;
         done();
     });
 

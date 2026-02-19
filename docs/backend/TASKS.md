@@ -86,16 +86,16 @@ Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, 
 - [x] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
 - [x] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
 - [ ] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
-- [ ] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
+- [x] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
 - [ ] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
-- [ ] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
+- [x] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
 - [x] Infrastructure repositories: eliminar `any` en row mappings (`auth`, `reservations`, `desks`).
   - [x] `auth`: tipado explícito aplicado en `pg-user-repository`, `pg-email-verification-repository` y `pg-email-outbox`.
   - [x] `reservations`: tipado explícito aplicado en `pg-reservation-command-repository` y `pg-reservation-query-repository`.
   - [x] `desks`: tipado explícito aplicado en `pg-desk-repository`.
-- [ ] HTTP/Fastify typing: quitar `(req as any).body` en `app.ts` con parser tipado.
-- [ ] Token revocation repo: sustituir `Error` genérico por error tipado con `cause`.
-- [ ] Auth query path: revisar/eliminar transacción en `LoginHandler` si no hay requisito de consistencia documentado.
+- [x] HTTP/Fastify typing: quitar `(req as any).body` en `app.ts` con parser tipado.
+- [x] Token revocation repo: sustituir `Error` genérico por error tipado con `cause`.
+- [x] Auth query path: revisar/eliminar transacción en `LoginHandler` si no hay requisito de consistencia documentado.
 
 ### Hardening previo (prioridad alta)
 - [x] Implementar refresh token rotation real en `POST /auth/refresh`.

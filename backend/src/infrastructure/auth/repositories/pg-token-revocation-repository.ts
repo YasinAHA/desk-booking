@@ -1,5 +1,12 @@
-﻿import type { Pool } from "pg";
+import type { Pool } from "pg";
 import type { TokenRevocationRepository } from "@application/auth/ports/token-revocation-repository.js";
+
+export class TokenRevocationRepositoryError extends Error {
+	constructor(message: string, cause: unknown) {
+		super(message, { cause });
+		this.name = "TokenRevocationRepositoryError";
+	}
+}
 
 /**
  * PostgreSQL implementation of TokenRevocationRepository
@@ -20,7 +27,7 @@ export class PgTokenRevocationRepository implements TokenRevocationRepository {
 				[jti, userId, expiresAt]
 			);
 		} catch (error) {
-			throw new Error(`Failed to revoke token: ${error}`);
+			throw new TokenRevocationRepositoryError("Failed to revoke token", error);
 		}
 	}
 
@@ -35,7 +42,10 @@ export class PgTokenRevocationRepository implements TokenRevocationRepository {
 			);
 			return (result.rowCount ?? 0) > 0;
 		} catch (error) {
-			throw new Error(`Failed to check revocation status: ${error}`);
+			throw new TokenRevocationRepositoryError(
+				"Failed to check revocation status",
+				error
+			);
 		}
 	}
 
@@ -49,8 +59,10 @@ export class PgTokenRevocationRepository implements TokenRevocationRepository {
 				`DELETE FROM token_revocation WHERE expires_at < CURRENT_TIMESTAMP`
 			);
 		} catch (error) {
-			throw new Error(`Failed to cleanup expired tokens: ${error}`);
+			throw new TokenRevocationRepositoryError(
+				"Failed to cleanup expired tokens",
+				error
+			);
 		}
 	}
 }
-

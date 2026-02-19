@@ -23,7 +23,10 @@ import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 
 type AppWithDb = FastifyInstance & {
 	db: {
-		query: (text: string, params?: unknown[]) => Promise<any>;
+		query: (
+			text: string,
+			params?: unknown[]
+		) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
 		pool: Pool;
 	};
 };
@@ -42,6 +45,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	);
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
+	const userRepo = new PgUserRepository(dbApp.db);
 
 	const userRepoFactory = (tx: TransactionalContext) =>
 		new PgUserRepository(getTransactionalDbClient(tx));
@@ -53,6 +57,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		passwordHasher,
 		tokenService,
 		txManager,
+		userRepo,
 		userRepoFactory,
 		emailVerificationRepoFactory,
 		emailOutbox,

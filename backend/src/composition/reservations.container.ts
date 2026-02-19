@@ -15,7 +15,10 @@ import { PgErrorTranslator } from "@infrastructure/services/error-translator.js"
 
 type AppWithDb = FastifyInstance & {
 	db: {
-		query: (text: string, params?: unknown[]) => Promise<any>;
+		query: (
+			text: string,
+			params?: unknown[]
+		) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
 		pool: Pool;
 	};
 };

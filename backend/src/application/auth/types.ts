@@ -37,6 +37,7 @@ export type AuthDependencies = {
 	passwordHasher: PasswordHasher;
 	tokenService: TokenService;
 	txManager: TransactionManager;
+	userRepo: UserRepository;
 	userRepoFactory: UserRepoFactory;
 	emailVerificationRepoFactory: EmailVerificationRepoFactory;
 	emailOutbox: EmailOutbox;

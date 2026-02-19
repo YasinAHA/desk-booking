@@ -5,7 +5,7 @@ import { userIdToString } from "@domain/auth/value-objects/user-id.js";
 
 type LoginDependencies = Pick<
 	AuthDependencies,
-	"authPolicy" | "passwordHasher" | "txManager" | "userRepoFactory"
+	"authPolicy" | "passwordHasher" | "userRepo"
 >;
 
 export class LoginHandler {
@@ -23,10 +23,7 @@ export class LoginHandler {
 			return { status: "INVALID_CREDENTIALS" };
 		}
 
-		const authData = await this.deps.txManager.runInTransaction(async tx => {
-			const userRepo = this.deps.userRepoFactory(tx);
-			return userRepo.findAuthData(emailVO);
-		});
+		const authData = await this.deps.userRepo.findAuthData(emailVO);
 
 		if (!authData) {
 			return { status: "INVALID_CREDENTIALS" };
