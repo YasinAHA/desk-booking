@@ -4,11 +4,54 @@ import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
 import { userIdToString, type UserId } from "@domain/auth/value-objects/user-id.js";
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
 
 type DbClient = {
 	query: DbQuery;
 };
+
+type DeskRow = {
+	id: string;
+	office_id: string;
+	code: string;
+	name: string | null;
+	status: DeskAvailability["status"];
+	is_reserved: boolean;
+	is_mine: boolean;
+	reservation_id: string | null;
+	occupant_name: string | null;
+};
+
+function isDeskRow(value: unknown): value is DeskRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const row = value as Record<string, unknown>;
+	return (
+		typeof row.id === "string" &&
+		typeof row.office_id === "string" &&
+		typeof row.code === "string" &&
+		(typeof row.name === "string" || row.name === null) &&
+		(row.status === "active" || row.status === "maintenance" || row.status === "disabled") &&
+		typeof row.is_reserved === "boolean" &&
+		typeof row.is_mine === "boolean" &&
+		(typeof row.reservation_id === "string" || row.reservation_id === null) &&
+		(typeof row.occupant_name === "string" || row.occupant_name === null)
+	);
+}
+
+function toDeskRow(value: unknown): DeskRow {
+	if (!isDeskRow(value)) {
+		throw new Error("Invalid desk row shape");
+	}
+	return value;
+}
 
 export class PgDeskRepository implements DeskRepository {
 	constructor(private readonly db: DbClient) {}
@@ -30,7 +73,9 @@ export class PgDeskRepository implements DeskRepository {
 			[date, userIdToString(userId)]
 		);
 
-		return result.rows.map(row => ({
+		return result.rows.map(raw => {
+			const row = toDeskRow(raw);
+			return {
 			id: createDeskId(row.id),
 			officeId: createOfficeId(row.office_id),
 			code: row.code,
@@ -40,7 +85,8 @@ export class PgDeskRepository implements DeskRepository {
 			isMine: row.is_mine,
 			reservationId: row.reservation_id ? createReservationId(row.reservation_id) : null,
 			occupantName: row.occupant_name,
-		}));
+			};
+		});
 	}
 }
 
