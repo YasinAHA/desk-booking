@@ -112,6 +112,7 @@ Response 200:
 	"refreshToken": "jwt_refresh"
 }
 ```
+Nota: en cada refresh exitoso se emite un **nuevo** `refreshToken` (rotation). El token de refresh usado queda revocado.
 Errores: 400, 401
 
 #### `POST /auth/logout`

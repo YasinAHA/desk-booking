@@ -76,5 +76,6 @@ Monorepo con backend propio y frontend ligero:
 - Rutas HTTP delgadas en `interfaces/http/`, con lógica en `application/<feature>`.
 - Entidades base en `domain/` para evolucionar reglas de negocio.
 - Refactor por capas y por feature completado en v0.6.x (detalle histórico en `docs/backend/archive/ARCHITECTURE-V0.6-PLAN.md`).
+- Seguimiento de deuda arquitectónica activa en `docs/architecture-audit/ARCHITECTURE-AUDIT-v0.X.md` y aterrizado en `docs/backend/TASKS.md`.
 
 

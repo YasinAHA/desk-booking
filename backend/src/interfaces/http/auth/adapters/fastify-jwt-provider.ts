@@ -14,7 +14,7 @@ export class FastifyJwtProvider implements JwtProvider {
 		return this.app.jwt.sign(payload as any, options as any);
 	}
 
-	verify(token: string, options?: VerifyOptions): Record<string, unknown> {
+	verify(token: string, options?: VerifyOptions): unknown {
 		// Only place where we use `as any` - encapsulated in adapter
 		return this.app.jwt.verify(token, options as any);
 	}

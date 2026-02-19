@@ -1,6 +1,41 @@
-const API_BASE_URL = "http://localhost:3001";
+﻿const API_BASE_URL = "http://localhost:3001";
+const ACCESS_TOKEN_KEY = "deskbooking_token";
+const REFRESH_TOKEN_KEY = "deskbooking_refresh_token";
+const AUTO_REFRESH_ENABLED = true; // Modo normal: renovacion automatica de sesion
 
-async function request(path, options) {
+function getStoredAccessToken() {
+	return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+function getStoredRefreshToken() {
+	return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+function persistTokens(accessToken, refreshToken) {
+	localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+	localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+}
+
+function clearStoredTokens() {
+	localStorage.removeItem(ACCESS_TOKEN_KEY);
+	localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+function shouldSkipAutoRefresh(path) {
+	return (
+		path === "/auth/login" ||
+		path === "/auth/register" ||
+		path === "/auth/verify" ||
+		path === "/auth/refresh"
+	);
+}
+
+function authHeaders(token) {
+	const effectiveToken = getStoredAccessToken() ?? token;
+	return effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {};
+}
+
+async function doFetch(path, options) {
 	const headers = {
 		"Content-Type": "application/json",
 	};
@@ -14,23 +49,71 @@ async function request(path, options) {
 	});
 
 	if (response.status === 204) {
-		return null;
+		return { ok: true, status: 204, data: null };
 	}
 
 	const data = await response.json().catch(() => null);
-	if (!response.ok) {
-		const message = data?.error?.message ?? "Request failed";
-		const code = data?.error?.code ?? "ERROR";
+	return { ok: response.ok, status: response.status, data };
+}
+
+async function tryRefreshSession() {
+	const refresh = getStoredRefreshToken();
+	if (!refresh) {
+		return false;
+	}
+
+	const refreshed = await doFetch("/auth/refresh", {
+		method: "POST",
+		body: JSON.stringify({ token: refresh }),
+	});
+
+	if (!refreshed.ok) {
+		clearStoredTokens();
+		return false;
+	}
+
+	const accessToken = refreshed.data?.accessToken;
+	const refreshToken = refreshed.data?.refreshToken;
+	if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
+		clearStoredTokens();
+		return false;
+	}
+
+	persistTokens(accessToken, refreshToken);
+	return true;
+}
+
+async function request(path, options, canRetry = true) {
+	const result = await doFetch(path, options);
+
+	if (
+		!result.ok &&
+		result.status === 401 &&
+		canRetry &&
+		!shouldSkipAutoRefresh(path)
+	) {
+		const refreshed = await tryRefreshSession();
+		if (refreshed) {
+				const retryOptions = {
+					...options,
+					headers: {
+						...options?.headers,
+						...authHeaders(undefined),
+					},
+				};
+			return request(path, retryOptions, false);
+		}
+	}
+
+	if (!result.ok) {
+		const message = result.data?.error?.message ?? "Request failed";
+		const code = result.data?.error?.code ?? "ERROR";
 		const err = new Error(message);
 		err.code = code;
 		throw err;
 	}
 
-	return data;
-}
-
-function authHeaders(token) {
-	return token ? { Authorization: `Bearer ${token}` } : {};
+	return result.data;
 }
 
 export async function login(email, password) {
@@ -62,6 +145,13 @@ export async function logout(token) {
 
 export async function verifyToken(token) {
 	return request("/auth/verify", {
+		method: "POST",
+		body: JSON.stringify({ token }),
+	});
+}
+
+export async function refreshToken(token) {
+	return request("/auth/refresh", {
 		method: "POST",
 		body: JSON.stringify({ token }),
 	});

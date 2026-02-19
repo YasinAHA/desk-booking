@@ -7,7 +7,7 @@ Backlog backend: ver [backend/BACKLOG.md](backend/BACKLOG.md).
 - [x] Schema v1.0.0 implemented (office/floor/zone/desk hierarchy)
 - [x] User names refactored (first_name/last_name/second_last_name)
 - [x] Email outbox pattern with worker implemented
-- [x] 63 tests passing (auth, reservation, desk, repository, routes)
+- [x] 65 tests passing (auth, reservation, desk, repository, routes)
 - [x] Frontend alignment complete
 
 ## Pending for v0.7.0+
@@ -24,6 +24,6 @@ Backlog backend: ver [backend/BACKLOG.md](backend/BACKLOG.md).
 - [x] Tokens with access/refresh flow (`/auth/refresh`)
 - [x] Email confirmation required before login
 - [x] Password hashed with Argon2
-- [~] Token refresh vía POST /auth/refresh (not yet exposed in frontend)
+- [x] Token refresh vía POST /auth/refresh (frontend updated with refresh token storage and renewal on session restore)
 - Future: cookie httpOnly option for extra XSS protection
 

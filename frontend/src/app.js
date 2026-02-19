@@ -6,6 +6,7 @@ import {
 	login,
 	logout,
 	register,
+	refreshToken,
 	verifyToken,
 } from "./apiClient.js";
 import {
@@ -38,6 +39,8 @@ const loadingOverlay = document.getElementById("loadingOverlay");
 const loadingText = document.getElementById("loadingText");
 const loginSubmit = loginForm.querySelector("button[type='submit']");
 const registerSubmit = registerForm.querySelector("button[type='submit']");
+const ACCESS_TOKEN_KEY = "deskbooking_token";
+const REFRESH_TOKEN_KEY = "deskbooking_refresh_token";
 
 function setStatus(message, type = "info") {
 	statusEl.textContent = message;
@@ -234,7 +237,8 @@ loginForm.addEventListener("submit", async event => {
 		setLoading(true, "Validando acceso...");
 		const result = await login(emailInput.value, passwordInput.value);
 		setAuth(result.accessToken, result.user);
-		localStorage.setItem("deskbooking_token", result.accessToken);
+		localStorage.setItem(ACCESS_TOKEN_KEY, result.accessToken);
+		localStorage.setItem(REFRESH_TOKEN_KEY, result.refreshToken);
 		updateAuthUI();
 		await refreshData();
 		setStatus("Login correcto.", "success");
@@ -321,7 +325,8 @@ logoutBtn.addEventListener("click", async () => {
 		setStatus(getErrorMessage(err, "Logout error"), "error");
 	} finally {
 		clearAuth();
-		localStorage.removeItem("deskbooking_token");
+		localStorage.removeItem(ACCESS_TOKEN_KEY);
+		localStorage.removeItem(REFRESH_TOKEN_KEY);
 		updateAuthUI();
 		renderDesks();
 		renderReservations();
@@ -349,7 +354,8 @@ const today = new Date();
 dateInput.value = today.toISOString().slice(0, 10);
 setAuthTab("login");
 
-const storedToken = localStorage.getItem("deskbooking_token");
+const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 if (storedToken) {
 	setAuth(storedToken, null);
 }
@@ -364,12 +370,33 @@ if (storedToken) {
 		setStatus("Sesion valida", "success");
 		await refreshData();
 	} catch {
-		clearAuth();
-		localStorage.removeItem("deskbooking_token");
-		setStatus("Sesion expirada, vuelve a login.", "error");
-		updateAuthUI();
-		renderDesks();
-		renderReservations();
+		if (storedRefreshToken) {
+			try {
+				const refreshed = await refreshToken(storedRefreshToken);
+				localStorage.setItem(ACCESS_TOKEN_KEY, refreshed.accessToken);
+				localStorage.setItem(REFRESH_TOKEN_KEY, refreshed.refreshToken);
+				const verified = await verifyToken(refreshed.accessToken);
+				setAuth(refreshed.accessToken, verified.user ?? null);
+				updateAuthUI();
+				setStatus("Sesion renovada.", "success");
+				await refreshData();
+			} catch {
+				clearAuth();
+				localStorage.removeItem(ACCESS_TOKEN_KEY);
+				localStorage.removeItem(REFRESH_TOKEN_KEY);
+				setStatus("Sesion expirada, vuelve a login.", "error");
+				updateAuthUI();
+				renderDesks();
+				renderReservations();
+			}
+		} else {
+			clearAuth();
+			localStorage.removeItem(ACCESS_TOKEN_KEY);
+			setStatus("Sesion expirada, vuelve a login.", "error");
+			updateAuthUI();
+			renderDesks();
+			renderReservations();
+		}
 	}
 } else {
 	await refreshData();

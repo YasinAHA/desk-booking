@@ -82,11 +82,23 @@ Objetivo: cerrar la capa HTTP sin cambiar contratos funcionales, mejorando mante
 
 Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, anti-enumeración y UX consistente.
 
+### Deuda arquitectónica abierta (derivada de audit v0.X)
+- [ ] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
+- [ ] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
+- [ ] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
+- [ ] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
+- [ ] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).
+- [ ] Application common: endurecer tipado de `transaction-manager` para eliminar `Promise<any>`/shape SQL expuesto.
+- [ ] Infrastructure repositories: eliminar `any` en row mappings (`auth`, `reservations`, `desks`).
+- [ ] HTTP/Fastify typing: quitar `(req as any).body` en `app.ts` con parser tipado.
+- [ ] Token revocation repo: sustituir `Error` genérico por error tipado con `cause`.
+- [ ] Auth query path: revisar/eliminar transacción en `LoginHandler` si no hay requisito de consistencia documentado.
+
 ### Hardening previo (prioridad alta)
-- [ ] Implementar refresh token rotation real en `POST /auth/refresh`:
-- [ ] Revocar el refresh token usado (`jti`) en `token_revocation`.
-- [ ] Emitir nuevo `accessToken` y nuevo `refreshToken` en cada refresh exitoso.
-- [ ] Ajustar tests unitarios/integración de auth para cubrir rotación y revocación.
+- [x] Implementar refresh token rotation real en `POST /auth/refresh`.
+- [x] Revocar el refresh token usado (`jti`) en `token_revocation`.
+- [x] Emitir nuevo `accessToken` y nuevo `refreshToken` en cada refresh exitoso.
+- [x] Ajustar tests unitarios/integración de auth para cubrir rotación y revocación.
 
 ### Alcance funcional
 - [ ] Añadir `POST /auth/forgot-password` con respuesta genérica uniforme (sin revelar existencia de cuenta).

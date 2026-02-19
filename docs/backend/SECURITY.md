@@ -159,7 +159,7 @@ Las configuraciones por defecto son seguras, no inseguras.
 All security features are covered by unit + integration tests:
 ```bash
 npm -w backend run test
-# 63 tests passing (auth, reservation, desk, repository, routes)
+# 65 tests passing (auth, reservation, desk, repository, routes)
 ```
 
 Test coverage includes:

@@ -1,4 +1,4 @@
-﻿import type { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
+import type { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import type { ConfirmEmailCommand } from "@application/auth/commands/confirm-email.command.js";
 import type { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import type { RegisterCommand } from "@application/auth/commands/register.command.js";
@@ -184,8 +184,20 @@ export class AuthController {
 
 		try {
 			const refreshPayload = await this.jwtTokenService.verifyRefreshToken(parse.data.token);
+			await this.jwtTokenService.revoke(
+				refreshPayload.jti,
+				refreshPayload.id,
+				this.jwtTokenService.getRefreshTokenExpiresAt(refreshPayload)
+			);
 
 			const accessToken = this.jwtTokenService.createAccessToken({
+				id: refreshPayload.id,
+				email: refreshPayload.email,
+				firstName: refreshPayload.firstName,
+				lastName: refreshPayload.lastName,
+				secondLastName: refreshPayload.secondLastName,
+			});
+			const refreshToken = this.jwtTokenService.createRefreshToken({
 				id: refreshPayload.id,
 				email: refreshPayload.email,
 				firstName: refreshPayload.firstName,
@@ -197,7 +209,7 @@ export class AuthController {
 
 			return reply.send({
 				accessToken,
-				refreshToken: parse.data.token,
+				refreshToken,
 			});
 		} catch {
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");

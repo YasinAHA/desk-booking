@@ -70,5 +70,8 @@ export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const dbApp = app as AppWithDb;
 	const jwtProvider = new FastifyJwtProvider(app);
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
-	return new JwtTokenService(jwtProvider, tokenRevocationRepository);
+	return new JwtTokenService(jwtProvider, tokenRevocationRepository, {
+		accessTokenTtl: env.JWT_EXPIRATION,
+		refreshTokenTtl: env.JWT_REFRESH_EXPIRATION,
+	});
 }
