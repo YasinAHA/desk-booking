@@ -12,7 +12,22 @@ process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 const { authRoutes } = await import("./auth.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+
+type TransactionClient = {
+	query: (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+	release: () => void;
+};
+
+type MockPool = {
+	query: DbQuery;
+	connect: () => Promise<TransactionClient>;
+};
 
 function getFirstStringParam(params?: unknown[]): string {
 	const value = params?.[0];
@@ -38,7 +53,7 @@ async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });
 
 	// Mock pool for TransactionManager
-	const mockPool: any = {
+	const mockPool: MockPool = {
 		query: async (text: string, params?: unknown[]) => query(text, params),
 		connect: async () => ({
 			query: async (text: string, params?: unknown[]) => {

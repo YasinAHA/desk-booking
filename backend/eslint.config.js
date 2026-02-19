@@ -18,12 +18,18 @@ export default defineConfig(
 		plugins: {
 			sonarjs,
 		},
-		rules: {
-			"no-duplicate-imports": "error",
-			"max-params": ["error", 7],
-			"no-unused-vars": "off",
-			"@typescript-eslint/no-unused-vars": "off",
-			"@typescript-eslint/no-explicit-any": "off",
+			rules: {
+				"no-duplicate-imports": "error",
+				"max-params": ["error", 7],
+				"no-unused-vars": "off",
+				"@typescript-eslint/no-unused-vars": [
+					"error",
+					{
+						argsIgnorePattern: "^_",
+						caughtErrorsIgnorePattern: "^_",
+					},
+				],
+				"@typescript-eslint/no-explicit-any": "error",
+			},
 		},
-	},
-);
+	);

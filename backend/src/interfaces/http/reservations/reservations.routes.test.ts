@@ -10,11 +10,26 @@ process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 const { reservationsRoutes } = await import("./reservations.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
-type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
+type DbQueryResult = {
+	rows: unknown[];
+	rowCount?: number | null;
+};
+
+type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+
+type TransactionClient = {
+	query: (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+	release: () => void;
+};
+
+type MockPool = {
+	query: DbQuery;
+	connect: () => Promise<TransactionClient>;
+};
 
 async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });
-	const mockPool: any = {
+	const mockPool: MockPool = {
 		query: async (text: string, params?: unknown[]) => query(text, params),
 		connect: async () => ({
 			query: async (text: string, params?: unknown[]) => {
@@ -137,7 +152,7 @@ test("DELETE /reservations/:id returns 404 when not found", async () => {
 		if (text.startsWith("select id, reservation_date")) {
 			return { rows: [] };
 		}
-		return { rowCount: 0 };
+		return { rows: [], rowCount: 0 };
 	});
 
 	const res = await app.inject({
@@ -155,7 +170,7 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 		if (text.startsWith("select id, reservation_date")) {
 			return { rows: [{ reservation_date: "2020-01-01", id: "res-1" }] };
 		}
-		return { rowCount: 0 };
+		return { rows: [], rowCount: 0 };
 	});
 
 	const res = await app.inject({
