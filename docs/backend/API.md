@@ -161,7 +161,7 @@ Response 200:
 }
 ```
 Errores: 400, 401, 409
-> Nota: 400 incluye `DATE_IN_PAST` cuando la fecha es anterior a hoy.
+> Nota: 400 incluye `DATE_INVALID` (fecha inválida de calendario) y `DATE_IN_PAST` (fecha anterior a hoy).
 
 #### `DELETE /reservations/:id`
 Response 204 (sin body)

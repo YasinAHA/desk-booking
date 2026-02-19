@@ -6,6 +6,7 @@ import type { ListUserReservationsHandler } from "@application/reservations/quer
 import type { ListUserReservationsQuery } from "@application/reservations/queries/list-user-reservations.query.js";
 import {
 	DeskAlreadyReservedError,
+	ReservationDateInvalidError,
 	ReservationConflictError,
 	ReservationDateInPastError,
 	UserAlreadyHasReservationError,
@@ -65,6 +66,10 @@ export class ReservationController {
 
 			return reply.send(mapCreateReservationResponse(reservationId));
 		} catch (err) {
+			if (err instanceof ReservationDateInvalidError) {
+				throwHttpError(400, "DATE_INVALID", "Invalid reservation date");
+			}
+
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
 			}

@@ -55,5 +55,12 @@ export class ReservationDateInPastError extends Error {
 	}
 }
 
+export class ReservationDateInvalidError extends Error {
+	constructor() {
+		super("Reservation date is invalid");
+		this.name = "ReservationDateInvalidError";
+	}
+}
+
 // Re-export from value object for convenience
 export { isReservationDateInPast } from "@domain/reservations/value-objects/reservation-date.js";

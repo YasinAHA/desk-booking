@@ -1,7 +1,13 @@
 ﻿import type { CreateReservationCommand } from "@application/reservations/commands/create-reservation.command.js";
-import type { ReservationDependencies } from "@application/reservations/types.js";
+import type {
+	TransactionManager,
+	TransactionalContext,
+} from "@application/common/ports/transaction-manager.js";
+import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
+import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import {
 	DeskAlreadyReservedError,
+	ReservationDateInvalidError,
 	ReservationDateInPastError,
 	UserAlreadyHasReservationError,
 	type ReservationSource,
@@ -17,7 +23,11 @@ import {
 } from "@domain/reservations/value-objects/reservation-date.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
-type CreateReservationDependencies = Pick<ReservationDependencies, "commandRepo" | "queryRepo">;
+type CreateReservationDependencies = {
+	txManager: TransactionManager;
+	commandRepoFactory: (tx: TransactionalContext) => ReservationCommandRepository;
+	queryRepoFactory: (tx: TransactionalContext) => ReservationQueryRepository;
+};
 
 export class CreateReservationHandler {
 	constructor(private readonly deps: CreateReservationDependencies) {}
@@ -33,7 +43,7 @@ export class CreateReservationHandler {
 			reservationDate = createReservationDate(command.date);
 		} catch (err) {
 			if (err instanceof InvalidReservationDateError) {
-				throw new ReservationDateInPastError();
+				throw new ReservationDateInvalidError();
 			}
 			throw err;
 		}
@@ -44,29 +54,34 @@ export class CreateReservationHandler {
 
 		const reservationDateString = reservationDateToString(reservationDate);
 
-		// Deterministic UX: check desk conflict first, then user/day conflict.
-		const deskAlreadyReserved = await this.deps.queryRepo.hasActiveReservationForDeskOnDate(
-			deskIdVO,
-			reservationDateString
-		);
-		if (deskAlreadyReserved) {
-			throw new DeskAlreadyReservedError();
-		}
+		return this.deps.txManager.runInTransaction(async tx => {
+			const queryRepo = this.deps.queryRepoFactory(tx);
+			const commandRepo = this.deps.commandRepoFactory(tx);
 
-		const userAlreadyReserved = await this.deps.queryRepo.hasActiveReservationForUserOnDate(
-			userIdVO,
-			reservationDateString
-		);
-		if (userAlreadyReserved) {
-			throw new UserAlreadyHasReservationError();
-		}
+			// Deterministic UX: check desk conflict first, then user/day conflict.
+			const deskAlreadyReserved = await queryRepo.hasActiveReservationForDeskOnDate(
+				deskIdVO,
+				reservationDateString
+			);
+			if (deskAlreadyReserved) {
+				throw new DeskAlreadyReservedError();
+			}
 
-		return this.deps.commandRepo.create(
-			userIdVO,
-			reservationDateString,
-			deskIdVO,
-			reservationSource,
-			officeIdVO
-		);
+			const userAlreadyReserved = await queryRepo.hasActiveReservationForUserOnDate(
+				userIdVO,
+				reservationDateString
+			);
+			if (userAlreadyReserved) {
+				throw new UserAlreadyHasReservationError();
+			}
+
+			return commandRepo.create(
+				userIdVO,
+				reservationDateString,
+				deskIdVO,
+				reservationSource,
+				officeIdVO
+			);
+		});
 	}
 }

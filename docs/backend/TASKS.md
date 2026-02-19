@@ -83,8 +83,8 @@ Objetivo: cerrar la capa HTTP sin cambiar contratos funcionales, mejorando mante
 Objetivo: incorporar recuperación/cambio de contraseña con foco en seguridad, anti-enumeración y UX consistente.
 
 ### Deuda arquitectónica abierta (derivada de audit v0.X)
-- [ ] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
-- [ ] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
+- [x] Reservations: ejecutar `create reservation` en una transacción de aplicación explícita (checks + create).
+- [x] Reservations: separar semántica de errores de fecha (`invalid` vs `past`) y mapear en HTTP.
 - [ ] Domain: evolucionar `Desk` y `Reservation` de type alias a entidades con comportamiento cuando aplique.
 - [ ] Reservations VO: forzar formato estricto `YYYY-MM-DD` (zero-padded) en `reservation-date`.
 - [ ] Auth: mover orquestación de lifecycle de token a frontera de `application/auth` (controller más delgado).

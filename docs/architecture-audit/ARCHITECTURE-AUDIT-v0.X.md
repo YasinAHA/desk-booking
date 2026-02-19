@@ -25,13 +25,13 @@ Status legend: `Resolved` | `Partial` | `Open`
   - Finding: `Reservation` is a plain type alias; lifecycle rules are not encapsulated in an entity class.
 
 - `backend/src/application/reservations/commands/create-reservation.handler.ts:48`
-  - Status: `Open`
-  - Finding: check-then-write flow without explicit transaction boundary in application orchestration.
+  - Status: `Resolved`
+  - Finding: application-level explicit transaction boundary has been introduced for check-then-write flow.
 
 ### Medium
 - `backend/src/application/reservations/commands/create-reservation.handler.ts:35`
-  - Status: `Open`
-  - Finding: `InvalidReservationDateError` is mapped to `ReservationDateInPastError` (semantic mismatch).
+  - Status: `Resolved`
+  - Finding: invalid vs past reservation date errors are now separated and mapped explicitly in HTTP.
 
 - `backend/src/domain/reservations/value-objects/reservation-date.ts:13`
   - Status: `Open`
@@ -84,18 +84,17 @@ Status legend: `Resolved` | `Partial` | `Open`
 - Removed direct `env` dependency from token service internals by injecting TTL config through composition.
 - Replaced token payload unsafe casts with explicit `unknown` handling and type guards.
 - Added typed token errors (`InvalidTokenError`, `RevokedTokenError`) in JWT service path.
+- Added explicit transaction boundary in `CreateReservationHandler` (checks + create within one tx unit).
+- Split reservation date error semantics (`DATE_INVALID` vs `DATE_IN_PAST`) in application/domain and HTTP mapping.
 
 ### Still Pending
 - Ownership move of token lifecycle orchestration from HTTP layer to application boundary.
-- Reservation command explicit transaction boundary.
 - Domain entity enrichment (`Desk`, `Reservation`) and stricter date semantics.
 - Repository and framework typing hardening (`any` removal).
 
 ## 4) Actionable Task Pack (to track in TASKS)
 
 ### P0
-- Add explicit transaction boundary for reservation create flow (checks + create in one unit).
-- Split reservation date errors (`invalid` vs `past`) and map separately in HTTP.
 
 ### P1
 - Harden repository row typing (auth/reservations/desks): remove `any` and unsafe assertions.

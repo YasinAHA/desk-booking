@@ -14,7 +14,19 @@ type DbQuery = (text: string, params?: unknown[]) => Promise<any>;
 
 async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });
-	app.decorate("db", { query });
+	const mockPool: any = {
+		query: async (text: string, params?: unknown[]) => query(text, params),
+		connect: async () => ({
+			query: async (text: string, params?: unknown[]) => {
+				if (text === "BEGIN" || text === "COMMIT" || text === "ROLLBACK") {
+					return { rows: [], rowCount: 0 };
+				}
+				return query(text, params);
+			},
+			release: () => {},
+		}),
+	};
+	app.decorate("db", { query, pool: mockPool });
 	await app.register(registerAuthPlugin);
 	await app.register(reservationsRoutes, { prefix: "/reservations" });
 	await app.ready();
@@ -98,6 +110,25 @@ test("POST /reservations returns user/day-specific conflict message", async () =
 	assert.equal(res.statusCode, 409);
 	const body = res.json();
 	assert.equal(body.error?.code ?? body.code, "USER_ALREADY_HAS_RESERVATION");
+	await app.close();
+});
+
+test("POST /reservations returns DATE_INVALID for invalid calendar date", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2026-02-31",
+			desk_id: "11111111-1111-1111-1111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "DATE_INVALID");
 	await app.close();
 });
 
