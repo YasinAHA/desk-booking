@@ -107,11 +107,30 @@ function getErrorMessage(err, fallback) {
 		DATE_IN_PAST: "La fecha seleccionada está en el pasado.",
 		CANNOT_CANCEL_PAST: "No se puede cancelar una reserva pasada.",
 		UNAUTHORIZED: "Sesión no válida. Inicia sesión de nuevo.",
+		DESK_ALREADY_RESERVED: "Ese escritorio ya está reservado.",
+		USER_ALREADY_HAS_RESERVATION: "Ya tienes una reserva activa para ese día.",
 		INVALID_TOKEN: "Token inválido.",
 		EXPIRED_TOKEN: "Token expirado.",
 		TOKEN_ALREADY_USED: "El token ya fue utilizado.",
 	};
 	return map[code] ?? err?.message ?? fallback;
+}
+
+
+function handleSessionExpired(err) {
+	if (err?.code !== "UNAUTHORIZED") {
+		return false;
+	}
+	clearAuth();
+	setAdminDesks([]);
+	localStorage.removeItem(ACCESS_TOKEN_KEY);
+	localStorage.removeItem(REFRESH_TOKEN_KEY);
+	updateAuthUI();
+	renderDesks();
+	renderReservations();
+	renderAdminDesks();
+	setStatus("Sesión expirada, vuelve a login.", "error");
+	return true;
 }
 
 function setAuthTab(tab) {
@@ -251,21 +270,32 @@ function renderDesks() {
 		action.textContent = desk.isMine ? "Cancelar" : "Reservar";
 		action.disabled = desk.status !== "active" || (desk.isReserved && !desk.isMine);
 
-		action.addEventListener("click", async () => {
-			try {
-				setLoading(true, "Actualizando reserva...");
-				if (desk.isMine) {
-					await cancelReservation(desk.reservationId, state.token);
-					setStatus("Reserva cancelada.", "success");
-				} else {
-					if (!dateInput.value) {
-						dateInput.value = new Date().toISOString().slice(0, 10);
+			action.addEventListener("click", async () => {
+				try {
+					setLoading(true, "Actualizando reserva...");
+					if (desk.isMine) {
+						await cancelReservation(desk.reservationId, state.token);
+					} else {
+						if (!dateInput.value) {
+							dateInput.value = new Date().toISOString().slice(0, 10);
+						}
+						await createReservation(dateInput.value, desk.id, desk.officeId, state.token, "user");
 					}
-					await createReservation(dateInput.value, desk.id, desk.officeId, state.token, "user");
-					setStatus("Reserva creada.", "success");
-				}
-				await refreshData();
-			} catch (err) {
+					await refreshData({ silent: true });
+					if (desk.isMine) {
+						setStatus("Reserva cancelada.", "success");
+					} else {
+						const updatedDesk = state.desks.find(item => item.id === desk.id);
+						if (updatedDesk?.isMine) {
+							setStatus("Reserva creada.", "success");
+						} else {
+							setStatus("No se pudo confirmar la reserva. Revisa disponibilidad e inténtalo de nuevo.", "error");
+						}
+					}
+				} catch (err) {
+					if (handleSessionExpired(err)) {
+						return;
+					}
 				setStatus(getErrorMessage(err, "Error"), "error");
 			} finally {
 				setLoading(false);
@@ -309,21 +339,23 @@ function buildDeskQrImageUrl(qrPublicId) {
 	return `https://quickchart.io/qr?text=${encodeURIComponent(payload)}&size=220`;
 }
 
+function escapeHtml(value) {
+	return String(value ?? "")
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll("\"", "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
 function printDeskQr(item) {
 	const qrImageUrl = buildDeskQrImageUrl(item.qr_public_id);
-	const safe = value =>
-		String(value ?? "")
-			.replaceAll("&", "&amp;")
-			.replaceAll("<", "&lt;")
-			.replaceAll(">", "&gt;")
-			.replaceAll("\"", "&quot;")
-			.replaceAll("'", "&#39;");
 
 	const html = `<!doctype html>
 <html lang="es">
 <head>
 	<meta charset="utf-8" />
-	<title>QR ${safe(item.code)}</title>
+	<title>QR ${escapeHtml(item.code)}</title>
 	<style>
 		body { font-family: Arial, sans-serif; padding: 24px; }
 		.sheet { border: 1px solid #ddd; border-radius: 12px; padding: 16px; max-width: 320px; }
@@ -334,10 +366,10 @@ function printDeskQr(item) {
 </head>
 <body>
 	<div class="sheet">
-		<h2>Desk ${safe(item.code)}</h2>
-		<p class="meta">${safe(item.name ?? "Sin nombre")} | estado: ${safe(item.status)}</p>
-		<img src="${safe(qrImageUrl)}" alt="QR ${safe(item.code)}" />
-		<p class="token">${safe(item.qr_public_id)}</p>
+		<h2>Desk ${escapeHtml(item.code)}</h2>
+		<p class="meta">${escapeHtml(item.name ?? "Sin nombre")} | estado: ${escapeHtml(item.status)}</p>
+		<img src="${escapeHtml(qrImageUrl)}" alt="QR ${escapeHtml(item.code)}" />
+		<p class="token">${escapeHtml(item.qr_public_id)}</p>
 	</div>
 	<script>
 		(() => {
@@ -378,21 +410,14 @@ function printAllDeskQr(items) {
 		setStatus("No hay escritorios para imprimir.", "info");
 		return;
 	}
-	const safe = value =>
-		String(value ?? "")
-			.replaceAll("&", "&amp;")
-			.replaceAll("<", "&lt;")
-			.replaceAll(">", "&gt;")
-			.replaceAll("\"", "&quot;")
-			.replaceAll("'", "&#39;");
 
 	const cards = items
 		.map(
 			item => `<article class="sheet">
-	<h2>Desk ${safe(item.code)}</h2>
-	<p class="meta">${safe(item.name ?? "Sin nombre")} | estado: ${safe(item.status)}</p>
-	<img src="${safe(buildDeskQrImageUrl(item.qr_public_id))}" alt="QR ${safe(item.code)}" />
-	<p class="token">${safe(item.qr_public_id)}</p>
+	<h2>Desk ${escapeHtml(item.code)}</h2>
+	<p class="meta">${escapeHtml(item.name ?? "Sin nombre")} | estado: ${escapeHtml(item.status)}</p>
+	<img src="${escapeHtml(buildDeskQrImageUrl(item.qr_public_id))}" alt="QR ${escapeHtml(item.code)}" />
+	<p class="token">${escapeHtml(item.qr_public_id)}</p>
 </article>`
 		)
 		.join("");
@@ -500,6 +525,9 @@ function renderAdminDesks() {
 				renderAdminDesks();
 				setStatus(`QR regenerado para ${item.code}. Reemplaza la pegatina física.`, "success");
 			} catch (err) {
+				if (handleSessionExpired(err)) {
+					return;
+				}
 				setStatus(getErrorMessage(err, "No se pudo regenerar el QR."), "error");
 			} finally {
 				setLoading(false);
@@ -539,6 +567,9 @@ if (regenerateAllQrBtn) {
 			const updated = Number(result?.updated ?? 0);
 			setStatus(`QR regenerados: ${updated}. Reemplaza las pegatinas físicas.`, "success");
 		} catch (err) {
+			if (handleSessionExpired(err)) {
+				return;
+			}
 			setStatus(getErrorMessage(err, "No se pudieron regenerar todos los QR."), "error");
 		} finally {
 			setLoading(false);
@@ -552,7 +583,8 @@ if (printAllQrBtn) {
 	});
 }
 
-async function refreshData() {
+async function refreshData(options = {}) {
+	const silent = options.silent === true;
 	if (!state.token) {
 		renderDesks();
 		renderReservations();
@@ -564,7 +596,9 @@ async function refreshData() {
 		dateInput.value = new Date().toISOString().slice(0, 10);
 	}
 
-	setStatus("Cargando...", "info");
+	if (!silent) {
+		setStatus("Cargando...", "info");
+	}
 	try {
 		const [desks, reservations] = await Promise.all([
 			getDesks(dateInput.value, state.token),
@@ -585,8 +619,13 @@ async function refreshData() {
 		renderDesks();
 		renderReservations();
 		renderAdminDesks();
-		setStatus("OK", "success");
+		if (!silent) {
+			setStatus("OK", "success");
+		}
 	} catch (err) {
+		if (handleSessionExpired(err)) {
+			return;
+		}
 		setStatus(getErrorMessage(err, "Error"), "error");
 	}
 }
@@ -690,6 +729,9 @@ changePasswordForm.addEventListener("submit", async event => {
 		changePasswordForm.reset();
 		setStatus("Contraseña actualizada correctamente.", "success");
 	} catch (err) {
+		if (handleSessionExpired(err)) {
+			return;
+		}
 		setStatus(getErrorMessage(err, "No se pudo cambiar la contraseña."), "error");
 	} finally {
 		setLoading(false);
@@ -799,3 +841,4 @@ if (storedToken) {
 } else {
 	await refreshData();
 }
+
