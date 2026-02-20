@@ -3,16 +3,18 @@ import {
 	changePassword,
 	createReservation,
 	forgotPassword,
+	getAdminDesks,
 	getDesks,
 	listMyReservations,
 	login,
 	logout,
 	refreshToken,
 	register,
+	regenerateDeskQr,
 	resetPassword,
 	verifyToken,
 } from "./apiClient.js";
-import { clearAuth, setAuth, setDesks, setReservations, state } from "./state.js";
+import { clearAuth, setAdminDesks, setAuth, setDesks, setReservations, state } from "./state.js";
 
 const ACCESS_TOKEN_KEY = "deskbooking_token";
 const REFRESH_TOKEN_KEY = "deskbooking_refresh_token";
@@ -50,6 +52,8 @@ const reservationsList = document.getElementById("reservationsList");
 const statusEl = document.getElementById("status");
 const authSection = document.getElementById("authSection");
 const changePasswordSection = document.getElementById("changePasswordSection");
+const adminSection = document.getElementById("adminSection");
+const adminDesksGrid = document.getElementById("adminDesksGrid");
 const loadingOverlay = document.getElementById("loadingOverlay");
 const loadingText = document.getElementById("loadingText");
 
@@ -123,12 +127,12 @@ function setResetTokenManualMode(isManualVisible) {
 }
 
 function extractResetTokenFromLocation() {
-	const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("token");
+	const fromHash = new URLSearchParams(globalThis.location.hash.replace(/^#/, "")).get("token");
 	if (fromHash) {
 		return { token: fromHash, source: "hash" };
 	}
 
-	const fromQuery = new URLSearchParams(window.location.search).get("token");
+	const fromQuery = new URLSearchParams(globalThis.location.search).get("token");
 	if (fromQuery) {
 		return { token: fromQuery, source: "query" };
 	}
@@ -137,7 +141,7 @@ function extractResetTokenFromLocation() {
 }
 
 function removeTokenFromUrl(source) {
-	const url = new URL(window.location.href);
+	const url = new URL(globalThis.location.href);
 	if (source === "hash") {
 		url.hash = "";
 	} else if (source === "query") {
@@ -149,6 +153,9 @@ function removeTokenFromUrl(source) {
 function updateAuthUI() {
 	authSection.style.display = state.token ? "none" : "block";
 	changePasswordSection.classList.toggle("hidden", !state.token);
+	if (!state.token) {
+		adminSection.classList.add("hidden");
+	}
 	logoutBtn.disabled = !state.token;
 }
 
@@ -220,11 +227,13 @@ function renderDesks() {
 			statusText = `No disponible (${desk.status})`;
 		}
 		if (desk.isReserved) {
-			statusText = desk.isMine
-				? "Reservado (mío)"
-				: desk.occupantName
-					? `Reservado (${desk.occupantName})`
-					: "Reservado";
+			if (desk.isMine) {
+				statusText = "Reservado (mío)";
+			} else if (desk.occupantName) {
+				statusText = `Reservado (${desk.occupantName})`;
+			} else {
+				statusText = "Reservado";
+			}
 		}
 		status.textContent = statusText;
 
@@ -280,10 +289,154 @@ function renderReservations() {
 	});
 }
 
+function buildDeskQrPayload(qrPublicId) {
+	const url = new URL(globalThis.location.href);
+	url.hash = `desk_qr=${encodeURIComponent(qrPublicId)}`;
+	return url.toString();
+}
+
+function buildDeskQrImageUrl(qrPublicId) {
+	const payload = buildDeskQrPayload(qrPublicId);
+	return `https://quickchart.io/qr?text=${encodeURIComponent(payload)}&size=220`;
+}
+
+function printDeskQr(item) {
+	const qrImageUrl = buildDeskQrImageUrl(item.qr_public_id);
+	const safe = value =>
+		String(value ?? "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll("\"", "&quot;")
+			.replaceAll("'", "&#39;");
+
+	const html = `<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<title>QR ${safe(item.code)}</title>
+	<style>
+		body { font-family: Arial, sans-serif; padding: 24px; }
+		.sheet { border: 1px solid #ddd; border-radius: 12px; padding: 16px; max-width: 320px; }
+		.meta { margin: 0 0 12px; color: #444; }
+		img { width: 260px; height: 260px; display: block; margin: 8px 0; }
+		.token { font-size: 12px; word-break: break-all; color: #666; }
+	</style>
+</head>
+<body>
+	<div class="sheet">
+		<h2>Desk ${safe(item.code)}</h2>
+		<p class="meta">${safe(item.name ?? "Sin nombre")} | estado: ${safe(item.status)}</p>
+		<img src="${safe(qrImageUrl)}" alt="QR ${safe(item.code)}" />
+		<p class="token">${safe(item.qr_public_id)}</p>
+	</div>
+	<script>
+		(() => {
+			const img = document.querySelector("img");
+			let done = false;
+			const printNow = () => {
+				if (done) return;
+				done = true;
+				window.focus();
+				window.print();
+			};
+			if (img) {
+				img.addEventListener("load", () => setTimeout(printNow, 50), { once: true });
+				img.addEventListener("error", printNow, { once: true });
+			}
+			setTimeout(printNow, 1500);
+		})();
+	</script>
+</body>
+</html>`;
+
+	const blob = new Blob([html], { type: "text/html" });
+	const blobUrl = globalThis.URL.createObjectURL(blob);
+	const printWindow = globalThis.open(blobUrl, "_blank", "width=600,height=800");
+	if (!printWindow) {
+		globalThis.URL.revokeObjectURL(blobUrl);
+		setStatus("No se pudo abrir la ventana de impresión.", "error");
+		return;
+	}
+
+	globalThis.setTimeout(() => {
+		globalThis.URL.revokeObjectURL(blobUrl);
+	}, 5000);
+}
+
+function renderAdminDesks() {
+	adminDesksGrid.innerHTML = "";
+	if (!state.token || !state.adminDesks?.length) {
+		adminSection.classList.add("hidden");
+		return;
+	}
+
+	adminSection.classList.remove("hidden");
+
+	state.adminDesks.forEach(item => {
+		const card = document.createElement("div");
+		card.className = "admin-card";
+
+		const header = document.createElement("div");
+		header.className = "admin-card-header";
+		header.innerHTML = `<strong>${item.code}</strong><span>${item.status}</span>`;
+
+		const name = document.createElement("div");
+		name.textContent = item.name ?? "Sin nombre";
+
+		const qr = document.createElement("img");
+		qr.className = "admin-qr";
+		qr.src = buildDeskQrImageUrl(item.qr_public_id);
+		qr.alt = `QR ${item.code}`;
+
+		const token = document.createElement("code");
+		token.textContent = item.qr_public_id;
+
+		const actions = document.createElement("div");
+		actions.className = "admin-actions";
+
+		const regenerateBtn = document.createElement("button");
+		regenerateBtn.className = "btn btn-ghost";
+		regenerateBtn.type = "button";
+		regenerateBtn.textContent = "Regenerar QR";
+		regenerateBtn.addEventListener("click", async () => {
+			try {
+				setLoading(true, `Regenerando QR de ${item.code}...`);
+				await regenerateDeskQr(item.id, state.token);
+				const adminData = await getAdminDesks(state.token);
+				setAdminDesks(adminData.items ?? []);
+				renderAdminDesks();
+				setStatus(`QR regenerado para ${item.code}. Reemplaza la pegatina física.`, "success");
+			} catch (err) {
+				setStatus(getErrorMessage(err, "No se pudo regenerar el QR."), "error");
+			} finally {
+				setLoading(false);
+			}
+		});
+
+		const printBtn = document.createElement("button");
+		printBtn.className = "btn";
+		printBtn.type = "button";
+		printBtn.textContent = "Imprimir";
+		printBtn.addEventListener("click", () => printDeskQr(item));
+
+		actions.appendChild(regenerateBtn);
+		actions.appendChild(printBtn);
+
+		card.appendChild(header);
+		card.appendChild(name);
+		card.appendChild(qr);
+		card.appendChild(token);
+		card.appendChild(actions);
+		adminDesksGrid.appendChild(card);
+	});
+}
+
 async function refreshData() {
 	if (!state.token) {
 		renderDesks();
 		renderReservations();
+		renderAdminDesks();
 		return;
 	}
 
@@ -299,8 +452,19 @@ async function refreshData() {
 		]);
 		setDesks(desks.items ?? []);
 		setReservations(reservations.items ?? []);
+		try {
+			const adminData = await getAdminDesks(state.token);
+			setAdminDesks(adminData.items ?? []);
+		} catch (err) {
+			if (err?.code === "FORBIDDEN") {
+				setAdminDesks([]);
+			} else {
+				throw err;
+			}
+		}
 		renderDesks();
 		renderReservations();
+		renderAdminDesks();
 		setStatus("OK", "success");
 	} catch (err) {
 		setStatus(getErrorMessage(err, "Error"), "error");
@@ -420,11 +584,13 @@ logoutBtn.addEventListener("click", async () => {
 		setStatus(getErrorMessage(err, "Error en logout"), "error");
 	} finally {
 		clearAuth();
+		setAdminDesks([]);
 		localStorage.removeItem(ACCESS_TOKEN_KEY);
 		localStorage.removeItem(REFRESH_TOKEN_KEY);
 		updateAuthUI();
 		renderDesks();
 		renderReservations();
+		renderAdminDesks();
 		setStatus("Sesión cerrada.", "info");
 		setLoading(false);
 	}
@@ -490,19 +656,23 @@ if (storedToken) {
 				await refreshData();
 			} catch {
 				clearAuth();
+				setAdminDesks([]);
 				localStorage.removeItem(ACCESS_TOKEN_KEY);
 				localStorage.removeItem(REFRESH_TOKEN_KEY);
 				updateAuthUI();
 				renderDesks();
 				renderReservations();
+				renderAdminDesks();
 				setStatus("Sesión expirada, vuelve a login.", "error");
 			}
 		} else {
 			clearAuth();
+			setAdminDesks([]);
 			localStorage.removeItem(ACCESS_TOKEN_KEY);
 			updateAuthUI();
 			renderDesks();
 			renderReservations();
+			renderAdminDesks();
 			setStatus("Sesión expirada, vuelve a login.", "error");
 		}
 	}

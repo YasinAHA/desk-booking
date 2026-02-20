@@ -97,7 +97,7 @@ export class PgDeskRepository implements DeskRepository {
 			"update reservations r " +
 				"set status = 'no_show', no_show_at = now() " +
 				"from offices o " +
-				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
+				"left join reservation_policies p_office on p_office.office_id = o.id " +
 				"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
 				"where r.office_id = o.id and r.reservation_date = $1 and r.status = 'reserved' and (" +
 				"r.reservation_date < (now() at time zone o.timezone)::date or (" +

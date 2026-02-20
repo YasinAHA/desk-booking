@@ -216,3 +216,16 @@ export async function listMyReservations(token) {
 		headers: authHeaders(token),
 	});
 }
+
+export async function getAdminDesks(token) {
+	return request("/desks/admin", {
+		headers: authHeaders(token),
+	});
+}
+
+export async function regenerateDeskQr(deskId, token) {
+	return request(`/desks/admin/${deskId}/qr/regenerate`, {
+		method: "POST",
+		headers: authHeaders(token),
+	});
+}

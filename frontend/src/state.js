@@ -3,6 +3,7 @@ export const state = {
 	user: null,
 	desks: [],
 	reservations: [],
+	adminDesks: [],
 };
 
 export function setAuth(token, user) {
@@ -21,4 +22,8 @@ export function setDesks(items) {
 
 export function setReservations(items) {
 	state.reservations = items;
+}
+
+export function setAdminDesks(items) {
+	state.adminDesks = items;
 }
