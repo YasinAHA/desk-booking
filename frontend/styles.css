@@ -264,6 +264,12 @@ input {
 	gap: 12px;
 }
 
+.admin-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin: 10px 0 12px;
+}
+
 .admin-card {
 	border: 1px solid var(--border);
 	border-radius: 12px;

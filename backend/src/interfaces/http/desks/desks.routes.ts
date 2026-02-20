@@ -1,6 +1,7 @@
 ﻿import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 
 import {
+	buildRegenerateAllDesksQrHandler,
 	buildListAdminDesksHandler,
 	buildListDesksHandler,
 	buildRegenerateDeskQrHandler,
@@ -38,15 +39,20 @@ export const desksRoutes: FastifyPluginAsync = async app => {
 	const listDesksHandler = buildListDesksHandler(app);
 	const listAdminDesksHandler = buildListAdminDesksHandler(app);
 	const regenerateDeskQrHandler = buildRegenerateDeskQrHandler(app);
+	const regenerateAllDesksQrHandler = buildRegenerateAllDesksQrHandler(app);
 	const controller = new DeskController(
 		listDesksHandler,
 		listAdminDesksHandler,
-		regenerateDeskQrHandler
+		regenerateDeskQrHandler,
+		regenerateAllDesksQrHandler
 	);
 
 	app.get("/", withAuth(app), (req, reply) => controller.listForDate(req, reply));
 	app.get("/admin", withAdmin(app), (req, reply) => controller.listAdmin(req, reply));
 	app.post("/admin/:id/qr/regenerate", withAdmin(app), (req, reply) =>
 		controller.regenerateQr(req, reply)
+	);
+	app.post("/admin/qr/regenerate-all", withAdmin(app), (req, reply) =>
+		controller.regenerateAllQr(req, reply)
 	);
 };

@@ -1,6 +1,7 @@
 ﻿import type { FastifyInstance } from "fastify";
 
 import { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
+import { RegenerateAllDesksQrHandler } from "@application/desks/commands/regenerate-all-desks-qr.handler.js";
 import { ListAdminDesksHandler } from "@application/desks/queries/list-admin-desks.handler.js";
 import { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
 import { PgDeskRepository } from "@infrastructure/desks/repositories/pg-desk-repository.js";
@@ -22,4 +23,9 @@ export function buildListAdminDesksHandler(app: FastifyInstance): ListAdminDesks
 export function buildRegenerateDeskQrHandler(app: FastifyInstance): RegenerateDeskQrHandler {
 	const deskRepo = buildDeskRepository(app);
 	return new RegenerateDeskQrHandler({ deskRepo });
+}
+
+export function buildRegenerateAllDesksQrHandler(app: FastifyInstance): RegenerateAllDesksQrHandler {
+	const deskRepo = buildDeskRepository(app);
+	return new RegenerateAllDesksQrHandler({ deskRepo });
 }

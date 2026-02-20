@@ -25,6 +25,8 @@ Nota: este backlog no compite con `docs/backend/TASKS.md` mientras estemos en mo
 
 ## 4) Roles, admin y auditoría
 - [ ] Modelo de roles (user/admin) y checks en backend.
+- [ ] Ajustar `POST /desks/admin/qr/regenerate-all` para multi-oficina/multi-org: regeneración por ámbito (`office_id`/`organization_id`) y permisos de admin por alcance.
+- [ ] Reglas de ciclo de vida de QR en administración de escritorios: al cambiar atributos que afecten a la identidad operativa del puesto (por ejemplo, código/identificador visible), regenerar QR automáticamente en backend; mantener regeneración manual como opción y auditar ambos casos.
 - [ ] Registro de acciones críticas (audit log básico).
 - [ ] Export de reservas (CSV) para gestión interna.
 

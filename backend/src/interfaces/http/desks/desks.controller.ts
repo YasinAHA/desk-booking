@@ -1,5 +1,7 @@
-﻿import type { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
+import type { RegenerateAllDesksQrCommand } from "@application/desks/commands/regenerate-all-desks-qr.command.js";
+import type { RegenerateAllDesksQrHandler } from "@application/desks/commands/regenerate-all-desks-qr.handler.js";
 import type { RegenerateDeskQrCommand } from "@application/desks/commands/regenerate-desk-qr.command.js";
+import type { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
 import type { ListAdminDesksHandler } from "@application/desks/queries/list-admin-desks.handler.js";
 import type { ListAdminDesksQuery } from "@application/desks/queries/list-admin-desks.query.js";
 import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
@@ -10,6 +12,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import {
 	mapAdminDesksResponse,
 	mapListDesksResponse,
+	mapRegenerateAllDesksQrResponse,
 	mapRegenerateDeskQrResponse,
 } from "./desks.mappers.js";
 import { deskIdParamSchema, listDesksSchema } from "./desks.schemas.js";
@@ -24,7 +27,8 @@ export class DeskController {
 	constructor(
 		private readonly listDesksHandler: ListDesksHandler,
 		private readonly listAdminDesksHandler: ListAdminDesksHandler,
-		private readonly regenerateDeskQrHandler: RegenerateDeskQrHandler
+		private readonly regenerateDeskQrHandler: RegenerateDeskQrHandler,
+		private readonly regenerateAllDesksQrHandler: RegenerateAllDesksQrHandler
 	) {}
 
 	async listForDate(req: FastifyRequest, reply: FastifyReply) {
@@ -63,5 +67,12 @@ export class DeskController {
 
 		return reply.send(mapRegenerateDeskQrResponse(parse.data.id, qrPublicId));
 	}
-}
 
+	async regenerateAllQr(req: FastifyRequest, reply: FastifyReply) {
+		const command: RegenerateAllDesksQrCommand = {
+			requestedByUserId: req.user.id,
+		};
+		const updated = await this.regenerateAllDesksQrHandler.execute(command);
+		return reply.send(mapRegenerateAllDesksQrResponse(updated));
+	}
+}

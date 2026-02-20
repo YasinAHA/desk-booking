@@ -171,4 +171,11 @@ export class PgDeskRepository implements DeskRepository {
 		const row = result.rows[0] as { qr_public_id?: unknown } | undefined;
 		return typeof row?.qr_public_id === "string" ? row.qr_public_id : null;
 	}
+
+	async regenerateAllQrPublicIds(): Promise<number> {
+		const result = await this.db.query(
+			"update desks set qr_public_id = gen_random_uuid()::text, updated_at = now()"
+		);
+		return result.rowCount ?? 0;
+	}
 }

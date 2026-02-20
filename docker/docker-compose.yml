@@ -2,10 +2,13 @@
   postgres:
     image: postgres:18
     container_name: deskbooking_pg
+    command: ["postgres", "-c", "timezone=Europe/Madrid"]
     environment:
       POSTGRES_DB: deskbooking
       POSTGRES_USER: deskbooking
       POSTGRES_PASSWORD: deskbooking
+      TZ: Europe/Madrid
+      PGTZ: Europe/Madrid
     ports:
       - "5432:5432"
     volumes:

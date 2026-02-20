@@ -229,3 +229,10 @@ export async function regenerateDeskQr(deskId, token) {
 		headers: authHeaders(token),
 	});
 }
+
+export async function regenerateAllDeskQr(token) {
+	return request("/desks/admin/qr/regenerate-all", {
+		method: "POST",
+		headers: authHeaders(token),
+	});
+}

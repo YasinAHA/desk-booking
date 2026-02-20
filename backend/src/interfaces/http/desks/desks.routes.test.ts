@@ -183,3 +183,35 @@ test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
 	assert.equal(body.qr_public_id, "qr-new-123");
 	await app.close();
 });
+
+test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("select role from users")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update desks set qr_public_id = gen_random_uuid()::text")) {
+			return { rows: [], rowCount: 12 };
+		}
+		return { rows: [] };
+	});
+
+	const token = app.jwt.sign({
+		id: "admin-1",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "User",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/desks/admin/qr/regenerate-all",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.ok, true);
+	assert.equal(body.updated, 12);
+	await app.close();
+});

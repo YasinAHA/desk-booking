@@ -31,3 +31,10 @@ export function mapRegenerateDeskQrResponse(deskId: string, qrPublicId: string) 
 		qr_public_id: qrPublicId,
 	};
 }
+
+export function mapRegenerateAllDesksQrResponse(updated: number) {
+	return {
+		ok: true,
+		updated,
+	};
+}

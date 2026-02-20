@@ -10,6 +10,7 @@ import {
 	logout,
 	refreshToken,
 	register,
+	regenerateAllDeskQr,
 	regenerateDeskQr,
 	resetPassword,
 	verifyToken,
@@ -54,6 +55,8 @@ const authSection = document.getElementById("authSection");
 const changePasswordSection = document.getElementById("changePasswordSection");
 const adminSection = document.getElementById("adminSection");
 const adminDesksGrid = document.getElementById("adminDesksGrid");
+const regenerateAllQrBtn = document.getElementById("regenerateAllQrBtn");
+const printAllQrBtn = document.getElementById("printAllQrBtn");
 const loadingOverlay = document.getElementById("loadingOverlay");
 const loadingText = document.getElementById("loadingText");
 
@@ -77,6 +80,12 @@ function setLoading(isLoading, message = "Cargando...") {
 	forgotSubmit.disabled = isLoading;
 	resetSubmit.disabled = isLoading;
 	changeSubmit.disabled = isLoading;
+	if (regenerateAllQrBtn) {
+		regenerateAllQrBtn.disabled = isLoading;
+	}
+	if (printAllQrBtn) {
+		printAllQrBtn.disabled = isLoading;
+	}
 
 	loadingOverlay.classList.toggle("hidden", !isLoading);
 	loadingText.textContent = message;
@@ -364,6 +373,89 @@ function printDeskQr(item) {
 	}, 5000);
 }
 
+function printAllDeskQr(items) {
+	if (!items?.length) {
+		setStatus("No hay escritorios para imprimir.", "info");
+		return;
+	}
+	const safe = value =>
+		String(value ?? "")
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll("\"", "&quot;")
+			.replaceAll("'", "&#39;");
+
+	const cards = items
+		.map(
+			item => `<article class="sheet">
+	<h2>Desk ${safe(item.code)}</h2>
+	<p class="meta">${safe(item.name ?? "Sin nombre")} | estado: ${safe(item.status)}</p>
+	<img src="${safe(buildDeskQrImageUrl(item.qr_public_id))}" alt="QR ${safe(item.code)}" />
+	<p class="token">${safe(item.qr_public_id)}</p>
+</article>`
+		)
+		.join("");
+
+	const html = `<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<title>QR Desks</title>
+	<style>
+		body { font-family: Arial, sans-serif; margin: 16px; }
+		.grid { display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 12px; }
+		.sheet { border: 1px solid #ddd; border-radius: 12px; padding: 12px; break-inside: avoid; }
+		.meta { margin: 0 0 10px; color: #444; font-size: 14px; }
+		img { width: 220px; height: 220px; display: block; margin: 8px 0; }
+		.token { font-size: 12px; word-break: break-all; color: #666; }
+		@media print { body { margin: 0; } .grid { gap: 8px; } }
+	</style>
+</head>
+<body>
+	<section class="grid">${cards}</section>
+	<script>
+		(() => {
+			const images = Array.from(document.images);
+			let pending = images.length;
+			let done = false;
+			const printNow = () => {
+				if (done) return;
+				done = true;
+				window.focus();
+				window.print();
+			};
+			if (pending === 0) {
+				setTimeout(printNow, 50);
+			} else {
+				for (const img of images) {
+					const settle = () => {
+						pending -= 1;
+						if (pending <= 0) setTimeout(printNow, 50);
+					};
+					img.addEventListener("load", settle, { once: true });
+					img.addEventListener("error", settle, { once: true });
+				}
+			}
+			setTimeout(printNow, 2500);
+		})();
+	</script>
+</body>
+</html>`;
+
+	const blob = new Blob([html], { type: "text/html" });
+	const blobUrl = globalThis.URL.createObjectURL(blob);
+	const printWindow = globalThis.open(blobUrl, "_blank", "width=960,height=900");
+	if (!printWindow) {
+		globalThis.URL.revokeObjectURL(blobUrl);
+		setStatus("No se pudo abrir la impresión masiva.", "error");
+		return;
+	}
+	globalThis.setTimeout(() => {
+		globalThis.URL.revokeObjectURL(blobUrl);
+	}, 7000);
+}
+
 function renderAdminDesks() {
 	adminDesksGrid.innerHTML = "";
 	if (!state.token || !state.adminDesks?.length) {
@@ -429,6 +521,34 @@ function renderAdminDesks() {
 		card.appendChild(token);
 		card.appendChild(actions);
 		adminDesksGrid.appendChild(card);
+	});
+}
+
+if (regenerateAllQrBtn) {
+	regenerateAllQrBtn.addEventListener("click", async () => {
+		if (!state.token) {
+			setStatus("Debes iniciar sesión.", "error");
+			return;
+		}
+		try {
+			setLoading(true, "Regenerando todos los QR...");
+			const result = await regenerateAllDeskQr(state.token);
+			const adminData = await getAdminDesks(state.token);
+			setAdminDesks(adminData.items ?? []);
+			renderAdminDesks();
+			const updated = Number(result?.updated ?? 0);
+			setStatus(`QR regenerados: ${updated}. Reemplaza las pegatinas físicas.`, "success");
+		} catch (err) {
+			setStatus(getErrorMessage(err, "No se pudieron regenerar todos los QR."), "error");
+		} finally {
+			setLoading(false);
+		}
+	});
+}
+
+if (printAllQrBtn) {
+	printAllQrBtn.addEventListener("click", () => {
+		printAllDeskQr(state.adminDesks ?? []);
 	});
 }
 

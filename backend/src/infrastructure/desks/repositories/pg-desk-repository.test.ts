@@ -91,3 +91,18 @@ test("PgDeskRepository.regenerateQrPublicId returns new qr id", async () => {
 	assert.equal(qr, "qr-new");
 });
 
+test("PgDeskRepository.regenerateAllQrPublicIds returns updated rows count", async () => {
+	const repo = new PgDeskRepository({
+		query: async text => {
+			assert.ok(text.includes("update desks set qr_public_id = gen_random_uuid()::text"));
+			return {
+				rows: [],
+				rowCount: 7,
+			};
+		},
+	});
+
+	const updated = await repo.regenerateAllQrPublicIds();
+	assert.equal(updated, 7);
+});
+

@@ -29,6 +29,7 @@ export interface DeskRepository {
 	listForDate(date: string, userId: UserId): Promise<DeskAvailability[]>;
 	listForAdmin(): Promise<AdminDeskRecord[]>;
 	regenerateQrPublicId(deskId: DeskId): Promise<string | null>;
+	regenerateAllQrPublicIds(): Promise<number>;
 }
 
 
