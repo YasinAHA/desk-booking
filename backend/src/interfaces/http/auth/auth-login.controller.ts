@@ -95,7 +95,17 @@ export class AuthLoginController {
 		}
 	}
 
-	async logout(_req: FastifyRequest, reply: FastifyReply) {
-		return reply.status(204).send();
+	async logout(req: FastifyRequest, reply: FastifyReply) {
+		const parse = verifySchema.safeParse(req.body);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+
+		try {
+			await this.authSessionLifecycleService.logout(parse.data.token, req.user.id);
+			return reply.status(204).send();
+		} catch {
+			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");
+		}
 	}
 }

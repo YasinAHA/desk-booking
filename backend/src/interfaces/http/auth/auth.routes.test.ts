@@ -349,6 +349,85 @@ test("POST /auth/refresh rejects reused revoked refresh token", async () => {
 	await app.close();
 });
 
+test("POST /auth/logout returns 401 without access token", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/logout",
+		payload: { token: "any-refresh-token" },
+	});
+
+	assert.equal(res.statusCode, 401);
+	await app.close();
+});
+
+test("POST /auth/logout revokes refresh token and prevents reuse", async () => {
+	const hash = await argon2.hash("123456");
+	const revokedJtis = new Set<string>();
+	const app = await buildTestApp(async (_text, params) => {
+		const first = params?.[0];
+		if (isEmail(first)) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: hash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+		if (Array.isArray(params) && params.length === 3) {
+			revokedJtis.add(getFirstStringParam(params));
+			return { rows: [], rowCount: 1 };
+		}
+		if (isUserId(first)) {
+			return { rows: [{ token_valid_after: null }], rowCount: 1 };
+		}
+		if (isString(first)) {
+			const jti = first;
+			const isRevoked = revokedJtis.has(jti);
+			return {
+				rows: isRevoked ? [{ exists: 1 }] : [],
+				rowCount: isRevoked ? 1 : 0,
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const loginRes = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { email: "admin@camerfirma.com", password: "123456" },
+	});
+	assert.equal(loginRes.statusCode, 200);
+	const loginBody = getJsonRecord(loginRes);
+	const accessToken = getRequiredString(loginBody, "accessToken");
+	const refreshToken = getRequiredString(loginBody, "refreshToken");
+
+	const logoutRes = await app.inject({
+		method: "POST",
+		url: "/auth/logout",
+		headers: { Authorization: `Bearer ${accessToken}` },
+		payload: { token: refreshToken },
+	});
+	assert.equal(logoutRes.statusCode, 204);
+
+	const refreshRes = await app.inject({
+		method: "POST",
+		url: "/auth/refresh",
+		payload: { token: refreshToken },
+	});
+	assert.equal(refreshRes.statusCode, 401);
+
+	await app.close();
+});
+
 test("POST /auth/forgot-password returns generic OK and enqueues reset for existing user", async () => {
 	const hash = await argon2.hash("123456");
 	let resetCreated = false;

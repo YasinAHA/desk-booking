@@ -306,8 +306,12 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		method: "post",
 		path: "/auth/logout",
 		tags: ["auth"],
+		security: [{ bearerAuth: [] }],
+		request: { body: { required: true, content: json(refreshSchema) } },
 		responses: {
 			204: { description: "Logged out" },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
 			500: err("Internal error"),
 		},
 	});

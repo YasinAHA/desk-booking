@@ -2,6 +2,7 @@
 import type { RegenerateAllDesksQrHandler } from "@application/desks/commands/regenerate-all-desks-qr.handler.js";
 import type { RegenerateDeskQrCommand } from "@application/desks/commands/regenerate-desk-qr.command.js";
 import type { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
+import { AdminAuthorizationError } from "@application/desks/errors/admin-authorization-error.js";
 import type { ListAdminDesksHandler } from "@application/desks/queries/list-admin-desks.handler.js";
 import type { ListAdminDesksQuery } from "@application/desks/queries/list-admin-desks.query.js";
 import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
@@ -46,7 +47,9 @@ export class DeskController {
 
 	async listAdmin(req: FastifyRequest, reply: FastifyReply) {
 		const query: ListAdminDesksQuery = { requestedByUserId: req.user.id };
-		const items = await this.listAdminDesksHandler.execute(query);
+		const items = await this.executeAdminAction(() =>
+			this.listAdminDesksHandler.execute(query)
+		);
 		return reply.send(mapAdminDesksResponse(items));
 	}
 
@@ -60,7 +63,9 @@ export class DeskController {
 			deskId: parse.data.id,
 			requestedByUserId: req.user.id,
 		};
-		const qrPublicId = await this.regenerateDeskQrHandler.execute(command);
+		const qrPublicId = await this.executeAdminAction(() =>
+			this.regenerateDeskQrHandler.execute(command)
+		);
 		if (!qrPublicId) {
 			throwHttpError(404, "DESK_NOT_FOUND", "Desk not found");
 		}
@@ -72,7 +77,20 @@ export class DeskController {
 		const command: RegenerateAllDesksQrCommand = {
 			requestedByUserId: req.user.id,
 		};
-		const updated = await this.regenerateAllDesksQrHandler.execute(command);
+		const updated = await this.executeAdminAction(() =>
+			this.regenerateAllDesksQrHandler.execute(command)
+		);
 		return reply.send(mapRegenerateAllDesksQrResponse(updated));
+	}
+
+	private async executeAdminAction<T>(action: () => Promise<T>): Promise<T> {
+		try {
+			return await action();
+		} catch (error) {
+			if (error instanceof AdminAuthorizationError) {
+				throwHttpError(403, "FORBIDDEN", "Forbidden");
+			}
+			throw error;
+		}
 	}
 }

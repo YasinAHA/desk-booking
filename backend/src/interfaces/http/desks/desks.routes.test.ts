@@ -278,3 +278,110 @@ test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async (
 	assert.equal(body.updated, 12);
 	await app.close();
 });
+
+test("GET /desks/admin returns 403 when application handler denies admin access", async () => {
+	let adminChecks = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-shadow") {
+			adminChecks += 1;
+			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+		}
+		if (!params || params.length === 0) {
+			return {
+				rows: [
+					{
+						id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
+						code: "D01",
+						name: "Puesto 01",
+						status: "active",
+						qr_public_id: "qr-111",
+					},
+				],
+			};
+		}
+		return { rows: [] };
+	}, "admin-shadow");
+
+	const token = await signAccessToken({
+		id: "admin-shadow",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "Shadow",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/desks/admin",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 403);
+	await app.close();
+});
+
+test("POST /desks/admin/:id/qr/regenerate returns 403 when application handler denies admin access", async () => {
+	let adminChecks = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-shadow") {
+			adminChecks += 1;
+			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+		}
+		if (
+			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
+			params.length === 1
+		) {
+			return { rows: [{ qr_public_id: "qr-new-123" }], rowCount: 1 };
+		}
+		return { rows: [] };
+	}, "admin-shadow");
+
+	const token = await signAccessToken({
+		id: "admin-shadow",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "Shadow",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/desks/admin/11111111-1111-1111-8111-111111111111/qr/regenerate",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 403);
+	await app.close();
+});
+
+test("POST /desks/admin/qr/regenerate-all returns 403 when application handler denies admin access", async () => {
+	let adminChecks = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-shadow") {
+			adminChecks += 1;
+			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+		}
+		if (!params || params.length === 0) {
+			return { rows: [], rowCount: 12 };
+		}
+		return { rows: [] };
+	}, "admin-shadow");
+
+	const token = await signAccessToken({
+		id: "admin-shadow",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "Shadow",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/desks/admin/qr/regenerate-all",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 403);
+	await app.close();
+});

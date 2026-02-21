@@ -34,6 +34,6 @@ export const authRoutes: FastifyPluginAsync = async app => {
 	app.post("/change-password", auth, async (req, reply) => passwordController.changePassword(req, reply));
 	app.post("/refresh", async (req, reply) => loginController.refresh(req, reply));
 	app.get("/confirm", async (req, reply) => registrationController.confirmEmail(req, reply));
-	app.post("/logout", async (req, reply) => loginController.logout(req, reply));
+	app.post("/logout", auth, async (req, reply) => loginController.logout(req, reply));
 };
 

@@ -30,17 +30,20 @@ export function buildListDesksHandler(app: FastifyInstance): ListDesksHandler {
 
 export function buildListAdminDesksHandler(app: FastifyInstance): ListAdminDesksHandler {
 	const deskRepo = buildDeskRepository(app);
-	return new ListAdminDesksHandler({ deskRepo });
+	const userAuthorizationRepo = buildUserAuthorizationRepository(app);
+	return new ListAdminDesksHandler({ deskRepo, userAuthorizationRepo });
 }
 
 export function buildRegenerateDeskQrHandler(app: FastifyInstance): RegenerateDeskQrHandler {
 	const deskRepo = buildDeskRepository(app);
-	return new RegenerateDeskQrHandler({ deskRepo });
+	const userAuthorizationRepo = buildUserAuthorizationRepository(app);
+	return new RegenerateDeskQrHandler({ deskRepo, userAuthorizationRepo });
 }
 
 export function buildRegenerateAllDesksQrHandler(app: FastifyInstance): RegenerateAllDesksQrHandler {
 	const deskRepo = buildDeskRepository(app);
-	return new RegenerateAllDesksQrHandler({ deskRepo });
+	const userAuthorizationRepo = buildUserAuthorizationRepository(app);
+	return new RegenerateAllDesksQrHandler({ deskRepo, userAuthorizationRepo });
 }
 
 export function buildCheckAdminAccessHandler(app: FastifyInstance): CheckAdminAccessHandler {
