@@ -8,6 +8,7 @@
 - [FRONTEND-DECISIONS.md](FRONTEND-DECISIONS.md)
 - [RUNBOOK-FRONTEND.md](RUNBOOK-FRONTEND.md)
 - [TASKS.md](TASKS.md)
+- [HANDOFF-FRONTEND-AGENT.md](HANDOFF-FRONTEND-AGENT.md)
 - [llm-context/frontend-context.md](llm-context/frontend-context.md)
 - [ai/README.md](ai/README.md)
 - [design/DESIGN-SYSTEM.md](design/DESIGN-SYSTEM.md)
