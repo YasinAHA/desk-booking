@@ -29,6 +29,13 @@ Monorepo con backend propio y frontend ligero:
 - Serialización/formatos se resuelven en `infrastructure`.
 - Constantes de negocio y límites compartidos en `src/config/constants.ts`.
 
+### Convención de naming (normativa)
+- DB/SQL (`migrations`, tablas, columnas): `snake_case`.
+- Código de `domain` y `application`: `camelCase`.
+- Contrato HTTP público (request/response y OpenAPI): `camelCase`.
+- La traducción de naming se hace en mappers/adapters de `interfaces/http` (y en `infrastructure` para row DB -> modelo interno cuando aplique).
+- No introducir nuevos endpoints/respuestas en `snake_case`.
+
 ### CQRS (criterio pragmatica)
 - CQRS estricto solo se aplica cuando hay lecturas complejas o proyecciones.
 - En v1 se usa separacion comando/consulta donde aporta claridad (reservations).

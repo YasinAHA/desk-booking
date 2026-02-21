@@ -24,5 +24,7 @@ Architecture Decision Records (ADR) del proyecto.
 - [ADR-0003: v0.6 Architecture - Layer-First with Feature Grouping](ADR-0003-layer-first-feature-grouping-v0.6.md)
 - [ADR-0004: Migrations as Single Source of Truth](ADR-0004-migrations-as-single-source-of-truth.md)
 - [ADR-0005: Docs Structure for Monorepo](ADR-0005-docs-structure-monorepo.md)
+- [ADR-0006: OpenAPI from Zod](ADR-0006-openapi-from-zod.md)
+- [ADR-0007: HTTP Naming Convention](ADR-0007-http-naming-convention.md)
 
 
