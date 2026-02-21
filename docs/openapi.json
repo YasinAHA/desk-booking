@@ -139,15 +139,15 @@
                           "type": "string",
                           "format": "email"
                         },
-                        "first_name": {
+                        "firstName": {
                           "type": "string",
                           "minLength": 1
                         },
-                        "last_name": {
+                        "lastName": {
                           "type": "string",
                           "minLength": 1
                         },
-                        "second_last_name": {
+                        "secondLastName": {
                           "type": [
                             "string",
                             "null"
@@ -157,9 +157,9 @@
                       "required": [
                         "id",
                         "email",
-                        "first_name",
-                        "last_name",
-                        "second_last_name"
+                        "firstName",
+                        "lastName",
+                        "secondLastName"
                       ]
                     }
                   },
@@ -348,15 +348,15 @@
                           "type": "string",
                           "format": "email"
                         },
-                        "first_name": {
+                        "firstName": {
                           "type": "string",
                           "minLength": 1
                         },
-                        "last_name": {
+                        "lastName": {
                           "type": "string",
                           "minLength": 1
                         },
-                        "second_last_name": {
+                        "secondLastName": {
                           "type": [
                             "string",
                             "null"
@@ -366,9 +366,9 @@
                       "required": [
                         "id",
                         "email",
-                        "first_name",
-                        "last_name",
-                        "second_last_name"
+                        "firstName",
+                        "lastName",
+                        "secondLastName"
                       ]
                     }
                   },
@@ -526,15 +526,15 @@
                   "password": {
                     "type": "string"
                   },
-                  "first_name": {
+                  "firstName": {
                     "type": "string",
                     "minLength": 1
                   },
-                  "last_name": {
+                  "lastName": {
                     "type": "string",
                     "minLength": 1
                   },
-                  "second_last_name": {
+                  "secondLastName": {
                     "type": "string",
                     "minLength": 1
                   }
@@ -542,8 +542,8 @@
                 "required": [
                   "email",
                   "password",
-                  "first_name",
-                  "last_name"
+                  "firstName",
+                  "lastName"
                 ]
               }
             }
@@ -1034,17 +1034,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "current_password": {
+                  "currentPassword": {
                     "type": "string",
                     "minLength": 1
                   },
-                  "new_password": {
+                  "newPassword": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "current_password",
-                  "new_password"
+                  "currentPassword",
+                  "newPassword"
                 ]
               }
             }
@@ -1782,7 +1782,7 @@
                             "type": "string",
                             "format": "uuid"
                           },
-                          "office_id": {
+                          "officeId": {
                             "type": "string",
                             "format": "uuid"
                           },
@@ -1803,18 +1803,18 @@
                               "disabled"
                             ]
                           },
-                          "qr_public_id": {
+                          "qrPublicId": {
                             "type": "string",
                             "minLength": 10
                           }
                         },
                         "required": [
                           "id",
-                          "office_id",
+                          "officeId",
                           "code",
                           "name",
                           "status",
-                          "qr_public_id"
+                          "qrPublicId"
                         ]
                       }
                     }
@@ -1957,19 +1957,19 @@
                         true
                       ]
                     },
-                    "desk_id": {
+                    "deskId": {
                       "type": "string",
                       "format": "uuid"
                     },
-                    "qr_public_id": {
+                    "qrPublicId": {
                       "type": "string",
                       "minLength": 10
                     }
                   },
                   "required": [
                     "ok",
-                    "desk_id",
-                    "qr_public_id"
+                    "deskId",
+                    "qrPublicId"
                   ]
                 }
               }
@@ -2288,11 +2288,11 @@
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                     "description": "Date in YYYY-MM-DD format"
                   },
-                  "desk_id": {
+                  "deskId": {
                     "type": "string",
                     "format": "uuid"
                   },
-                  "office_id": {
+                  "officeId": {
                     "type": "string",
                     "format": "uuid"
                   },
@@ -2308,7 +2308,7 @@
                 },
                 "required": [
                   "date",
-                  "desk_id"
+                  "deskId"
                 ]
               }
             }
@@ -2328,14 +2328,14 @@
                         true
                       ]
                     },
-                    "reservation_id": {
+                    "reservationId": {
                       "type": "string",
                       "format": "uuid"
                     }
                   },
                   "required": [
                     "ok",
-                    "reservation_id"
+                    "reservationId"
                   ]
                 }
               }
@@ -2490,14 +2490,14 @@
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                     "description": "Date in YYYY-MM-DD format"
                   },
-                  "qr_public_id": {
+                  "qrPublicId": {
                     "type": "string",
                     "minLength": 10
                   }
                 },
                 "required": [
                   "date",
-                  "qr_public_id"
+                  "qrPublicId"
                 ]
               }
             }
@@ -2897,22 +2897,22 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "reservation_id": {
+                          "reservationId": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          "desk_id": {
+                          "deskId": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          "office_id": {
+                          "officeId": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          "desk_name": {
+                          "deskName": {
                             "type": "string"
                           },
-                          "reservation_date": {
+                          "reservationDate": {
                             "type": "string",
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                           },
@@ -2925,7 +2925,7 @@
                               "system"
                             ]
                           },
-                          "cancelled_at": {
+                          "cancelledAt": {
                             "type": [
                               "string",
                               "null"
@@ -2933,13 +2933,13 @@
                           }
                         },
                         "required": [
-                          "reservation_id",
-                          "desk_id",
-                          "office_id",
-                          "desk_name",
-                          "reservation_date",
+                          "reservationId",
+                          "deskId",
+                          "officeId",
+                          "deskName",
+                          "reservationDate",
                           "source",
-                          "cancelled_at"
+                          "cancelledAt"
                         ]
                       }
                     }

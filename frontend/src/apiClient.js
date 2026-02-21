@@ -131,9 +131,9 @@ export async function register(email, password, firstName, lastName, secondLastN
 		body: JSON.stringify({
 			email,
 			password,
-			first_name: firstName,
-			last_name: lastName,
-			second_last_name: secondLastName || undefined,
+			firstName,
+			lastName,
+			secondLastName: secondLastName || undefined,
 		}),
 	});
 }
@@ -157,8 +157,8 @@ export async function changePassword(currentPassword, newPassword, token) {
 		method: "POST",
 		headers: authHeaders(token),
 		body: JSON.stringify({
-			current_password: currentPassword,
-			new_password: newPassword,
+			currentPassword,
+			newPassword,
 		}),
 	});
 }
@@ -197,8 +197,8 @@ export async function createReservation(date, deskId, officeId, token, source) {
 		headers: authHeaders(token),
 		body: JSON.stringify({
 			date,
-			desk_id: deskId,
-			office_id: officeId || undefined,
+			deskId,
+			officeId: officeId || undefined,
 			source: source || undefined,
 		}),
 	});
@@ -223,7 +223,7 @@ export async function checkInByQr(date, qrPublicId, token) {
 		headers: authHeaders(token),
 		body: JSON.stringify({
 			date,
-			qr_public_id: qrPublicId,
+			qrPublicId,
 		}),
 	});
 }

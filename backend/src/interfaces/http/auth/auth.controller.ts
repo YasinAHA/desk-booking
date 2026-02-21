@@ -116,10 +116,10 @@ export class AuthController {
 		const command: RegisterCommand = {
 			email: parse.data.email.toLowerCase(),
 			password: parse.data.password,
-			firstName: parse.data.first_name,
-			lastName: parse.data.last_name,
-			...(parse.data.second_last_name
-				? { secondLastName: parse.data.second_last_name }
+			firstName: parse.data.firstName,
+			lastName: parse.data.lastName,
+			...(parse.data.secondLastName
+				? { secondLastName: parse.data.secondLastName }
 				: {}),
 		};
 		const result = await this.registerHandler.execute(command);
@@ -317,7 +317,7 @@ export class AuthController {
 
 		const parse = changePasswordSchema.safeParse(req.body);
 		if (!parse.success) {
-			const passwordError = parse.error.issues.find(issue => issue.path.includes("new_password"));
+			const passwordError = parse.error.issues.find(issue => issue.path.includes("newPassword"));
 			if (passwordError) {
 				throwHttpError(400, "WEAK_PASSWORD", passwordError.message);
 			}
@@ -326,8 +326,8 @@ export class AuthController {
 
 		const command: ChangePasswordCommand = {
 			userId: req.user.id,
-			currentPassword: parse.data.current_password,
-			newPassword: parse.data.new_password,
+			currentPassword: parse.data.currentPassword,
+			newPassword: parse.data.newPassword,
 		};
 		const result = await this.changePasswordHandler.execute(command);
 		if (result.status !== "OK") {

@@ -12,6 +12,12 @@ Histórico de tareas cerradas: consultar los tags/release notes en Git y `CHANGE
 ## Prioridad P0 (entrega)
 - [x] Implementar backend para **Admin UI básica** (operaciones mínimas de gestión necesarias para demo/uso interno).
 - [x] Implementar flujo backend de **QR check-in** end-to-end.
+- [x] Normalizar contrato HTTP a `camelCase` (según ADR-0007) en endpoints existentes:
+  - auth (responses mapeadas en `interfaces/http/auth`)
+  - desks (listado user/admin + regeneración QR)
+  - reservations (create/list/cancel/check-in)
+- [x] Actualizar OpenAPI tras normalización de naming y regenerar `docs/openapi.json`.
+- [x] Coordinar ajuste de frontend al nuevo contrato HTTP (`camelCase`) y validar flujo completo.
 - [ ] Validar migraciones y seeds en entorno de despliegue.
 - [ ] Ejecutar smoke funcional completo en entorno desplegado:
   - auth (login/refresh/logout, forgot/reset/change password)

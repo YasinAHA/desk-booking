@@ -24,15 +24,14 @@ export const resetPasswordSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-	current_password: z.string().min(1),
-	new_password: strongPasswordSchema,
+	currentPassword: z.string().min(1),
+	newPassword: strongPasswordSchema,
 });
 
 export const registerSchema = z.object({
 	email: emailSchema,
 	password: strongPasswordSchema,
-	first_name: z.string().min(1),
-	last_name: z.string().min(1),
-	second_last_name: z.string().min(1).optional(),
+	firstName: z.string().min(1),
+	lastName: z.string().min(1),
+	secondLastName: z.string().min(1).optional(),
 });
-

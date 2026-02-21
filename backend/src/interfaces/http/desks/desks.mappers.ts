@@ -15,11 +15,11 @@ export function mapAdminDesksResponse(items: ListAdminDesksItems) {
 	return {
 		items: items.map(item => ({
 			id: item.id,
-			office_id: item.officeId,
+			officeId: item.officeId,
 			code: item.code,
 			name: item.name,
 			status: item.status,
-			qr_public_id: item.qrPublicId,
+			qrPublicId: item.qrPublicId,
 		})),
 	};
 }
@@ -27,8 +27,8 @@ export function mapAdminDesksResponse(items: ListAdminDesksItems) {
 export function mapRegenerateDeskQrResponse(deskId: string, qrPublicId: string) {
 	return {
 		ok: true,
-		desk_id: deskId,
-		qr_public_id: qrPublicId,
+		deskId,
+		qrPublicId,
 	};
 }
 

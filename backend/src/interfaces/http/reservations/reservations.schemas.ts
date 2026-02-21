@@ -7,8 +7,8 @@ import { z } from "zod";
 
 export const createReservationSchema = z.object({
 	date: dateSchema,
-	desk_id: uuidSchema,
-	office_id: uuidSchema.optional(),
+	deskId: uuidSchema,
+	officeId: uuidSchema.optional(),
 	source: z.enum(["user", "admin", "walk_in", "system"]).optional(),
 });
 
@@ -16,6 +16,5 @@ export const reservationIdParamSchema = createUuidParamSchema("id");
 
 export const checkInByQrSchema = z.object({
 	date: dateSchema,
-	qr_public_id: z.string().min(10),
+	qrPublicId: z.string().min(10),
 });
-

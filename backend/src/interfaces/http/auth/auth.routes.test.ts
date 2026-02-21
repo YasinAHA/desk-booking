@@ -85,8 +85,8 @@ test("POST /auth/register returns 403 for domain not allowed", async () => {
 		payload: {
 			email: "user@other.com",
 			password: "ValidPass123!",
-			first_name: "User",
-			last_name: "Other",
+			firstName: "User",
+			lastName: "Other",
 		},
 	});
 
@@ -117,8 +117,8 @@ test("POST /auth/register returns 200 when already confirmed", async () => {
 		payload: {
 			email: "admin@camerfirma.com",
 			password: "ValidPass123!",
-			first_name: "Admin",
-			last_name: "User",
+			firstName: "Admin",
+			lastName: "User",
 		},
 	});
 
@@ -529,8 +529,8 @@ test("POST /auth/change-password returns 200 with valid current password", async
 		url: "/auth/change-password",
 		headers: { Authorization: `Bearer ${token}` },
 		payload: {
-			current_password: "123456",
-			new_password: "ValidPass123!",
+			currentPassword: "123456",
+			newPassword: "ValidPass123!",
 		},
 	});
 
@@ -688,8 +688,8 @@ test("POST /auth/change-password invalidates previous refresh tokens", async () 
 		url: "/auth/change-password",
 		headers: { Authorization: `Bearer ${accessToken}` },
 		payload: {
-			current_password: "123456",
-			new_password: "ValidPass123!",
+			currentPassword: "123456",
+			newPassword: "ValidPass123!",
 		},
 	});
 	assert.equal(changeRes.statusCode, 200);

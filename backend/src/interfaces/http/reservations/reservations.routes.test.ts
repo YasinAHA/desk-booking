@@ -75,7 +75,7 @@ test("POST /reservations returns 401 without token", async () => {
 		url: "/reservations",
 		payload: {
 			date: "2026-02-20",
-			desk_id: "33333333-3333-3333-8333-333333333333",
+			deskId: "33333333-3333-3333-8333-333333333333",
 		},
 	});
 
@@ -101,7 +101,7 @@ test("POST /reservations returns desk-specific conflict message", async () => {
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: futureDate,
-			desk_id: "11111111-1111-1111-8111-111111111111",
+			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
@@ -129,7 +129,7 @@ test("POST /reservations returns user/day-specific conflict message", async () =
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: futureDate,
-			desk_id: "11111111-1111-1111-8111-111111111111",
+			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
@@ -148,7 +148,7 @@ test("POST /reservations returns DATE_INVALID for invalid calendar date", async 
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: "2026-02-31",
-			desk_id: "11111111-1111-1111-8111-111111111111",
+			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
@@ -271,7 +271,7 @@ test("POST /reservations returns NON_WORKING_DAY on weekend date", async () => {
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: "2099-02-21",
-			desk_id: "11111111-1111-1111-8111-111111111111",
+			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
@@ -299,7 +299,7 @@ test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: nonWeekendDate,
-			desk_id: "11111111-1111-1111-8111-111111111111",
+			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
@@ -317,7 +317,7 @@ test("POST /reservations/check-in/qr returns 401 without token", async () => {
 		url: "/reservations/check-in/qr",
 		payload: {
 			date: "2026-02-20",
-			qr_public_id: "qr-public-id-001",
+			qrPublicId: "qr-public-id-001",
 		},
 	});
 
@@ -339,7 +339,7 @@ test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async 
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: "2026-02-20",
-			qr_public_id: "qr-public-id-001",
+			qrPublicId: "qr-public-id-001",
 		},
 	});
 
@@ -364,7 +364,7 @@ test("POST /reservations/check-in/qr returns 404 when reservation is not found",
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: "2026-02-20",
-			qr_public_id: "qr-public-id-001",
+			qrPublicId: "qr-public-id-001",
 		},
 	});
 
@@ -386,7 +386,7 @@ test("POST /reservations/check-in/qr returns 409 when reservation is not active"
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
 			date: "2026-02-20",
-			qr_public_id: "qr-public-id-001",
+			qrPublicId: "qr-public-id-001",
 		},
 	});
 

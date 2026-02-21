@@ -33,9 +33,9 @@ extendZodWithOpenApi(z);
 const authUserSchema = z.object({
 	id: uuidSchema,
 	email: z.email(),
-	first_name: z.string().min(1),
-	last_name: z.string().min(1),
-	second_last_name: z.string().nullable(),
+	firstName: z.string().min(1),
+	lastName: z.string().min(1),
+	secondLastName: z.string().nullable(),
 });
 
 const okSchema = z.object({
@@ -82,19 +82,19 @@ const adminDesksResponseSchema = z.object({
 	items: z.array(
 		z.object({
 			id: uuidSchema,
-			office_id: uuidSchema,
+			officeId: uuidSchema,
 			code: z.string(),
 			name: z.string().nullable(),
 			status: z.enum(["active", "maintenance", "disabled"]),
-			qr_public_id: z.string().min(10),
+			qrPublicId: z.string().min(10),
 		})
 	),
 });
 
 const regenerateDeskQrResponseSchema = z.object({
 	ok: z.literal(true),
-	desk_id: uuidSchema,
-	qr_public_id: z.string().min(10),
+	deskId: uuidSchema,
+	qrPublicId: z.string().min(10),
 });
 
 const regenerateAllQrResponseSchema = z.object({
@@ -104,7 +104,7 @@ const regenerateAllQrResponseSchema = z.object({
 
 const createReservationResponseSchema = z.object({
 	ok: z.literal(true),
-	reservation_id: uuidSchema,
+	reservationId: uuidSchema,
 });
 
 const checkInByQrResponseSchema = z.object({
@@ -115,13 +115,13 @@ const checkInByQrResponseSchema = z.object({
 const listReservationsResponseSchema = z.object({
 	items: z.array(
 		z.object({
-			reservation_id: uuidSchema,
-			desk_id: uuidSchema,
-			office_id: uuidSchema,
-			desk_name: z.string(),
-			reservation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+			reservationId: uuidSchema,
+			deskId: uuidSchema,
+			officeId: uuidSchema,
+			deskName: z.string(),
+			reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 			source: z.enum(["user", "admin", "walk_in", "system"]),
-			cancelled_at: z.string().nullable(),
+			cancelledAt: z.string().nullable(),
 		})
 	),
 });

@@ -345,8 +345,8 @@ function renderReservations() {
 
 	state.reservations.forEach(item => {
 		const li = document.createElement("li");
-		const cancelled = item.cancelled_at ? " (cancelada)" : "";
-		li.textContent = `${item.reservation_date} - ${item.desk_name}${cancelled}`;
+		const cancelled = item.cancelledAt ? " (cancelada)" : "";
+		li.textContent = `${item.reservationDate} - ${item.deskName}${cancelled}`;
 		reservationsList.appendChild(li);
 	});
 }
@@ -372,7 +372,7 @@ function escapeHtml(value) {
 }
 
 function printDeskQr(item) {
-	const qrImageUrl = buildDeskQrImageUrl(item.qr_public_id);
+	const qrImageUrl = buildDeskQrImageUrl(item.qrPublicId);
 
 	const html = `<!doctype html>
 <html lang="es">
@@ -392,7 +392,7 @@ function printDeskQr(item) {
 		<h2>Desk ${escapeHtml(item.code)}</h2>
 		<p class="meta">${escapeHtml(item.name ?? "Sin nombre")} | estado: ${escapeHtml(item.status)}</p>
 		<img src="${escapeHtml(qrImageUrl)}" alt="QR ${escapeHtml(item.code)}" />
-		<p class="token">${escapeHtml(item.qr_public_id)}</p>
+		<p class="token">${escapeHtml(item.qrPublicId)}</p>
 	</div>
 	<script>
 		(() => {
@@ -439,8 +439,8 @@ function printAllDeskQr(items) {
 			item => `<article class="sheet">
 	<h2>Desk ${escapeHtml(item.code)}</h2>
 	<p class="meta">${escapeHtml(item.name ?? "Sin nombre")} | estado: ${escapeHtml(item.status)}</p>
-	<img src="${escapeHtml(buildDeskQrImageUrl(item.qr_public_id))}" alt="QR ${escapeHtml(item.code)}" />
-	<p class="token">${escapeHtml(item.qr_public_id)}</p>
+	<img src="${escapeHtml(buildDeskQrImageUrl(item.qrPublicId))}" alt="QR ${escapeHtml(item.code)}" />
+	<p class="token">${escapeHtml(item.qrPublicId)}</p>
 </article>`
 		)
 		.join("");
@@ -559,11 +559,11 @@ function renderAdminDesks() {
 
 		const qr = document.createElement("img");
 		qr.className = "admin-qr";
-		qr.src = buildDeskQrImageUrl(item.qr_public_id);
+		qr.src = buildDeskQrImageUrl(item.qrPublicId);
 		qr.alt = `QR ${item.code}`;
 
 		const token = document.createElement("code");
-		token.textContent = item.qr_public_id;
+		token.textContent = item.qrPublicId;
 
 		const actions = document.createElement("div");
 		actions.className = "admin-actions";

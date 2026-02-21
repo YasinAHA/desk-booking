@@ -109,7 +109,7 @@ test("GET /desks/admin returns 403 for non-admin user", async () => {
 	await app.close();
 });
 
-test("GET /desks/admin returns desks with qr_public_id for admin", async () => {
+test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 	const app = await buildTestApp(async text => {
 		if (text.includes("select role from users")) {
 			return { rows: [{ role: "admin" }] };
@@ -148,7 +148,7 @@ test("GET /desks/admin returns desks with qr_public_id for admin", async () => {
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
 	assert.equal(body.items.length, 1);
-	assert.equal(body.items[0].qr_public_id, "qr-111");
+	assert.equal(body.items[0].qrPublicId, "qr-111");
 	await app.close();
 });
 
@@ -180,7 +180,7 @@ test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
 	assert.equal(body.ok, true);
-	assert.equal(body.qr_public_id, "qr-new-123");
+	assert.equal(body.qrPublicId, "qr-new-123");
 	await app.close();
 });
 

@@ -53,20 +53,14 @@ export class ReservationController {
 		}
 
 		try {
-			const command: CreateReservationCommand = {
-				userId: req.user.id,
-				date: parse.data.date,
-				deskId: parse.data.desk_id,
-				...(parse.data.source ? { source: parse.data.source } : {}),
-				...(parse.data.office_id ? { officeId: parse.data.office_id } : {}),
-			};
+			const command = this.buildCreateReservationCommand(req.user.id, parse.data);
 			const reservationId = await this.createReservationHandler.execute(command);
 
 			req.log.info(
 				{
 					event: "reservation.create",
 					userId: req.user.id,
-					deskId: parse.data.desk_id,
+					deskId: parse.data.deskId,
 					date: parse.data.date,
 					reservationId,
 				},
@@ -75,41 +69,7 @@ export class ReservationController {
 
 			return reply.send(mapCreateReservationResponse(reservationId));
 		} catch (err) {
-			if (err instanceof ReservationDateInvalidError) {
-				throwHttpError(400, "DATE_INVALID", "Invalid reservation date");
-			}
-
-			if (err instanceof ReservationDateInPastError) {
-				throwHttpError(400, "DATE_IN_PAST", "Date in past");
-			}
-			if (err instanceof ReservationOnNonWorkingDayError) {
-				throwHttpError(400, "NON_WORKING_DAY", "No se permite reservar en fin de semana.");
-			}
-			if (err instanceof ReservationSameDayBookingClosedError) {
-				throwHttpError(
-					409,
-					"SAME_DAY_BOOKING_CLOSED",
-					"La jornada ya ha comenzado. Para hoy solo se permite walk-in."
-				);
-			}
-
-			if (err instanceof DeskAlreadyReservedError) {
-				throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
-			}
-
-			if (err instanceof UserAlreadyHasReservationError) {
-				throwHttpError(
-					409,
-					"USER_ALREADY_HAS_RESERVATION",
-					"Ya tienes una reserva activa para ese día."
-				);
-			}
-
-			if (err instanceof ReservationConflictError) {
-				throwHttpError(409, "CONFLICT", "Reservation conflict");
-			}
-
-			throw err;
+			this.rethrowCreateError(err);
 		}
 	}
 
@@ -179,7 +139,7 @@ export class ReservationController {
 		const command: CheckInByQrCommand = {
 			userId: req.user.id,
 			date: parse.data.date,
-			qrPublicId: parse.data.qr_public_id,
+			qrPublicId: parse.data.qrPublicId,
 		};
 		const result = await this.checkInByQrHandler.execute(command);
 
@@ -194,7 +154,7 @@ export class ReservationController {
 			{
 				event: "reservation.check_in",
 				userId: req.user.id,
-				qrPublicId: parse.data.qr_public_id,
+				qrPublicId: parse.data.qrPublicId,
 				date: parse.data.date,
 				result,
 			},
@@ -202,5 +162,56 @@ export class ReservationController {
 		);
 
 		return reply.send(mapQrCheckInResponse(result));
+	}
+
+	private buildCreateReservationCommand(
+		userId: string,
+		payload: {
+			date: string;
+			deskId: string;
+			officeId?: string | undefined;
+			source?: "user" | "admin" | "walk_in" | "system" | undefined;
+		}
+	): CreateReservationCommand {
+		return {
+			userId,
+			date: payload.date,
+			deskId: payload.deskId,
+			...(payload.source ? { source: payload.source } : {}),
+			...(payload.officeId ? { officeId: payload.officeId } : {}),
+		};
+	}
+
+	private rethrowCreateError(err: unknown): never {
+		if (err instanceof ReservationDateInvalidError) {
+			throwHttpError(400, "DATE_INVALID", "Invalid reservation date");
+		}
+		if (err instanceof ReservationDateInPastError) {
+			throwHttpError(400, "DATE_IN_PAST", "Date in past");
+		}
+		if (err instanceof ReservationOnNonWorkingDayError) {
+			throwHttpError(400, "NON_WORKING_DAY", "No se permite reservar en fin de semana.");
+		}
+		if (err instanceof ReservationSameDayBookingClosedError) {
+			throwHttpError(
+				409,
+				"SAME_DAY_BOOKING_CLOSED",
+				"La jornada ya ha comenzado. Para hoy solo se permite walk-in."
+			);
+		}
+		if (err instanceof DeskAlreadyReservedError) {
+			throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
+		}
+		if (err instanceof UserAlreadyHasReservationError) {
+			throwHttpError(
+				409,
+				"USER_ALREADY_HAS_RESERVATION",
+				"Ya tienes una reserva activa para ese día."
+			);
+		}
+		if (err instanceof ReservationConflictError) {
+			throwHttpError(409, "CONFLICT", "Reservation conflict");
+		}
+		throw err;
 	}
 }
