@@ -122,9 +122,9 @@ export async function buildApp(): Promise<FastifyInstance> {
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
+                styleSrc: ["'self'", "https:"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:"],
+                imgSrc: ["'self'", "data:", "https:"],
             },
         },
         hsts: {
