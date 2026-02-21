@@ -4,6 +4,7 @@ const nodeEnv = process.env.NODE_ENV || "development";
 
 const envSchema = z.object({
     NODE_ENV: z.string().default("development"),
+    APP_VERSION: z.string().default("dev"),
     PORT: z.coerce.number().int().positive().default(3001),
     HOST: z.string().default("0.0.0.0"),
     DATABASE_URL: z.url(),
@@ -26,6 +27,9 @@ const envSchema = z.object({
         .default("Desk Booking <no-reply@camerfirma.com>"),
     APP_BASE_URL: z.url().default("http://localhost:3001"),
     FRONTEND_BASE_URL: z.url().default("http://localhost:5500"),
+    SENTRY_DSN_BACKEND: z.string().default(""),
+    SENTRY_DSN_FRONTEND: z.string().default(""),
+    SENTRY_ENV: z.string().default(nodeEnv),
     CORS_ORIGINS: z.string().default(""),
     DB_SSL: z.preprocess(
         value => {

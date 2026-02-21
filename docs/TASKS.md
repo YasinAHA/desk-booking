@@ -9,8 +9,13 @@ Histórico de tareas cerradas: consultar tags/release notes en Git y `CHANGELOG.
 - [ ] Verificar coherencia entre `SCOPE`, `TASKS` y `CHANGELOG` antes del cierre de versión.
 
 ## Prioridad P1 (tras cerrar backend funcional de Admin UI + QR)
-- [ ] Definir un frontend "en condiciones" (arquitectura mínima, flujo de navegación, estado y estándares de UI).
-- [ ] Convertir esa definición en roadmap por hitos para la siguiente versión.
+- [x] Definir un frontend "en condiciones" (arquitectura mínima, flujo de navegación, estado y estándares de UI).
+- [x] Convertir esa definición en roadmap por hitos para la siguiente versión.
+- [ ] Implementar bootstrap técnico del frontend según docs (`React + TS + Vite`, Query, Router, OpenAPI types).
+
+## Prioridad P1 (cross-cutting)
+- [x] Activar quality gates globales en monorepo con Husky (`pre-commit`, `pre-push`).
+- [ ] Completar integración Sentry global por fases (backend envío real, frontend envío real, sanitización estricta).
 
 ## Referencias por área
 - Backend tasks activas: [backend/TASKS.md](backend/TASKS.md)

@@ -36,6 +36,7 @@ Registro de decisiones clave para mantener coherencia técnica.
 | 2026-02-21 | backend | OpenAPI basado en Zod como fuente única de contrato HTTP | Reducir drift entre validación y documentación, minimizar duplicación y mejorar mantenibilidad del contrato API. | [ADR-0006](adr/ADR-0006-openapi-from-zod.md) |
 | 2026-02-21 | backend | Convención de naming para contrato HTTP | Establecer consistencia entre DB (`snake_case`), core (`camelCase`) y API HTTP (`camelCase`) para reducir drift y fricción en frontend. | [ADR-0007](adr/ADR-0007-http-naming-convention.md) |
 | 2026-02-21 | core | Estrategia global de quality gates y observabilidad | Definir `husky` en raíz del monorepo (pre-commit/pre-push) y estrategia Sentry por entorno para backend/frontend sin exponer datos sensibles. | - |
+| 2026-02-21 | core | Implementación inicial de quality gates globales y base Sentry | Activados hooks `husky` en raíz con gates de backend; variables Sentry globales añadidas para habilitación progresiva sin bloqueo de entrega. | - |
 
 
 

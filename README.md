@@ -99,6 +99,8 @@ En raíz:
 - `npm run db:seed:dev`
 - `npm run db:seed:test`
 - `npm run db:seed:correction`
+- `npm run qa:precommit`
+- `npm run qa:prepush`
 
 En backend:
 
@@ -128,6 +130,7 @@ Security note: CI blocks releases only on runtime dependency vulnerabilities (`n
   - `SENTRY_ENV`
   - `APP_VERSION`
 - Regla de seguridad: nunca enviar tokens, emails ni datos sensibles.
+- Estado actual: base global preparada (variables y logging de activación), integración de envío a Sentry planificada por fases.
 
 ## API (resumen)
 
