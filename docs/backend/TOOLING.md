@@ -21,6 +21,9 @@ Guia rapida del tooling y scripts del proyecto.
 
 ## Scripts backend
 - `npm -w backend run dev`
+- `npm -w backend run lint`
+- `npm -w backend run lint:architecture`
+- `npm -w backend run lint:types`
 - `npm -w backend run test`
 - `npm -w backend run build`
 - `npm -w backend run start`
@@ -53,6 +56,8 @@ Guia rapida del tooling y scripts del proyecto.
 ## CI
 - GitHub Actions: test + build en pushes/PR a `main` y `next`
 - Workflow: `.github/workflows/ci.yml`
+- Gate explicito de arquitectura: `npm -w backend run lint:architecture`
+- Linting policy: [LINTING-POLICY.md](LINTING-POLICY.md)
 
 ## Deployment
 - Ver [DEPLOYMENT.md](DEPLOYMENT.md)

@@ -20,10 +20,13 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run lint
         run: npm -w backend run lint
+
+      - name: Run architecture guardrails
+        run: npm -w backend run lint:architecture
 
       - name: Run type check
         run: npm -w backend run lint:types

@@ -13,6 +13,7 @@ pnpm-debug.log*
 
 # Build outputs
 backend/dist/
+/.openapi/
 backend/.openapi/
 frontend/dist/
 **/*.tsbuildinfo
