@@ -101,6 +101,7 @@ button:disabled {
 .toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
@@ -140,4 +141,36 @@ button:disabled {
 
 .error-text {
   color: #a32139;
+}
+
+.success-text {
+  color: #1d6d2f;
+}
+
+.desks-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.reservation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.reservation-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.reservation-main {
+  margin: 0;
+  font-weight: 600;
 }

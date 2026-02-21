@@ -1,27 +1,27 @@
 # Frontend Tasks
 
 ## v0.8.x - Bootstrap frontend serio
-- [ ] Inicializar app React + TypeScript + Vite.
-- [ ] Configurar Router y layout base.
-- [ ] Integrar TanStack Query y QueryClientProvider.
+- [x] Inicializar app React + TypeScript + Vite.
+- [x] Configurar Router y layout base.
+- [x] Integrar TanStack Query y QueryClientProvider.
 - [ ] Integrar Tailwind + sistema de componentes base (shadcn/ui).
-- [ ] Configurar cliente API con auth/refresh/retry.
-- [ ] Integrar tipos OpenAPI en build.
+- [x] Configurar cliente API con auth/refresh/retry.
+- [x] Integrar tipos OpenAPI en build.
 
-## v0.8.x - Flujos funcionales mínimos
-- [ ] Login / logout.
-- [ ] Vista de desks por fecha.
-- [ ] Crear y cancelar reserva.
+## v0.8.x - Flujos funcionales minimos
+- [x] Login / logout.
+- [x] Vista de desks por fecha.
+- [x] Crear y cancelar reserva.
 - [ ] Check-in por QR (flujo web).
 - [ ] Pantalla admin de QR (listar, regenerar uno, regenerar todos).
 
 ## Calidad
-- [ ] ESLint + Prettier + scripts quality.
+- [x] ESLint + Prettier + scripts quality.
 - [ ] Husky + lint-staged.
-- [ ] Vitest + Testing Library para flujos clave.
-- [ ] Playwright e2e smoke de rutas críticas.
+- [x] Vitest + Testing Library para flujos clave.
+- [ ] Playwright e2e smoke de rutas criticas.
 
 ## Pendiente (no bloquear bootstrap)
-- [ ] Front observability mínima (logger con niveles).
-- [ ] Virtualización de listas si volumen real lo requiere.
-- [ ] Internacionalización (si aplica al alcance final).
+- [ ] Front observability minima (logger con niveles).
+- [ ] Virtualizacion de listas si volumen real lo requiere.
+- [ ] Internacionalizacion (si aplica al alcance final).

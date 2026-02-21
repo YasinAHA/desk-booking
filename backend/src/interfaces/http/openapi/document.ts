@@ -164,7 +164,7 @@ type BuildOpenApiOptions = {
 };
 
 export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
-	const version = options?.version ?? "0.7.0";
+	const version = options?.version ?? "0.8.0";
 	const registry = new OpenAPIRegistry();
 
 	registry.registerComponent("securitySchemes", "bearerAuth", {
