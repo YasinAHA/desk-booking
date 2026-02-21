@@ -5,7 +5,15 @@ import type { NoShowPolicyService } from "@application/common/ports/no-show-poli
 import { CheckInByQrHandler } from "@application/reservations/commands/check-in-by-qr.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
+import {
+	Reservation,
+	type ReservationStatus,
+} from "@domain/reservations/entities/reservation.js";
+import { createReservationDate } from "@domain/reservations/value-objects/reservation-date.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
 function mockCommandRepo(
 	overrides: Partial<ReservationCommandRepository> = {}
@@ -38,6 +46,19 @@ function mockNoShowPolicyService(): NoShowPolicyService {
 	};
 }
 
+function buildReservation(status: ReservationStatus, reservationDate: string): Reservation {
+	return new Reservation({
+		id: createReservationId("11111111-1111-1111-8111-111111111111"),
+		userId: createUserId("11111111-1111-1111-8111-111111111112"),
+		deskId: createDeskId("11111111-1111-1111-8111-111111111113"),
+		officeId: createOfficeId("11111111-1111-1111-8111-111111111114"),
+		reservationDate: createReservationDate(reservationDate),
+		status,
+		source: "user",
+		cancelledAt: null,
+	});
+}
+
 test("CheckInByQrHandler.execute returns not_found when no candidate exists", async () => {
 	const handler = new CheckInByQrHandler({
 		commandRepo: mockCommandRepo(),
@@ -59,9 +80,7 @@ test("CheckInByQrHandler.execute returns already_checked_in when reservation was
 		commandRepo: mockCommandRepo(),
 		queryRepo: mockQueryRepo({
 			findQrCheckInCandidate: async () => ({
-				id: createReservationId("res-1"),
-				status: "checked_in",
-				reservationDate: "2026-03-10",
+				reservation: buildReservation("checked_in", "2026-03-10"),
 				timezone: "Europe/Madrid",
 				checkinAllowedFrom: "08:00",
 				checkinCutoffTime: "12:00",
@@ -83,7 +102,10 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 	const today = new Date().toISOString().slice(0, 10);
 	const commandRepo = mockCommandRepo({
 		checkInReservation: async reservationId => {
-			assert.equal(reservationId, createReservationId("res-1"));
+			assert.equal(
+				reservationId,
+				createReservationId("11111111-1111-1111-8111-111111111111")
+			);
 			return "checked_in";
 		},
 	});
@@ -91,9 +113,7 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 		findQrCheckInCandidate: async (_userId, _date, qrPublicId) => {
 			assert.equal(qrPublicId, "qr-123");
 			return {
-				id: createReservationId("res-1"),
-				status: "reserved",
-				reservationDate: today,
+				reservation: buildReservation("reserved", today),
 				timezone: "Europe/Madrid",
 				checkinAllowedFrom: "00:00",
 				checkinCutoffTime: "23:59",

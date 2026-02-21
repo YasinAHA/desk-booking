@@ -4,16 +4,26 @@ import type {
 	QrCheckInCandidate,
 } from "@application/reservations/ports/reservation-query-repository.js";
 import { createDeskId, deskIdToString, type DeskId } from "@domain/desks/value-objects/desk-id.js";
-import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
+import { createOfficeId, type OfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
 	createReservationId,
 	reservationIdToString,
 	type ReservationId,
 } from "@domain/reservations/value-objects/reservation-id.js";
 import {
+	createReservationDate,
+	type ReservationDate,
+} from "@domain/reservations/value-objects/reservation-date.js";
+import {
+	createUserId,
 	userIdToString,
 	type UserId,
 } from "@domain/auth/value-objects/user-id.js";
+import {
+	Reservation as ReservationEntity,
+	type Reservation,
+	type ReservationSource,
+} from "@domain/reservations/entities/reservation.js";
 
 type DbQueryResult = {
 	rows: unknown[];
@@ -28,8 +38,13 @@ type DbClient = {
 
 type ActiveReservationRow = {
 	id: string;
+	user_id: string;
+	desk_id: string;
+	office_id: string;
 	reservation_date: string;
 	status: "reserved" | "checked_in";
+	source: ReservationSource;
+	cancelled_at: string | null;
 	timezone: string;
 	checkin_allowed_from: string;
 };
@@ -46,7 +61,12 @@ type ReservationRecordRow = {
 
 type QrCheckInCandidateRow = {
 	id: string;
+	user_id: string;
+	desk_id: string;
+	office_id: string;
 	status: "reserved" | "checked_in" | "cancelled" | "no_show";
+	source: ReservationSource;
+	cancelled_at: string | null;
 	reservation_date: string;
 	timezone: string;
 	checkin_allowed_from: string;
@@ -66,8 +86,16 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 	const row = value as Record<string, unknown>;
 	return (
 		typeof row.id === "string" &&
+		typeof row.user_id === "string" &&
+		typeof row.desk_id === "string" &&
+		typeof row.office_id === "string" &&
 		typeof row.reservation_date === "string" &&
 		(row.status === "reserved" || row.status === "checked_in") &&
+		(row.source === "user" ||
+			row.source === "admin" ||
+			row.source === "walk_in" ||
+			row.source === "system") &&
+		(typeof row.cancelled_at === "string" || row.cancelled_at === null) &&
 		typeof row.timezone === "string" &&
 		typeof row.checkin_allowed_from === "string"
 	);
@@ -75,6 +103,21 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 
 function toActiveReservationRow(value: unknown): ActiveReservationRow | null {
 	return isActiveReservationRow(value) ? value : null;
+}
+
+function toReservationEntity(row: ActiveReservationRow): Reservation {
+	const reservationDate: ReservationDate = createReservationDate(row.reservation_date);
+	const officeId: OfficeId = createOfficeId(row.office_id);
+	return new ReservationEntity({
+		id: createReservationId(row.id),
+		userId: createUserId(row.user_id),
+		deskId: createDeskId(row.desk_id),
+		officeId,
+		reservationDate,
+		status: row.status,
+		source: row.source,
+		cancelledAt: row.cancelled_at,
+	});
 }
 
 function isReservationRecordRow(value: unknown): value is ReservationRecordRow {
@@ -111,12 +154,33 @@ function isQrCheckInCandidateRow(value: unknown): value is QrCheckInCandidateRow
 	const row = value as Record<string, unknown>;
 	return (
 		typeof row.id === "string" &&
+		typeof row.user_id === "string" &&
+		typeof row.desk_id === "string" &&
+		typeof row.office_id === "string" &&
 		(row.status === "reserved" || row.status === "checked_in" || row.status === "cancelled" || row.status === "no_show") &&
+		(row.source === "user" ||
+			row.source === "admin" ||
+			row.source === "walk_in" ||
+			row.source === "system") &&
+		(typeof row.cancelled_at === "string" || row.cancelled_at === null) &&
 		typeof row.reservation_date === "string" &&
 		typeof row.timezone === "string" &&
 		typeof row.checkin_allowed_from === "string" &&
 		typeof row.checkin_cutoff_time === "string"
 	);
+}
+
+function toReservationEntityFromQrCandidateRow(row: QrCheckInCandidateRow): Reservation {
+	return new ReservationEntity({
+		id: createReservationId(row.id),
+		userId: createUserId(row.user_id),
+		deskId: createDeskId(row.desk_id),
+		officeId: createOfficeId(row.office_id),
+		reservationDate: createReservationDate(row.reservation_date),
+		status: row.status,
+		source: row.source,
+		cancelledAt: row.cancelled_at,
+	});
 }
 
 function isDeskBookingPolicyRow(value: unknown): value is DeskBookingPolicyRow {
@@ -138,14 +202,13 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		reservationId: ReservationId,
 		userId: UserId
 	): Promise<{
-		id: ReservationId;
-		reservationDate: string;
-		status: "reserved" | "checked_in";
+		reservation: Reservation;
 		timezone: string;
 		checkinAllowedFrom: string;
 	} | null> {
 		const result = await this.db.query(
-			"select r.id, r.reservation_date::text as reservation_date, r.status, o.timezone, " +
+			"select r.id, r.user_id, r.desk_id, r.office_id, r.reservation_date::text as reservation_date, " +
+				"r.status, r.source, r.cancelled_at::text as cancelled_at, o.timezone, " +
 				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from " +
 				"from reservations r " +
 				"join offices o on o.id = r.office_id " +
@@ -159,9 +222,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			return null;
 		}
 		return {
-			id: createReservationId(row.id),
-			reservationDate: row.reservation_date,
-			status: row.status,
+			reservation: toReservationEntity(row),
 			timezone: row.timezone,
 			checkinAllowedFrom: row.checkin_allowed_from,
 		};
@@ -239,7 +300,8 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		qrPublicId: string
 	): Promise<QrCheckInCandidate | null> {
 		const result = await this.db.query(
-			"select r.id, r.status, r.reservation_date::text as reservation_date, o.timezone, " +
+			"select r.id, r.user_id, r.desk_id, r.office_id, r.status, r.source, r.cancelled_at::text as cancelled_at, " +
+				"r.reservation_date::text as reservation_date, o.timezone, " +
 				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from, " +
 				"coalesce(p_office.checkin_cutoff_time, p_org.checkin_cutoff_time, '12:00'::time)::text as checkin_cutoff_time " +
 				"from reservations r " +
@@ -259,9 +321,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		}
 
 		return {
-			id: createReservationId(row.id),
-			status: row.status,
-			reservationDate: row.reservation_date,
+			reservation: toReservationEntityFromQrCandidateRow(row),
 			timezone: row.timezone,
 			checkinAllowedFrom: row.checkin_allowed_from,
 			checkinCutoffTime: row.checkin_cutoff_time,

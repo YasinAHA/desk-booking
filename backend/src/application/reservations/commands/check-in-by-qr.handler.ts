@@ -35,8 +35,8 @@ export class CheckInByQrHandler {
 		}
 
 		const checkInDecision = evaluateQrCheckInPolicy({
-			status: candidate.status,
-			reservationDate: candidate.reservationDate,
+			status: candidate.reservation.status,
+			reservationDate: candidate.reservation.reservationDate,
 			timezone: candidate.timezone,
 			checkinAllowedFrom: candidate.checkinAllowedFrom,
 			checkinCutoffTime: candidate.checkinCutoffTime,
@@ -48,6 +48,7 @@ export class CheckInByQrHandler {
 			return "not_active";
 		}
 
-		return this.deps.commandRepo.checkInReservation(candidate.id);
+		const checkedInReservation = candidate.reservation.checkIn();
+		return this.deps.commandRepo.checkInReservation(checkedInReservation.id);
 	}
 }

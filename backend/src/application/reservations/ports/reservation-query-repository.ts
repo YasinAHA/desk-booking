@@ -1,11 +1,11 @@
 import type {
+	Reservation,
 	ReservationSource,
-	ReservationStatus,
 } from "@domain/reservations/entities/reservation.js";
 import type { DeskId } from "@domain/desks/value-objects/desk-id.js";
 import type { OfficeId } from "@domain/desks/value-objects/office-id.js";
-import type { ReservationId } from "@domain/reservations/value-objects/reservation-id.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
+import type { ReservationId } from "@domain/reservations/value-objects/reservation-id.js";
 
 export type ReservationRecord = {
 	id: ReservationId;
@@ -18,9 +18,7 @@ export type ReservationRecord = {
 };
 
 export type QrCheckInCandidate = {
-	id: ReservationId;
-	status: ReservationStatus;
-	reservationDate: string;
+	reservation: Reservation;
 	timezone: string;
 	checkinAllowedFrom: string;
 	checkinCutoffTime: string;
@@ -37,9 +35,7 @@ export interface ReservationQueryRepository {
 		userId: UserId
 	): Promise<
 		{
-			id: ReservationId;
-			reservationDate: string;
-			status: "reserved" | "checked_in";
+			reservation: Reservation;
 			timezone: string;
 			checkinAllowedFrom: string;
 		} | null

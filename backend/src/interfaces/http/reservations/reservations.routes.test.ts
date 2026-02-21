@@ -216,9 +216,14 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 			return {
 				rows: [
 					{
+						id: "22222222-2222-2222-8222-222222222222",
+						user_id: "user-1",
+						desk_id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
 						reservation_date: "2020-01-01",
-						id: "res-1",
 						status: "reserved",
+						source: "user",
+						cancelled_at: null,
 						timezone: "UTC",
 						checkin_allowed_from: "23:59:59",
 					},
@@ -247,9 +252,14 @@ test("DELETE /reservations/:id returns 409 for checked-in reservation", async ()
 			return {
 				rows: [
 					{
+						id: "22222222-2222-2222-8222-222222222222",
+						user_id: "user-1",
+						desk_id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
 						reservation_date: "2099-01-01",
-						id: "res-1",
 						status: "checked_in",
+						source: "user",
+						cancelled_at: null,
 						timezone: "UTC",
 						checkin_allowed_from: "23:59:59",
 					},
@@ -281,9 +291,14 @@ test("DELETE /reservations/:id returns 409 when cancellation window is closed", 
 			return {
 				rows: [
 					{
+						id: "22222222-2222-2222-8222-222222222222",
+						user_id: "user-1",
+						desk_id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
 						reservation_date: today,
-						id: "res-1",
 						status: "reserved",
+						source: "user",
+						cancelled_at: null,
 						timezone: "UTC",
 						checkin_allowed_from: "00:00:00",
 					},
@@ -381,7 +396,12 @@ test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async 
 				rows: [
 					{
 						id: "res-1",
+						user_id: "user-1",
+						desk_id: "desk-1",
+						office_id: "office-1",
 						status: "reserved",
+						source: "user",
+						cancelled_at: null,
 						reservation_date: today,
 						timezone: "UTC",
 						checkin_allowed_from: "00:00:00",
@@ -457,7 +477,12 @@ test("POST /reservations/check-in/qr returns 409 when reservation is not active"
 				rows: [
 					{
 						id: "res-1",
+						user_id: "user-1",
+						desk_id: "desk-1",
+						office_id: "office-1",
 						status: "cancelled",
+						source: "user",
+						cancelled_at: null,
 						reservation_date: "2026-02-20",
 						timezone: "UTC",
 						checkin_allowed_from: "00:00:00",

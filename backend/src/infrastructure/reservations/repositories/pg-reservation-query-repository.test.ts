@@ -108,7 +108,12 @@ test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", a
 				rows: [
 					{
 						id: "res-1",
+						user_id: "user-1",
+						desk_id: "desk-1",
+						office_id: "office-1",
 						status: "reserved",
+						source: "user",
+						cancelled_at: null,
 						reservation_date: "2026-02-20",
 						timezone: "Europe/Madrid",
 						checkin_allowed_from: "06:00:00",
@@ -125,12 +130,16 @@ test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", a
 		"qr-public-id"
 	);
 
-	assert.deepEqual(result, {
-		id: createReservationId("res-1"),
-		status: "reserved",
-		reservationDate: "2026-02-20",
-		timezone: "Europe/Madrid",
-		checkinAllowedFrom: "06:00:00",
-		checkinCutoffTime: "12:00:00",
-	});
+	assert.ok(result);
+	assert.equal(result.reservation.id, createReservationId("res-1"));
+	assert.equal(result.reservation.userId, createUserId("user-1"));
+	assert.equal(result.reservation.deskId, createDeskId("desk-1"));
+	assert.equal(result.reservation.officeId, createOfficeId("office-1"));
+	assert.equal(result.reservation.reservationDate, "2026-02-20");
+	assert.equal(result.reservation.status, "reserved");
+	assert.equal(result.reservation.source, "user");
+	assert.equal(result.reservation.cancelledAt, null);
+	assert.equal(result.timezone, "Europe/Madrid");
+	assert.equal(result.checkinAllowedFrom, "06:00:00");
+	assert.equal(result.checkinCutoffTime, "12:00:00");
 });

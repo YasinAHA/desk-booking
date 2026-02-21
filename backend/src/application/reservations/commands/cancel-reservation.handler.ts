@@ -3,7 +3,6 @@ import type { ReservationDependencies } from "@application/reservations/types.js
 import {
 	ReservationCancellationWindowClosedError,
 	ReservationDateInPastError,
-	ReservationNotCancellableError,
 } from "@domain/reservations/entities/reservation.js";
 import { isSameDayBookingClosed } from "@domain/reservations/policies/reservation-policy.js";
 import {
@@ -31,16 +30,13 @@ export class CancelReservationHandler {
 
 		const found = await this.deps.queryRepo.findByIdForUser(reservationIdVO, userIdVO);
 
-		if (!found?.reservationDate) {
+		if (!found?.reservation) {
 			return false;
-		}
-		if (found.status !== "reserved") {
-			throw new ReservationNotCancellableError(found.status);
 		}
 		const now = this.deps.nowProvider?.();
 		if (
 			isSameDayBookingClosed({
-				reservationDate: found.reservationDate,
+				reservationDate: found.reservation.reservationDate,
 				timezone: found.timezone,
 				checkinAllowedFrom: found.checkinAllowedFrom,
 				...(now ? { now } : {}),
@@ -51,7 +47,7 @@ export class CancelReservationHandler {
 
 		let reservationDate: ReservationDate;
 		try {
-			reservationDate = createReservationDate(found.reservationDate);
+			reservationDate = createReservationDate(found.reservation.reservationDate);
 		} catch (err) {
 			if (err instanceof InvalidReservationDateError) {
 				return false;
@@ -63,6 +59,7 @@ export class CancelReservationHandler {
 			throw new ReservationDateInPastError();
 		}
 
+		found.reservation.cancel(new Date().toISOString());
 		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
 	}
 }
