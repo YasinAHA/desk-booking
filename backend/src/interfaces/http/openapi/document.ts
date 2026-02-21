@@ -150,7 +150,12 @@ function err(description: string) {
 	};
 }
 
-export function buildOpenApiDocument() {
+type BuildOpenApiOptions = {
+	version?: string;
+};
+
+export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
+	const version = options?.version ?? "0.7.0";
 	const registry = new OpenAPIRegistry();
 
 	registry.registerComponent("securitySchemes", "bearerAuth", {
@@ -415,7 +420,7 @@ export function buildOpenApiDocument() {
 		openapi: "3.1.0",
 		info: {
 			title: "Desk Booking API",
-			version: "0.7.0",
+			version,
 			description: "Backend API for desk booking, auth and QR check-in.",
 		},
 		servers: [{ url: env.APP_BASE_URL }],

@@ -19,19 +19,19 @@ import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
 
 type RequestWithUnknownBody = FastifyRequest & {
-	body: unknown;
+    body: unknown;
 };
 
 function tryParseBody(body: unknown): unknown {
-	if (typeof body !== "string" || body.length === 0) {
-		return body;
-	}
+    if (typeof body !== "string" || body.length === 0) {
+        return body;
+    }
 
-	try {
-		return JSON.parse(body);
-	} catch {
-		return body;
-	}
+    try {
+        return JSON.parse(body);
+    } catch {
+        return body;
+    }
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -83,18 +83,32 @@ export async function buildApp(): Promise<FastifyInstance> {
     // --- CORS (ajusta origin cuando haya frontend real) ---
     await app.register(cors, {
         origin: (origin, cb) => {
-            if (!origin) {
-                cb(null, true);
-                return;
+            // Requests without Origin (curl, Postman, server-to-server) => allow
+            if (!origin) return cb(null, true);
+
+            const isDev = env.NODE_ENV !== "production";
+
+            // Dev convenience: allow any localhost/127.0.0.1 origin
+            if (isDev) {
+                try {
+                    const { hostname } = new URL(origin);
+                    if (hostname === "localhost" || hostname === "127.0.0.1") {
+                        return cb(null, true);
+                    }
+                } catch {
+                    // invalid origin => deny without throwing
+                    return cb(null, false);
+                }
             }
 
+            // Strict allowlist from env
             if (env.CORS_ORIGINS.length === 0) {
-                cb(new Error("CORS origin not allowed"), false);
-                return;
+                // No origins configured -> deny without crashing (important)
+                return cb(null, false);
             }
 
             const allowed = env.CORS_ORIGINS.includes(origin);
-            cb(allowed ? null : new Error("CORS origin not allowed"), allowed);
+            return cb(null, allowed); // <-- key: never throw
         },
         credentials: true,
         methods: ["GET", "POST", "DELETE", "OPTIONS"],
