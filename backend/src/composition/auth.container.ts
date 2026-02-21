@@ -4,6 +4,7 @@ import type { Pool } from "pg";
 import { ChangePasswordHandler } from "@application/auth/commands/change-password.handler.js";
 import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import { ForgotPasswordHandler } from "@application/auth/commands/forgot-password.handler.js";
+import { LogoutHandler } from "@application/auth/commands/logout.handler.js";
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import { ResetPasswordHandler } from "@application/auth/commands/reset-password.handler.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
@@ -49,6 +50,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	forgotPasswordHandler: ForgotPasswordHandler;
 	resetPasswordHandler: ResetPasswordHandler;
 	changePasswordHandler: ChangePasswordHandler;
+	logoutHandler: LogoutHandler;
 	recoveryAttemptPolicyService: RecoveryAttemptPolicyService;
 } {
 	const dbApp = app as AppWithDb;
@@ -95,6 +97,9 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		forgotPasswordHandler: new ForgotPasswordHandler(deps),
 		resetPasswordHandler: new ResetPasswordHandler(deps),
 		changePasswordHandler: new ChangePasswordHandler(deps),
+		logoutHandler: new LogoutHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
 		recoveryAttemptPolicyService,
 	};
 }

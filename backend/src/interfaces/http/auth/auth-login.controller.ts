@@ -1,4 +1,5 @@
-﻿import type { LoginHandler } from "@application/auth/queries/login.handler.js";
+import type { LogoutHandler } from "@application/auth/commands/logout.handler.js";
+import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import {
@@ -12,14 +13,18 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
 import { loginSchema, verifySchema } from "./auth.schemas.js";
 
-function applyRateLimit(reply: FastifyReply, config: { max: number; timeWindow?: string; timeWindowMs?: number }): void {
+function applyRateLimit(
+	reply: FastifyReply,
+	config: { max: number; timeWindow?: string; timeWindowMs?: number }
+): void {
 	reply.rateLimit?.(config);
 }
 
 export class AuthLoginController {
 	constructor(
 		private readonly loginHandler: LoginHandler,
-		private readonly authSessionLifecycleService: AuthSessionLifecycleService
+		private readonly authSessionLifecycleService: AuthSessionLifecycleService,
+		private readonly logoutHandler: LogoutHandler
 	) {}
 
 	async login(req: FastifyRequest, reply: FastifyReply) {
@@ -102,7 +107,10 @@ export class AuthLoginController {
 		}
 
 		try {
-			await this.authSessionLifecycleService.logout(parse.data.token, req.user.id);
+			await this.logoutHandler.execute({
+				refreshToken: parse.data.token,
+				authenticatedUserId: req.user.id,
+			});
 			return reply.status(204).send();
 		} catch {
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");

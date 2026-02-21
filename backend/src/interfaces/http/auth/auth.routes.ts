@@ -13,7 +13,8 @@ export const authRoutes: FastifyPluginAsync = async app => {
 
 	const loginController = new AuthLoginController(
 		handlers.loginHandler,
-		app.authSessionLifecycleService
+		app.authSessionLifecycleService,
+		handlers.logoutHandler
 	);
 	const registrationController = new AuthRegistrationController(
 		handlers.registerHandler,
