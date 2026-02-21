@@ -26,6 +26,11 @@ export type QrCheckInCandidate = {
 	checkinCutoffTime: string;
 };
 
+export type ReservationBookingPolicyContext = {
+	timezone: string;
+	checkinAllowedFrom: string;
+};
+
 export interface ReservationQueryRepository {
 	findByIdForUser(
 		reservationId: ReservationId,
@@ -35,13 +40,16 @@ export interface ReservationQueryRepository {
 			id: ReservationId;
 			reservationDate: string;
 			status: "reserved" | "checked_in";
-			isSameDayBookingClosed: boolean;
+			timezone: string;
+			checkinAllowedFrom: string;
 		} | null
 	>;
 	listForUser(userId: UserId): Promise<ReservationRecord[]>;
 	hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean>;
 	hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean>;
-	isSameDayBookingClosedForDesk(deskId: DeskId, date: string): Promise<boolean>;
+	getDeskBookingPolicyContext(
+		deskId: DeskId
+	): Promise<ReservationBookingPolicyContext | null>;
 	findQrCheckInCandidate(
 		userId: UserId,
 		date: string,

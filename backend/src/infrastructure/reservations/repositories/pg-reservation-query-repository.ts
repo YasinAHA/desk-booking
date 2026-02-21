@@ -30,7 +30,8 @@ type ActiveReservationRow = {
 	id: string;
 	reservation_date: string;
 	status: "reserved" | "checked_in";
-	is_same_day_booking_closed: boolean;
+	timezone: string;
+	checkin_allowed_from: string;
 };
 
 type ReservationRecordRow = {
@@ -52,6 +53,11 @@ type QrCheckInCandidateRow = {
 	checkin_cutoff_time: string;
 };
 
+type DeskBookingPolicyRow = {
+	timezone: string;
+	checkin_allowed_from: string;
+};
+
 function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 	if (typeof value !== "object" || value === null) {
 		return false;
@@ -62,7 +68,8 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 		typeof row.id === "string" &&
 		typeof row.reservation_date === "string" &&
 		(row.status === "reserved" || row.status === "checked_in") &&
-		typeof row.is_same_day_booking_closed === "boolean"
+		typeof row.timezone === "string" &&
+		typeof row.checkin_allowed_from === "string"
 	);
 }
 
@@ -112,6 +119,18 @@ function isQrCheckInCandidateRow(value: unknown): value is QrCheckInCandidateRow
 	);
 }
 
+function isDeskBookingPolicyRow(value: unknown): value is DeskBookingPolicyRow {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const row = value as Record<string, unknown>;
+	return (
+		typeof row.timezone === "string" &&
+		typeof row.checkin_allowed_from === "string"
+	);
+}
+
 export class PgReservationQueryRepository implements ReservationQueryRepository {
 	constructor(private readonly db: DbClient) {}
 
@@ -122,13 +141,12 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		id: ReservationId;
 		reservationDate: string;
 		status: "reserved" | "checked_in";
-		isSameDayBookingClosed: boolean;
+		timezone: string;
+		checkinAllowedFrom: string;
 	} | null> {
 		const result = await this.db.query(
-			"select r.id, r.reservation_date::text as reservation_date, r.status, (" +
-				"r.reservation_date = (now() at time zone o.timezone)::date and " +
-				"(now() at time zone o.timezone)::time >= coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)" +
-			") as is_same_day_booking_closed " +
+			"select r.id, r.reservation_date::text as reservation_date, r.status, o.timezone, " +
+				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from " +
 				"from reservations r " +
 				"join offices o on o.id = r.office_id " +
 				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
@@ -144,7 +162,8 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			id: createReservationId(row.id),
 			reservationDate: row.reservation_date,
 			status: row.status,
-			isSameDayBookingClosed: row.is_same_day_booking_closed,
+			timezone: row.timezone,
+			checkinAllowedFrom: row.checkin_allowed_from,
 		};
 	}
 
@@ -190,22 +209,28 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		return result.rows.length > 0;
 	}
 
-	async isSameDayBookingClosedForDesk(deskId: DeskId, date: string): Promise<boolean> {
+	async getDeskBookingPolicyContext(
+		deskId: DeskId
+	): Promise<{ timezone: string; checkinAllowedFrom: string } | null> {
 		const result = await this.db.query(
-			"select (" +
-				"$2::date = (now() at time zone o.timezone)::date and " +
-				"(now() at time zone o.timezone)::time >= coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)" +
-			") as is_same_day_booking_closed " +
+			"select o.timezone, " +
+				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from " +
 			"from desks d " +
 			"join offices o on o.id = d.office_id " +
 			"left join reservation_policies p_office on p_office.office_id = o.id " +
 			"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
 			"where d.id = $1 and d.status = 'active' " +
 			"limit 1",
-			[deskIdToString(deskId), date]
+			[deskIdToString(deskId)]
 		);
-		const row = result.rows[0] as { is_same_day_booking_closed?: unknown } | undefined;
-		return row?.is_same_day_booking_closed === true;
+		const row = result.rows[0];
+		if (!isDeskBookingPolicyRow(row)) {
+			return null;
+		}
+		return {
+			timezone: row.timezone,
+			checkinAllowedFrom: row.checkin_allowed_from,
+		};
 	}
 
 	async findQrCheckInCandidate(

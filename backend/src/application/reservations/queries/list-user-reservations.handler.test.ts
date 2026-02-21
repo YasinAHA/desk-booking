@@ -19,7 +19,7 @@ function mockQueryRepo(
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
-		isSameDayBookingClosedForDesk: async () => false,
+		getDeskBookingPolicyContext: async () => null,
 		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};

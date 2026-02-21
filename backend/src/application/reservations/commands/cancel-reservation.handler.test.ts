@@ -32,7 +32,7 @@ function mockQueryRepo(
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
-		isSameDayBookingClosedForDesk: async () => false,
+		getDeskBookingPolicyContext: async () => null,
 		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
@@ -50,7 +50,8 @@ test("CancelReservationHandler.execute returns true when row updated", async () 
 				id: createReservationId("res-1"),
 				reservationDate: "2099-01-01",
 				status: "reserved",
-				isSameDayBookingClosed: false,
+				timezone: "UTC",
+				checkinAllowedFrom: "23:59:59",
 			};
 		},
 	});
@@ -69,7 +70,8 @@ test("CancelReservationHandler.execute returns false when nothing updated", asyn
 			id: createReservationId("res-2"),
 			reservationDate: "2099-01-01",
 			status: "reserved",
-			isSameDayBookingClosed: false,
+			timezone: "UTC",
+			checkinAllowedFrom: "23:59:59",
 		}),
 	});
 	const handler = new CancelReservationHandler({ commandRepo, queryRepo });
@@ -85,7 +87,8 @@ test("CancelReservationHandler.execute throws when reservation is checked-in", a
 			id: createReservationId("res-3"),
 			reservationDate: "2099-01-01",
 			status: "checked_in",
-			isSameDayBookingClosed: false,
+			timezone: "UTC",
+			checkinAllowedFrom: "23:59:59",
 		}),
 	});
 	const handler = new CancelReservationHandler({ commandRepo, queryRepo });
@@ -103,10 +106,15 @@ test("CancelReservationHandler.execute throws when cancellation window is closed
 			id: createReservationId("res-4"),
 			reservationDate: "2099-01-01",
 			status: "reserved",
-			isSameDayBookingClosed: true,
+			timezone: "UTC",
+			checkinAllowedFrom: "00:00:00",
 		}),
 	});
-	const handler = new CancelReservationHandler({ commandRepo, queryRepo });
+	const handler = new CancelReservationHandler({
+		commandRepo,
+		queryRepo,
+		nowProvider: () => new Date("2099-01-01T12:00:00.000Z"),
+	});
 
 	await assert.rejects(
 		() => handler.execute({ userId: "user", reservationId: "res-4" }),

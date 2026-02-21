@@ -1,10 +1,11 @@
-﻿import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/types.js";
 import {
 	ReservationCancellationWindowClosedError,
 	ReservationDateInPastError,
 	ReservationNotCancellableError,
 } from "@domain/reservations/entities/reservation.js";
+import { isSameDayBookingClosed } from "@domain/reservations/policies/reservation-policy.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
@@ -17,7 +18,9 @@ import { createUserId } from "@domain/auth/value-objects/user-id.js";
 type CancelReservationDependencies = Pick<
 	ReservationDependencies,
 	"commandRepo" | "queryRepo"
->;
+> & {
+	nowProvider?: () => Date;
+};
 
 export class CancelReservationHandler {
 	constructor(private readonly deps: CancelReservationDependencies) {}
@@ -34,7 +37,15 @@ export class CancelReservationHandler {
 		if (found.status !== "reserved") {
 			throw new ReservationNotCancellableError(found.status);
 		}
-		if (found.isSameDayBookingClosed) {
+		const now = this.deps.nowProvider?.();
+		if (
+			isSameDayBookingClosed({
+				reservationDate: found.reservationDate,
+				timezone: found.timezone,
+				checkinAllowedFrom: found.checkinAllowedFrom,
+				...(now ? { now } : {}),
+			})
+		) {
 			throw new ReservationCancellationWindowClosedError();
 		}
 
@@ -55,5 +66,3 @@ export class CancelReservationHandler {
 		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
 	}
 }
-
-

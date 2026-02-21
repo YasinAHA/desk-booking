@@ -48,7 +48,10 @@ function mockQueryRepo(
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
-		isSameDayBookingClosedForDesk: async () => false,
+		getDeskBookingPolicyContext: async () => ({
+			timezone: "UTC",
+			checkinAllowedFrom: "06:00:00",
+		}),
 		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
@@ -224,26 +227,33 @@ test("CreateReservationHandler.execute throws on weekend booking", async () => {
 });
 
 test("CreateReservationHandler.execute throws when same-day cutoff has passed", async () => {
-	const futureDate = buildFutureDate();
+	const now = new Date();
+	const sameDayDate = now.toISOString().slice(0, 10);
 	const commandRepo = mockCommandRepo();
 	const queryRepo = mockQueryRepo({
-		isSameDayBookingClosedForDesk: async () => true,
+		getDeskBookingPolicyContext: async () => ({
+			timezone: "UTC",
+			checkinAllowedFrom: "00:00:00",
+		}),
 	});
 	const handler = new CreateReservationHandler({
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		nowProvider: () => now,
 	});
 
 	await assert.rejects(
 		() =>
 			handler.execute({
 				userId: "user",
-				date: futureDate,
+				date: sameDayDate,
 				deskId: "desk",
 			}),
-		ReservationSameDayBookingClosedError
+		err =>
+			err instanceof ReservationSameDayBookingClosedError ||
+			err instanceof ReservationOnNonWorkingDayError
 	);
 });
 

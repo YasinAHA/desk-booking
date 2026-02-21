@@ -83,19 +83,21 @@ test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns fal
 	assert.equal(result, false);
 });
 
-test("PgReservationQueryRepository.isSameDayBookingClosedForDesk returns true when query says so", async () => {
+test("PgReservationQueryRepository.getDeskBookingPolicyContext returns context when desk exists", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async (_text, params) => {
-			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
-			return { rows: [{ is_same_day_booking_closed: true }] };
+			assert.deepEqual(params, ["desk-1"]);
+			return {
+				rows: [{ timezone: "Europe/Madrid", checkin_allowed_from: "06:00:00" }],
+			};
 		},
 	});
 
-	const result = await repo.isSameDayBookingClosedForDesk(
-		createDeskId("desk-1"),
-		"2026-02-20"
-	);
-	assert.equal(result, true);
+	const result = await repo.getDeskBookingPolicyContext(createDeskId("desk-1"));
+	assert.deepEqual(result, {
+		timezone: "Europe/Madrid",
+		checkinAllowedFrom: "06:00:00",
+	});
 });
 
 test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", async () => {

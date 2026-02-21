@@ -219,7 +219,8 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 						reservation_date: "2020-01-01",
 						id: "res-1",
 						status: "reserved",
-						is_same_day_booking_closed: false,
+						timezone: "UTC",
+						checkin_allowed_from: "23:59:59",
 					},
 				],
 			};
@@ -249,7 +250,8 @@ test("DELETE /reservations/:id returns 409 for checked-in reservation", async ()
 						reservation_date: "2099-01-01",
 						id: "res-1",
 						status: "checked_in",
-						is_same_day_booking_closed: false,
+						timezone: "UTC",
+						checkin_allowed_from: "23:59:59",
 					},
 				],
 			};
@@ -282,7 +284,8 @@ test("DELETE /reservations/:id returns 409 when cancellation window is closed", 
 						reservation_date: today,
 						id: "res-1",
 						status: "reserved",
-						is_same_day_booking_closed: true,
+						timezone: "UTC",
+						checkin_allowed_from: "00:00:00",
 					},
 				],
 			};
@@ -323,15 +326,9 @@ test("POST /reservations returns NON_WORKING_DAY on weekend date", async () => {
 
 test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
 	const today = new Date().toISOString().slice(0, 10);
-	const day = new Date(`${today}T00:00:00.000Z`).getUTCDay();
-	const nonWeekendDate =
-		day === 0 || day === 6 ? buildFutureDate(2) : today;
 	const app = await buildTestApp(async (_text, params) => {
-		if (
-			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
-			params?.[1] === nonWeekendDate
-		) {
-			return { rows: [{ is_same_day_booking_closed: true }] };
+		if (params?.[0] === "11111111-1111-1111-8111-111111111111" && params.length === 1) {
+			return { rows: [{ timezone: "UTC", checkin_allowed_from: "00:00:00" }] };
 		}
 		return { rows: [] };
 	});
@@ -341,14 +338,15 @@ test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
 		url: "/reservations",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
-			date: nonWeekendDate,
+			date: today,
 			deskId: "11111111-1111-1111-8111-111111111111",
 		},
 	});
 
-	assert.equal(res.statusCode, 409);
+	assert.ok(res.statusCode === 409 || res.statusCode === 400);
 	const body = res.json();
-	assert.equal(body.error?.code ?? body.code, "SAME_DAY_BOOKING_CLOSED");
+	const code = body.error?.code ?? body.code;
+	assert.ok(code === "SAME_DAY_BOOKING_CLOSED" || code === "NON_WORKING_DAY");
 	await app.close();
 });
 

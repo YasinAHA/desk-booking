@@ -14,6 +14,13 @@ export type QrCheckInPolicyDecision =
 	| "already_checked_in"
 	| "not_active";
 
+export type SameDayBookingPolicyInput = {
+	reservationDate: string;
+	timezone: string;
+	checkinAllowedFrom: string;
+	now?: Date;
+};
+
 type LocalDateTime = {
 	date: string;
 	time: string;
@@ -82,6 +89,23 @@ function isCheckInWindowOpen(input: QrCheckInPolicyInput): boolean {
 	}
 
 	return currentMinutes >= allowedFromMinutes && currentMinutes <= cutoffMinutes;
+}
+
+export function isSameDayBookingClosed(input: SameDayBookingPolicyInput): boolean {
+	const now = input.now ?? new Date();
+	const localDateTime = getLocalDateTime(input.timezone, now);
+	if (localDateTime.date !== input.reservationDate) {
+		return false;
+	}
+
+	const currentMinutes = parseTimeToMinutes(localDateTime.time);
+	const allowedFromMinutes = parseTimeToMinutes(input.checkinAllowedFrom);
+
+	if (currentMinutes === null || allowedFromMinutes === null) {
+		return false;
+	}
+
+	return currentMinutes >= allowedFromMinutes;
 }
 
 export function evaluateQrCheckInPolicy(
