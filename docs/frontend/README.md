@@ -10,6 +10,9 @@
 - `npm -w frontend run typecheck`
 - `npm -w frontend run test`
 
+## Contrato API tipado
+- `npm -w frontend run generate:openapi-types` genera `src/shared/openapi/generated/schema.ts` desde `docs/openapi.json`.
+
 ## Variables de entorno frontend
 - `VITE_API_BASE_URL` (default local `http://localhost:3001`).
 - Opcionales: `SENTRY_DSN_FRONTEND`, `SENTRY_ENV`, `APP_VERSION`.
