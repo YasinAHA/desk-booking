@@ -47,8 +47,8 @@ test("GET /desks returns desks for valid token", async () => {
 			return {
 				rows: [
 					{
-						id: "11111111-1111-1111-1111-111111111111",
-						office_id: "22222222-2222-2222-2222-222222222222",
+						id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
 						code: "D01",
 						name: "Puesto 01",
 						status: "active",
@@ -118,8 +118,8 @@ test("GET /desks/admin returns desks with qr_public_id for admin", async () => {
 			return {
 				rows: [
 					{
-						id: "11111111-1111-1111-1111-111111111111",
-						office_id: "22222222-2222-2222-2222-222222222222",
+						id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
 						code: "D01",
 						name: "Puesto 01",
 						status: "active",
@@ -173,7 +173,7 @@ test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
 
 	const res = await app.inject({
 		method: "POST",
-		url: "/desks/admin/11111111-1111-1111-1111-111111111111/qr/regenerate",
+		url: "/desks/admin/11111111-1111-1111-8111-111111111111/qr/regenerate",
 		headers: { Authorization: `Bearer ${token}` },
 	});
 
@@ -215,3 +215,4 @@ test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async (
 	assert.equal(body.updated, 12);
 	await app.close();
 });
+

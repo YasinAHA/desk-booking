@@ -32,7 +32,7 @@ extendZodWithOpenApi(z);
 
 const authUserSchema = z.object({
 	id: uuidSchema,
-	email: z.string().email(),
+	email: z.email(),
 	first_name: z.string().min(1),
 	last_name: z.string().min(1),
 	second_last_name: z.string().nullable(),
@@ -51,6 +51,14 @@ const loginResponseSchema = z.object({
 const verifyResponseSchema = z.object({
 	valid: z.literal(true),
 	user: authUserSchema,
+});
+
+const refreshSchema = z.object({
+	token: tokenSchema,
+});
+
+const tokenQuerySchema = z.object({
+	token: tokenSchema,
 });
 
 const listDesksResponseSchema = z.object({
@@ -127,6 +135,7 @@ const metricsResponseSchema = z.object({
 		errors5xx: z.number().int().nonnegative(),
 	}),
 	routes: z.record(
+		z.string(),
 		z.object({
 			count: z.number().int().nonnegative(),
 			errors4xx: z.number().int().nonnegative(),
@@ -170,6 +179,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		tags: ["health"],
 		responses: {
 			200: { description: "API health status", content: json(okSchema) },
+			500: err("Internal error"),
 		},
 	});
 
@@ -183,6 +193,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Invalid credentials"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -196,6 +207,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Invalid token"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -209,6 +221,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			403: err("Email domain not allowed"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -221,6 +234,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			200: { description: "Recovery flow processed", content: json(okSchema) },
 			400: err("Invalid payload"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -234,6 +248,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid or expired token"),
 			409: err("Token already used"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -248,6 +263,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Invalid credentials"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -255,7 +271,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		method: "post",
 		path: "/auth/refresh",
 		tags: ["auth"],
-		request: { body: { required: true, content: json(verifySchema) } },
+		request: { body: { required: true, content: json(refreshSchema) } },
 		responses: {
 			200: {
 				description: "Access and refresh tokens rotated",
@@ -269,6 +285,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Invalid refresh token"),
 			429: err("Too many requests"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -276,15 +293,12 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		method: "get",
 		path: "/auth/confirm",
 		tags: ["auth"],
-		request: {
-			query: z.object({
-				token: tokenSchema,
-			}),
-		},
+		request: { query: tokenQuerySchema },
 		responses: {
 			200: { description: "Email confirmed", content: json(okSchema) },
 			400: err("Invalid or expired token"),
 			409: err("Email already confirmed"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -294,6 +308,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		tags: ["auth"],
 		responses: {
 			204: { description: "Logged out" },
+			500: err("Internal error"),
 		},
 	});
 
@@ -307,6 +322,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			200: { description: "Desks for date and user", content: json(listDesksResponseSchema) },
 			400: err("Invalid date"),
 			401: err("Unauthorized"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -319,6 +335,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			200: { description: "Admin desks listing", content: json(adminDesksResponseSchema) },
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -334,6 +351,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
 			404: err("Desk not found"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -346,6 +364,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			200: { description: "All desk QRs regenerated", content: json(regenerateAllQrResponseSchema) },
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -360,6 +379,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload or date"),
 			401: err("Unauthorized"),
 			409: err("Reservation conflict"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -375,6 +395,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			404: err("Reservation not found"),
 			409: err("Reservation not active"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -390,6 +411,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			404: err("Reservation not found"),
 			409: err("Reservation cannot be cancelled"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -401,6 +423,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		responses: {
 			200: { description: "User reservations", content: json(listReservationsResponseSchema) },
 			401: err("Unauthorized"),
+			500: err("Internal error"),
 		},
 	});
 
@@ -412,6 +435,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		responses: {
 			200: { description: "Current metrics snapshot", content: json(metricsResponseSchema) },
 			401: err("Unauthorized"),
+			500: err("Internal error"),
 		},
 	});
 
