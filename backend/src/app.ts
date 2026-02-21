@@ -7,6 +7,8 @@ import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
 
 import { env } from "@config/env.js";
+import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import { buildJwtTokenService } from "@composition/auth.container.js";
 import { authRoutes } from "@interfaces/http/auth/auth.routes.js";
 import { desksRoutes } from "@interfaces/http/desks/desks.routes.js";
 import { isHttpError, sendError } from "@interfaces/http/http-errors.js";
@@ -142,8 +144,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     // --- DB ---
     await app.register(registerDbPlugin);
 
+    // --- Session lifecycle service (single source for token verify/refresh/revocation checks) ---
+    const jwtTokenService = buildJwtTokenService(app);
+    const authSessionLifecycleService = new AuthSessionLifecycleService(jwtTokenService);
+    app.decorate("authSessionLifecycleService", authSessionLifecycleService);
+
     // --- Auth ---
-    await app.register(registerAuthPlugin);
+    await app.register(registerAuthPlugin, { authSessionLifecycleService });
 
     // --- OpenAPI / Swagger (non-prod, non-test) ---
     if (env.NODE_ENV !== "production" && env.NODE_ENV !== "test") {

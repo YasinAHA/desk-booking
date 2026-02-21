@@ -1,7 +1,7 @@
 # ADR-0006: Estrategia de documentación OpenAPI (Swagger) basada en Zod
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-02-21
@@ -23,7 +23,7 @@ Actualmente existen esquemas de validación definidos en Zod para las entradas (
 - Coste de mantenimiento
 
 ## Decision
-Adoptar **Zod como fuente única de verdad** (single source of truth) para validación de entrada y generación de documentación OpenAPI, mediante **zod-openapi**.
+Adoptar **Zod como fuente única de verdad** (single source of truth) para validación de entrada y generación de documentación OpenAPI, mediante **@asteasolutions/zod-to-openapi**.
 
 Se generará un documento OpenAPI (JSON) a partir de los esquemas Zod, incluyendo:
 - `components/schemas` reutilizables (ej. ErrorResponse, AuthUser, Tokens, etc.)
@@ -32,6 +32,11 @@ Se generará un documento OpenAPI (JSON) a partir de los esquemas Zod, incluyend
 - metadata (descriptions, examples) definida junto al schema Zod cuando aplique
 
 El documento OpenAPI se servirá a través de Swagger UI en entornos no productivos (o protegido en producción si se requiere).
+
+Implementación actual:
+- Builder en `backend/src/interfaces/http/openapi/document.ts`.
+- Exposición de `/docs` y `/openapi.json` desde `backend/src/interfaces/http/plugins/swagger.ts`.
+- Export estático con `npm -w backend run docs:openapi` (`backend/scripts/export-openapi.ts` -> `docs/openapi.json`).
 
 ## Rationale
 ### Beneficios
@@ -42,7 +47,7 @@ El documento OpenAPI se servirá a través de Swagger UI en entornos no producti
 - **Versionado**: el spec puede exportarse y versionarse junto al código.
 
 ### Trade-offs
-- Se introduce una dependencia adicional (`zod-openapi`).
+- Se introduce una dependencia adicional (`@asteasolutions/zod-to-openapi`).
 - Requiere una convención clara para nombrar y registrar componentes (schemas) y rutas (paths).
 - La generación del spec exige una capa de ensamblado (builder) para componer el documento OpenAPI.
 
@@ -77,7 +82,7 @@ El documento OpenAPI se servirá a través de Swagger UI en entornos no producti
   - estrategia de exposición (`/docs`, `/openapi.json`) y control por entorno
 
 ## Implementation notes
-- Añadir `zod-openapi` y extender Zod con `extendZodWithOpenApi`.
+- Añadir `@asteasolutions/zod-to-openapi` y extender Zod con `extendZodWithOpenApi`.
 - Definir schemas Zod en `interfaces/http/<feature>/schemas/*.ts`.
 - Definir un builder `interfaces/http/openapi/document.ts` que:
   - registre `components.schemas`
@@ -90,7 +95,7 @@ El documento OpenAPI se servirá a través de Swagger UI en entornos no producti
   - Si una respuesta aún no está modelada en Zod, documentarla de forma acotada en `interfaces/http/openapi/*` con `TODO` y fecha objetivo de retirada para volver a fuente única.
 
 ## References
-- OpenAPI 3.0 Specification
+- OpenAPI 3.1 Specification
 - Zod
-- zod-openapi
+- @asteasolutions/zod-to-openapi
 - Fastify Swagger UI

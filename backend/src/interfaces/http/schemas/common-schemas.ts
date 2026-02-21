@@ -7,11 +7,11 @@ import { z } from "zod";
 const PASSWORD_POLICY_MESSAGE =
 	`Password must be at least ${PASSWORD_POLICY_MIN_LENGTH} characters with uppercase, lowercase, digit, and special char`;
 
-export const emailSchema = z.string().email();
+export const emailSchema = z.email();
 
 export const tokenSchema = z.string().min(1);
 
-export const uuidSchema = z.string().uuid();
+export const uuidSchema = z.uuid();
 
 export const strongPasswordSchema = z.string().superRefine((password, ctx) => {
 	try {
