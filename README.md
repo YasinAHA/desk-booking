@@ -107,6 +107,9 @@ En backend:
 - `npm -w backend run build`
 - `npm -w backend run start`
 - `npm -w backend run worker:outbox`
+- `npm -w backend run audit:prod`
+
+Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm audit --omit=dev --audit-level=high`). Dev-only vulnerabilities from lint toolchains are tracked separately.
 
 ## API (resumen)
 

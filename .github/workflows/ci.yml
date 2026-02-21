@@ -22,6 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run lint
+        run: npm -w backend run lint
+
+      - name: Run type check
+        run: npm -w backend run lint:types
+
+      - name: Run security audit (prod deps)
+        run: npm -w backend run audit:prod
+
       - name: Run tests
         run: npm -w backend run test
 

@@ -6,6 +6,7 @@
         "dev": "tsx watch src/server.ts",
         "lint": "eslint src --max-warnings 0",
         "lint:types": "tsc -p tsconfig.json --noEmit",
+        "audit:prod": "npm audit --omit=dev --audit-level=high",
         "build": "tsc -p tsconfig.json",
         "start": "node dist/server.js",
         "test": "tsx --test src/**/*.test.ts",
@@ -30,12 +31,12 @@
         "zod": "^4.1.12"
     },
     "devDependencies": {
-        "@eslint/js": "^9.39.2",
+        "@eslint/js": "^10.0.1",
         "@types/node": "^22.0.0",
         "@types/nodemailer": "^6.4.15",
         "@types/pg": "^8.15.5",
-        "eslint": "^9.39.2",
-        "eslint-plugin-sonarjs": "^3.0.7",
+        "eslint": "^10.0.1",
+        "eslint-plugin-sonarjs": "^4.0.0",
         "globals": "^17.3.0",
         "tsx": "^4.19.0",
         "typescript": "^5.9.3",
