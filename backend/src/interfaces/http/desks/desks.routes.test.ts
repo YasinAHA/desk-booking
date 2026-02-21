@@ -1,3 +1,4 @@
+import type { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -37,10 +38,24 @@ async function signAccessToken(payload: {
 		.sign(new TextEncoder().encode(process.env.JWT_SECRET ?? "test-secret"));
 }
 
-async function buildTestApp(query: DbQuery) {
+async function buildTestApp(query: DbQuery, authenticatedUserId = "user-1") {
 	const app = Fastify({ logger: false });
 	app.decorate("db", { query });
-	await app.register(registerAuthPlugin);
+	const authSessionLifecycleService = {
+		async verifyAccessToken() {
+			return {
+				id: authenticatedUserId,
+				email: "admin@camerfirma.com",
+				firstName: "Admin",
+				lastName: "User",
+				secondLastName: null,
+				jti: randomUUID(),
+				type: "access" as const,
+				iat: Math.floor(Date.now() / 1000),
+			};
+		},
+	} as unknown as AuthSessionLifecycleService;
+	await app.register(registerAuthPlugin, { authSessionLifecycleService });
 	await app.register(desksRoutes, { prefix: "/desks" });
 	await app.ready();
 	return app;
@@ -59,11 +74,8 @@ test("GET /desks returns 401 without token", async () => {
 });
 
 test("GET /desks returns desks for valid token", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("set status = 'no_show'")) {
-			return { rows: [], rowCount: 0 };
-		}
-		if (text.includes("from desks")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (Array.isArray(params) && params.length === 2) {
 			return {
 				rows: [
 					{
@@ -80,7 +92,7 @@ test("GET /desks returns desks for valid token", async () => {
 				],
 			};
 		}
-		return { rows: [] };
+		return { rows: [], rowCount: 0 };
 	});
 
 	const token = await signAccessToken({
@@ -104,8 +116,8 @@ test("GET /desks returns desks for valid token", async () => {
 });
 
 test("GET /desks/admin returns 403 for non-admin user", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("select role from users")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "user-1") {
 			return { rows: [{ role: "user" }] };
 		}
 		return { rows: [] };
@@ -130,11 +142,11 @@ test("GET /desks/admin returns 403 for non-admin user", async () => {
 });
 
 test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("select role from users")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-1") {
 			return { rows: [{ role: "admin" }] };
 		}
-		if (text.includes("select d.id, d.office_id, d.code, d.name, d.status, d.qr_public_id")) {
+		if (!params || params.length === 0) {
 			return {
 				rows: [
 					{
@@ -149,7 +161,7 @@ test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 			};
 		}
 		return { rows: [] };
-	});
+	}, "admin-1");
 
 	const token = await signAccessToken({
 		id: "admin-1",
@@ -173,15 +185,18 @@ test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 });
 
 test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("select role from users")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-1") {
 			return { rows: [{ role: "admin" }] };
 		}
-		if (text.includes("update desks set qr_public_id")) {
+		if (
+			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
+			params.length === 1
+		) {
 			return { rows: [{ qr_public_id: "qr-new-123" }], rowCount: 1 };
 		}
 		return { rows: [] };
-	});
+	}, "admin-1");
 
 	const token = await signAccessToken({
 		id: "admin-1",
@@ -205,15 +220,15 @@ test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
 });
 
 test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("select role from users")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-1") {
 			return { rows: [{ role: "admin" }] };
 		}
-		if (text.includes("update desks set qr_public_id = gen_random_uuid()::text")) {
+		if (!params || params.length === 0) {
 			return { rows: [], rowCount: 12 };
 		}
 		return { rows: [] };
-	});
+	}, "admin-1");
 
 	const token = await signAccessToken({
 		id: "admin-1",

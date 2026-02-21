@@ -1,6 +1,7 @@
 ﻿import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 
 import {
+	buildCheckAdminAccessHandler,
 	buildRegenerateAllDesksQrHandler,
 	buildListAdminDesksHandler,
 	buildListDesksHandler,
@@ -12,21 +13,30 @@ import { DeskController } from "./desks.controller.js";
 
 function withAdmin(app: Parameters<typeof withAuth>[0]): { preHandler: preHandlerHookHandler[] } {
 	const auth = withAuth(app);
+	const checkAdminAccessHandler = buildCheckAdminAccessHandler(app);
 
 	const ensureAdmin: preHandlerHookHandler = (req, reply, done) => {
-		void app.db
-			.query("select role from users where id = $1 limit 1", [req.user.id])
-			.then(result => {
-				const row = result.rows[0] as { role?: unknown } | undefined;
-				if (row?.role !== "admin") {
+		checkAdminAccessHandler
+			.execute({ userId: req.user.id })
+			.then(isAdmin => {
+				if (!isAdmin) {
 					sendError(reply, 403, "FORBIDDEN", "Forbidden");
+					return;
 				}
+				done();
 			})
-			.catch(() => {
-				sendError(reply, 403, "FORBIDDEN", "Forbidden");
+			.catch(error => {
+				req.log.error(
+					{ event: "auth.admin_access_error", userId: req.user.id, error },
+					"Admin authorization check failed"
+				);
+				sendError(reply, 500, "INTERNAL_SERVER_ERROR", "Internal server error");
+				done();
 			})
 			.finally(() => {
+				if (!reply.sent) {
 				done();
+				}
 			});
 	};
 

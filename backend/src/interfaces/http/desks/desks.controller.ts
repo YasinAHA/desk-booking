@@ -1,4 +1,4 @@
-import type { RegenerateAllDesksQrCommand } from "@application/desks/commands/regenerate-all-desks-qr.command.js";
+﻿import type { RegenerateAllDesksQrCommand } from "@application/desks/commands/regenerate-all-desks-qr.command.js";
 import type { RegenerateAllDesksQrHandler } from "@application/desks/commands/regenerate-all-desks-qr.handler.js";
 import type { RegenerateDeskQrCommand } from "@application/desks/commands/regenerate-desk-qr.command.js";
 import type { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
@@ -44,8 +44,8 @@ export class DeskController {
 		return reply.send(mapListDesksResponse(parse.data.date, desks));
 	}
 
-	async listAdmin(_req: FastifyRequest, reply: FastifyReply) {
-		const query: ListAdminDesksQuery = { requestedByUserId: "admin" };
+	async listAdmin(req: FastifyRequest, reply: FastifyReply) {
+		const query: ListAdminDesksQuery = { requestedByUserId: req.user.id };
 		const items = await this.listAdminDesksHandler.execute(query);
 		return reply.send(mapAdminDesksResponse(items));
 	}
