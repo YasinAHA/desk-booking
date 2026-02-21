@@ -15,7 +15,7 @@ type AuthSessionProviderProps = {
 
 export function AuthSessionProvider({
   children
-}: AuthSessionProviderProps): JSX.Element {
+}: Readonly<AuthSessionProviderProps>): JSX.Element {
   const [state, setState] = useState<AuthSessionState>({
     user: null,
     isAuthenticated: false,
