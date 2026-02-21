@@ -69,6 +69,54 @@
     depends_on:
       - postgres
       - mailpit
+  backend-prod:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: deskbooking_backend_prod
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
+      SMTP_HOST: mailpit
+      HOST: 0.0.0.0
+      NODE_ENV: production
+    ports:
+      - "3002:3001"
+    depends_on:
+      - postgres
+      - mailpit
+    profiles:
+      - prod
+  frontend:
+    image: node:20
+    container_name: deskbooking_frontend
+    working_dir: /app
+    volumes:
+      - ..:/app
+      - root_node_modules_frontend:/app/node_modules
+      - frontend_node_modules:/app/frontend/node_modules
+    environment:
+      HOST: 0.0.0.0
+      VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5173:5173"
+    command: sh -c "npm ci -w frontend && npm -w frontend run dev -- --host 0.0.0.0 --port 5173"
+    depends_on:
+      - backend
+  frontend-prod:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: deskbooking_frontend_prod
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    profiles:
+      - prod
 
 volumes:
   pgdata:
@@ -77,4 +125,6 @@ volumes:
   backend_node_modules_worker:
   root_node_modules_backend:
   backend_node_modules_backend:
+  root_node_modules_frontend:
+  frontend_node_modules:
 

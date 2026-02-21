@@ -2,7 +2,8 @@
     "name": "desk-booking",
     "private": true,
     "workspaces": [
-        "backend"
+        "backend",
+        "frontend"
     ],
     "devDependencies": {
         "husky": "^9.1.7",
@@ -11,13 +12,21 @@
     "scripts": {
         "prepare": "husky",
         "dev:db": "docker compose -f docker/docker-compose.yml up -d",
+        "dev:api:prod:docker": "docker compose -f docker/docker-compose.yml --profile prod up -d backend-prod",
+        "dev:api:prod:docker:logs": "docker compose -f docker/docker-compose.yml --profile prod logs -f backend-prod",
+        "dev:api:prod:docker:down": "docker compose -f docker/docker-compose.yml --profile prod stop backend-prod",
+        "dev:front:docker": "docker compose -f docker/docker-compose.yml up -d frontend",
+        "dev:front:docker:logs": "docker compose -f docker/docker-compose.yml logs -f frontend",
+        "dev:front:docker:down": "docker compose -f docker/docker-compose.yml stop frontend",
+        "dev:front:prod:docker": "docker compose -f docker/docker-compose.yml --profile prod up -d frontend-prod",
+        "dev:front:prod:docker:down": "docker compose -f docker/docker-compose.yml --profile prod stop frontend-prod",
         "dev:api": "npm -w backend run dev",
         "db:migrate": "npm -w backend run db:migrate",
         "db:seed:dev": "npm -w backend run db:seed -- dev",
         "db:seed:test": "npm -w backend run db:seed -- test",
         "db:seed:correction": "npm -w backend run db:seed -- correction",
-        "qa:precommit": "npm -w backend run lint && npm -w backend run lint:types",
-        "qa:prepush": "npm -w backend run test"
+        "qa:precommit": "npm -w backend run lint && npm -w backend run lint:types && npm -w frontend run lint && npm -w frontend run typecheck",
+        "qa:prepush": "npm -w backend run test && npm -w frontend run test"
     },
     "lint-staged": {
         "backend/src/**/*.ts": [

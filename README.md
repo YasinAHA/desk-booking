@@ -29,8 +29,8 @@ desk-booking/
 ## Stack
 
 - Backend: Node.js, Fastify, TypeScript, PostgreSQL, Zod, Argon2, JWT.
-- Infra local: Docker Compose (Postgres, pgAdmin, Mailpit, backend y outbox-worker).
-- Frontend: HTML/CSS/JS vanilla.
+- Infra local: Docker Compose (Postgres, pgAdmin, Mailpit, backend, outbox-worker y frontend).
+- Frontend: React 18, TypeScript, Vite, React Router, TanStack Query.
 
 ## Requisitos
 
@@ -94,6 +94,14 @@ npm run dev:api
 En raíz:
 
 - `npm run dev:db`
+- `npm run dev:api:prod:docker`
+- `npm run dev:api:prod:docker:logs`
+- `npm run dev:api:prod:docker:down`
+- `npm run dev:front:docker`
+- `npm run dev:front:docker:logs`
+- `npm run dev:front:docker:down`
+- `npm run dev:front:prod:docker`
+- `npm run dev:front:prod:docker:down`
 - `npm run dev:api`
 - `npm run db:migrate`
 - `npm run db:seed:dev`
@@ -110,6 +118,14 @@ En backend:
 - `npm -w backend run start`
 - `npm -w backend run worker:outbox`
 - `npm -w backend run audit:prod`
+
+En frontend:
+
+- `npm -w frontend run dev`
+- `npm -w frontend run lint`
+- `npm -w frontend run typecheck`
+- `npm -w frontend run test`
+- `npm -w frontend run build`
 
 Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm audit --omit=dev --audit-level=high`). Dev-only vulnerabilities from lint toolchains are tracked separately.
 
@@ -163,6 +179,10 @@ Además de las típicas (`DATABASE_URL`, `JWT_SECRET`), el backend usa:
 - `APP_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`, `ALLOWED_EMAIL_DOMAINS`
 
 Referencia completa: `backend/.env.example`
+
+Variables frontend clave:
+
+- `VITE_API_BASE_URL` (default local: `http://localhost:3001`)
 
 ## Documentación principal
 
