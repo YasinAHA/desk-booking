@@ -53,7 +53,21 @@ async function buildTestApp(query: DbQuery) {
 		}),
 	};
 	app.decorate("db", { query, pool: mockPool });
-	await app.register(registerAuthPlugin);
+	const authSessionLifecycleService = {
+		async verifyAccessToken() {
+			return {
+				id: "user-1",
+				email: "admin@camerfirma.com",
+				firstName: "Admin",
+				lastName: "User",
+				secondLastName: null,
+				jti: randomUUID(),
+				type: "access" as const,
+				iat: Math.floor(Date.now() / 1000),
+			};
+		},
+	} as unknown as import("@application/auth/services/auth-session-lifecycle.service.js").AuthSessionLifecycleService;
+	await app.register(registerAuthPlugin, { authSessionLifecycleService });
 	await app.register(reservationsRoutes, { prefix: "/reservations" });
 	await app.ready();
 	return app;
@@ -93,11 +107,14 @@ test("POST /reservations returns 401 without token", async () => {
 
 test("POST /reservations returns desk-specific conflict message", async () => {
 	const futureDate = buildFutureDate();
-	const app = await buildTestApp(async text => {
-		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
+			params?.[1] === futureDate
+		) {
 			return { rows: [{ 1: 1 }] };
 		}
-		if (text.includes("where user_id = $1 and reservation_date = $2")) {
+		if (params?.[0] === "user-1" && params?.[1] === futureDate) {
 			return { rows: [] };
 		}
 		return { rows: [] };
@@ -121,11 +138,14 @@ test("POST /reservations returns desk-specific conflict message", async () => {
 
 test("POST /reservations returns user/day-specific conflict message", async () => {
 	const futureDate = buildFutureDate();
-	const app = await buildTestApp(async text => {
-		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
+			params?.[1] === futureDate
+		) {
 			return { rows: [] };
 		}
-		if (text.includes("where user_id = $1 and reservation_date = $2")) {
+		if (params?.[0] === "user-1" && params?.[1] === futureDate) {
 			return { rows: [{ 1: 1 }] };
 		}
 		return { rows: [] };
@@ -167,8 +187,11 @@ test("POST /reservations returns DATE_INVALID for invalid calendar date", async 
 });
 
 test("DELETE /reservations/:id returns 404 when not found", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("as is_same_day_booking_closed")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
 			return { rows: [] };
 		}
 		return { rows: [], rowCount: 0 };
@@ -185,8 +208,11 @@ test("DELETE /reservations/:id returns 404 when not found", async () => {
 });
 
 test("DELETE /reservations/:id returns 400 when date is past", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("as is_same_day_booking_closed")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
 			return {
 				rows: [
 					{
@@ -212,8 +238,11 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 });
 
 test("DELETE /reservations/:id returns 409 for checked-in reservation", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("as is_same_day_booking_closed")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
 			return {
 				rows: [
 					{
@@ -242,8 +271,11 @@ test("DELETE /reservations/:id returns 409 for checked-in reservation", async ()
 
 test("DELETE /reservations/:id returns 409 when cancellation window is closed", async () => {
 	const today = new Date().toISOString().slice(0, 10);
-	const app = await buildTestApp(async text => {
-		if (text.includes("as is_same_day_booking_closed")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
 			return {
 				rows: [
 					{
@@ -294,8 +326,11 @@ test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
 	const day = new Date(`${today}T00:00:00.000Z`).getUTCDay();
 	const nonWeekendDate =
 		day === 0 || day === 6 ? buildFutureDate(2) : today;
-	const app = await buildTestApp(async text => {
-		if (text.includes("as is_same_day_booking_closed")) {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
+			params?.[1] === nonWeekendDate
+		) {
 			return { rows: [{ is_same_day_booking_closed: true }] };
 		}
 		return { rows: [] };
@@ -334,11 +369,34 @@ test("POST /reservations/check-in/qr returns 401 without token", async () => {
 });
 
 test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("with target as")) {
-			return { rows: [{ result: "checked_in" }] };
+	const today = new Date().toISOString().slice(0, 10);
+	let callCount = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		callCount += 1;
+		if (callCount === 1) {
+			assert.deepEqual(params, [today]);
+			return { rows: [], rowCount: 0 };
 		}
-		return { rows: [] };
+		if (callCount === 2) {
+			assert.deepEqual(params, ["user-1", today, "qr-public-id-001"]);
+			return {
+				rows: [
+					{
+						id: "res-1",
+						status: "reserved",
+						reservation_date: today,
+						timezone: "UTC",
+						checkin_allowed_from: "00:00:00",
+						checkin_cutoff_time: "23:59:00",
+					},
+				],
+			};
+		}
+		if (callCount === 3) {
+			assert.deepEqual(params, ["res-1"]);
+			return { rows: [{ id: "res-1" }], rowCount: 1 };
+		}
+		assert.fail("Unexpected DB query in check-in success flow");
 	});
 
 	const res = await app.inject({
@@ -346,7 +404,7 @@ test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async 
 		url: "/reservations/check-in/qr",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
-			date: "2026-02-20",
+			date: today,
 			qrPublicId: "qr-public-id-001",
 		},
 	});
@@ -359,11 +417,18 @@ test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async 
 });
 
 test("POST /reservations/check-in/qr returns 404 when reservation is not found", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("with target as")) {
-			return { rows: [{ result: "not_found" }] };
+	let callCount = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		callCount += 1;
+		if (callCount === 1) {
+			assert.deepEqual(params, ["2026-02-20"]);
+			return { rows: [], rowCount: 0 };
 		}
-		return { rows: [] };
+		if (callCount === 2) {
+			assert.deepEqual(params, ["user-1", "2026-02-20", "qr-public-id-001"]);
+			return { rows: [] };
+		}
+		assert.fail("Unexpected DB query in check-in not-found flow");
 	});
 
 	const res = await app.inject({
@@ -381,11 +446,29 @@ test("POST /reservations/check-in/qr returns 404 when reservation is not found",
 });
 
 test("POST /reservations/check-in/qr returns 409 when reservation is not active", async () => {
-	const app = await buildTestApp(async text => {
-		if (text.includes("with target as")) {
-			return { rows: [{ result: "not_active" }] };
+	let callCount = 0;
+	const app = await buildTestApp(async (_text, params) => {
+		callCount += 1;
+		if (callCount === 1) {
+			assert.deepEqual(params, ["2026-02-20"]);
+			return { rows: [], rowCount: 0 };
 		}
-		return { rows: [] };
+		if (callCount === 2) {
+			assert.deepEqual(params, ["user-1", "2026-02-20", "qr-public-id-001"]);
+			return {
+				rows: [
+					{
+						id: "res-1",
+						status: "cancelled",
+						reservation_date: "2026-02-20",
+						timezone: "UTC",
+						checkin_allowed_from: "00:00:00",
+						checkin_cutoff_time: "23:59:00",
+					},
+				],
+			};
+		}
+		assert.fail("Unexpected DB query in check-in not-active flow");
 	});
 
 	const res = await app.inject({

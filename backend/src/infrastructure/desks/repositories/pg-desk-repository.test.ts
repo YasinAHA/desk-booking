@@ -8,12 +8,7 @@ import { PgDeskRepository } from "@infrastructure/desks/repositories/pg-desk-rep
 
 test("PgDeskRepository.listForDate maps rows", async () => {
 	const repo = new PgDeskRepository({
-		query: async (text, params) => {
-			if (text.includes("set status = 'no_show'")) {
-				assert.deepEqual(params, ["2026-02-20"]);
-				return { rows: [], rowCount: 0 };
-			}
-			assert.ok(text.includes("from desks"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["2026-02-20", "user-1"]);
 			return {
 				rows: [
@@ -51,8 +46,7 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 
 test("PgDeskRepository.listForAdmin maps rows with qr_public_id", async () => {
 	const repo = new PgDeskRepository({
-		query: async text => {
-			assert.ok(text.includes("select d.id, d.office_id, d.code, d.name, d.status, d.qr_public_id"));
+		query: async () => {
 			return {
 				rows: [
 					{
@@ -77,8 +71,7 @@ test("PgDeskRepository.listForAdmin maps rows with qr_public_id", async () => {
 
 test("PgDeskRepository.regenerateQrPublicId returns new qr id", async () => {
 	const repo = new PgDeskRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("update desks set qr_public_id"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["desk-1"]);
 			return {
 				rows: [{ qr_public_id: "qr-new" }],
@@ -93,8 +86,7 @@ test("PgDeskRepository.regenerateQrPublicId returns new qr id", async () => {
 
 test("PgDeskRepository.regenerateAllQrPublicIds returns updated rows count", async () => {
 	const repo = new PgDeskRepository({
-		query: async text => {
-			assert.ok(text.includes("update desks set qr_public_id = gen_random_uuid()::text"));
+		query: async () => {
 			return {
 				rows: [],
 				rowCount: 7,

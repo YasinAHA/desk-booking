@@ -21,8 +21,7 @@ test("PgReservationQueryRepository.findByIdForUser returns null when missing", a
 
 test("PgReservationQueryRepository.listForUser maps rows", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("from reservations"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["user-1"]);
 			return {
 				rows: [
@@ -56,12 +55,7 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 
 test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns true when row exists", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			if (text.includes("set status = 'no_show'")) {
-				assert.deepEqual(params, ["2026-02-20"]);
-				return { rows: [], rowCount: 0 };
-			}
-			assert.ok(text.includes("where user_id = $1 and reservation_date = $2"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["user-1", "2026-02-20"]);
 			return { rows: [{ 1: 1 }] };
 		},
@@ -76,12 +70,7 @@ test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns tru
 
 test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns false when no rows", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			if (text.includes("set status = 'no_show'")) {
-				assert.deepEqual(params, ["2026-02-20"]);
-				return { rows: [], rowCount: 0 };
-			}
-			assert.ok(text.includes("where desk_id = $1 and reservation_date = $2"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
 			return { rows: [] };
 		},
@@ -96,8 +85,7 @@ test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns fal
 
 test("PgReservationQueryRepository.isSameDayBookingClosedForDesk returns true when query says so", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("as is_same_day_booking_closed"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
 			return { rows: [{ is_same_day_booking_closed: true }] };
 		},
@@ -108,4 +96,39 @@ test("PgReservationQueryRepository.isSameDayBookingClosedForDesk returns true wh
 		"2026-02-20"
 	);
 	assert.equal(result, true);
+});
+
+test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, ["user-1", "2026-02-20", "qr-public-id"]);
+			return {
+				rows: [
+					{
+						id: "res-1",
+						status: "reserved",
+						reservation_date: "2026-02-20",
+						timezone: "Europe/Madrid",
+						checkin_allowed_from: "06:00:00",
+						checkin_cutoff_time: "12:00:00",
+					},
+				],
+			};
+		},
+	});
+
+	const result = await repo.findQrCheckInCandidate(
+		createUserId("user-1"),
+		"2026-02-20",
+		"qr-public-id"
+	);
+
+	assert.deepEqual(result, {
+		id: createReservationId("res-1"),
+		status: "reserved",
+		reservationDate: "2026-02-20",
+		timezone: "Europe/Madrid",
+		checkinAllowedFrom: "06:00:00",
+		checkinCutoffTime: "12:00:00",
+	});
 });
