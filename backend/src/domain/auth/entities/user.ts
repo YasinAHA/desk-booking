@@ -2,6 +2,38 @@
 import type { PasswordHash } from "@domain/auth/value-objects/password-hash.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
+export class InvalidUserProfileError extends Error {
+	constructor(field: "firstName" | "lastName") {
+		super(`Invalid user profile field: ${field}`);
+		this.name = "InvalidUserProfileError";
+	}
+}
+
+export type UserProfileInput = {
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
+};
+
+function normalizeRequiredName(
+	value: string,
+	field: "firstName" | "lastName"
+): string {
+	const normalized = value.trim();
+	if (normalized.length === 0) {
+		throw new InvalidUserProfileError(field);
+	}
+	return normalized;
+}
+
+function normalizeOptionalName(value: string | null): string | null {
+	if (value === null) {
+		return null;
+	}
+	const normalized = value.trim();
+	return normalized.length > 0 ? normalized : null;
+}
+
 /**
  * Domain entity for User
  * Contains business logic and invariants
@@ -17,6 +49,14 @@ export class User {
 		readonly passwordHash: PasswordHash,
 		readonly confirmedAt: string | null,
 	) {}
+
+	static normalizeProfile(input: UserProfileInput): UserProfileInput {
+		return {
+			firstName: normalizeRequiredName(input.firstName, "firstName"),
+			lastName: normalizeRequiredName(input.lastName, "lastName"),
+			secondLastName: normalizeOptionalName(input.secondLastName),
+		};
+	}
 
 	/**
 	 * Check if email is confirmed
@@ -44,6 +84,18 @@ export class User {
 		);
 	}
 
+	changePassword(newPasswordHash: PasswordHash): User {
+		return new User(
+			this.id,
+			this.email,
+			this.firstName,
+			this.lastName,
+			this.secondLastName,
+			newPasswordHash,
+			this.confirmedAt,
+		);
+	}
+
 	/**
 	 * Update credentials (password and/or display name)
 	 * Returns new User instance
@@ -54,12 +106,18 @@ export class User {
 		newLastName: string,
 		newSecondLastName: string | null,
 	): User {
+		const normalizedProfile = User.normalizeProfile({
+			firstName: newFirstName,
+			lastName: newLastName,
+			secondLastName: newSecondLastName,
+		});
+
 		return new User(
 			this.id,
 			this.email,
-			newFirstName,
-			newLastName,
-			newSecondLastName,
+			normalizedProfile.firstName,
+			normalizedProfile.lastName,
+			normalizedProfile.secondLastName,
 			newPasswordHash,
 			this.confirmedAt,
 		);
@@ -74,5 +132,3 @@ export class User {
 		return !!this.passwordHash;
 	}
 }
-
-
