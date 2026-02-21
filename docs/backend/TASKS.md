@@ -10,8 +10,8 @@ Histórico de tareas cerradas: consultar los tags/release notes en Git y `CHANGE
 - Todo hardening/refactor no bloqueante se mueve a `docs/backend/BACKLOG.md`.
 
 ## Prioridad P0 (entrega)
-- [ ] Implementar backend para **Admin UI básica** (operaciones mínimas de gestión necesarias para demo/uso interno).
-- [ ] Implementar flujo backend de **QR check-in** end-to-end.
+- [x] Implementar backend para **Admin UI básica** (operaciones mínimas de gestión necesarias para demo/uso interno).
+- [x] Implementar flujo backend de **QR check-in** end-to-end.
 - [ ] Validar migraciones y seeds en entorno de despliegue.
 - [ ] Ejecutar smoke funcional completo en entorno desplegado:
   - auth (login/refresh/logout, forgot/reset/change password)
@@ -26,3 +26,6 @@ Histórico de tareas cerradas: consultar los tags/release notes en Git y `CHANGE
 ## Prioridad P1 (si hay margen antes de entrega)
 - [ ] Mejorar UX de errores funcionales críticos detectados en demo.
 - [ ] Ajustar documentación operativa mínima de despliegue y verificación.
+
+## Foco inmediato
+- [ ] Revisar y validar funcionalmente el flujo de **check-in QR** en entorno real (ventana horaria, estados y mensajes UX).
