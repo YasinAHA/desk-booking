@@ -1,6 +1,20 @@
 # Frontend Docs
 
-## Índice
+## Arranque rapido
+- `npm install` en la raiz.
+- `npm -w frontend run dev` para entorno local.
+- `npm -w frontend run build` para build de produccion.
+
+## Quality gates frontend
+- `npm -w frontend run lint`
+- `npm -w frontend run typecheck`
+- `npm -w frontend run test`
+
+## Variables de entorno frontend
+- `VITE_API_BASE_URL` (default local `http://localhost:3001`).
+- Opcionales: `SENTRY_DSN_FRONTEND`, `SENTRY_ENV`, `APP_VERSION`.
+
+## Indice
 - [AI-GUIDE-FRONTEND.md](AI-GUIDE-FRONTEND.md)
 - [ARCHITECTURE-FRONTEND.md](ARCHITECTURE-FRONTEND.md)
 - [API-CONTRACT.md](API-CONTRACT.md)

@@ -1,0 +1,62 @@
+:root {
+  color-scheme: light;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  line-height: 1.4;
+  font-weight: 400;
+  --bg-1: #f6f2e8;
+  --bg-2: #f7f9f3;
+  --card: #ffffff;
+  --ink: #111111;
+  --muted: #4f4f4f;
+  --accent: #0d5c63;
+  --border: #d8dbdf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(920px 360px at 15% 5%, rgb(13 92 99 / 10%), transparent),
+    radial-gradient(740px 360px at 90% 10%, rgb(226 183 20 / 14%), transparent),
+    linear-gradient(120deg, var(--bg-1), var(--bg-2));
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a.active {
+  text-decoration: underline;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.app-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+}
