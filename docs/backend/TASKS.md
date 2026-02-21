@@ -32,6 +32,10 @@ Histórico de tareas cerradas: consultar los tags/release notes en Git y `CHANGE
 ## Prioridad P1 (si hay margen antes de entrega)
 - [ ] Mejorar UX de errores funcionales críticos detectados en demo.
 - [ ] Ajustar documentación operativa mínima de despliegue y verificación.
+- [ ] Añadir escenarios E2E deterministas con Postgres para invariantes temporales:
+  - timezone de oficina aplicado correctamente en check-in QR
+  - ventana `checkin_allowed_from` / `checkin_cutoff_time`
+  - transición automática a `no_show` y liberación para flujos posteriores
 
 ## Foco inmediato
 - [ ] Revisar y validar funcionalmente el flujo de **check-in QR** en entorno real (ventana horaria, estados y mensajes UX).
