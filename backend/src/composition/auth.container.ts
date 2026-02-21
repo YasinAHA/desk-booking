@@ -5,9 +5,11 @@ import { ChangePasswordHandler } from "@application/auth/commands/change-passwor
 import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import { ForgotPasswordHandler } from "@application/auth/commands/forgot-password.handler.js";
 import { LogoutHandler } from "@application/auth/commands/logout.handler.js";
+import { RefreshSessionHandler } from "@application/auth/commands/refresh-session.handler.js";
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import { ResetPasswordHandler } from "@application/auth/commands/reset-password.handler.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
+import { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
 import { RecoveryAttemptPolicyService } from "@application/auth/services/recovery-attempt-policy.service.js";
 import {
 	getTransactionalDbClient,
@@ -51,6 +53,8 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	resetPasswordHandler: ResetPasswordHandler;
 	changePasswordHandler: ChangePasswordHandler;
 	logoutHandler: LogoutHandler;
+	verifyTokenHandler: VerifyTokenHandler;
+	refreshSessionHandler: RefreshSessionHandler;
 	recoveryAttemptPolicyService: RecoveryAttemptPolicyService;
 } {
 	const dbApp = app as AppWithDb;
@@ -98,6 +102,12 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		resetPasswordHandler: new ResetPasswordHandler(deps),
 		changePasswordHandler: new ChangePasswordHandler(deps),
 		logoutHandler: new LogoutHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
+		verifyTokenHandler: new VerifyTokenHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
+		refreshSessionHandler: new RefreshSessionHandler({
 			authSessionLifecycleService: app.authSessionLifecycleService,
 		}),
 		recoveryAttemptPolicyService,

@@ -1,7 +1,9 @@
 import type { LogoutHandler } from "@application/auth/commands/logout.handler.js";
+import type { RefreshSessionHandler } from "@application/auth/commands/refresh-session.handler.js";
 import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import type { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
 import {
 	AUTH_LOGIN_RATE_LIMIT,
 	AUTH_REFRESH_RATE_LIMIT,
@@ -24,7 +26,9 @@ export class AuthLoginController {
 	constructor(
 		private readonly loginHandler: LoginHandler,
 		private readonly authSessionLifecycleService: AuthSessionLifecycleService,
-		private readonly logoutHandler: LogoutHandler
+		private readonly verifyTokenHandler: VerifyTokenHandler,
+		private readonly refreshSessionHandler: RefreshSessionHandler,
+		private readonly logoutHandler: LogoutHandler,
 	) {}
 
 	async login(req: FastifyRequest, reply: FastifyReply) {
@@ -71,7 +75,7 @@ export class AuthLoginController {
 		}
 
 		try {
-			const payload = await this.authSessionLifecycleService.verifyAccessToken(parse.data.token);
+			const payload = await this.verifyTokenHandler.execute({ token: parse.data.token });
 			req.log.info({ event: "auth.verify", userId: payload.id }, "Token verified OK");
 			return reply.send(mapVerifyResponse(payload));
 		} catch (err) {
@@ -89,7 +93,9 @@ export class AuthLoginController {
 		}
 
 		try {
-			const session = await this.authSessionLifecycleService.rotateRefreshToken(parse.data.token);
+			const session = await this.refreshSessionHandler.execute({
+				refreshToken: parse.data.token,
+			});
 			req.log.info({ event: "auth.refresh", userId: session.userId }, "Token refreshed");
 			return reply.send({
 				accessToken: session.accessToken,
