@@ -26,7 +26,8 @@ export type LoginResult =
 export type RegisterResult =
 	| { status: "OK" }
 	| { status: "ALREADY_CONFIRMED" }
-	| { status: "DOMAIN_NOT_ALLOWED" };
+	| { status: "DOMAIN_NOT_ALLOWED" }
+	| { status: "INVALID_PROFILE" };
 
 export type ForgotPasswordResult = { status: "OK" };
 

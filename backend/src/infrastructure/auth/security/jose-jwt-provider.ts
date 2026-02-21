@@ -1,6 +1,6 @@
 import { decodeJwt, jwtVerify, SignJWT, type JWTPayload } from "jose";
 
-import type { JwtProvider, SignOptions, VerifyOptions } from "@interfaces/http/auth/ports/jwt-provider.js";
+import type { JwtProvider, SignOptions, VerifyOptions } from "@infrastructure/auth/security/jwt-provider.js";
 
 function toSecretKey(secret: string): Uint8Array {
 	return new TextEncoder().encode(secret);
@@ -69,3 +69,4 @@ export class JoseJwtProvider implements JwtProvider {
 		return result.payload as unknown;
 	}
 }
+

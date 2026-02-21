@@ -2,6 +2,7 @@
 import type { AuthDependencies, RegisterResult } from "@application/auth/types.js";
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import { EmailVerificationService } from "@application/auth/services/email-verification.service.js";
+import { InvalidUserProfileError, User } from "@domain/auth/entities/user.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -32,6 +33,20 @@ export class RegisterHandler {
 			return { status: "DOMAIN_NOT_ALLOWED" };
 		}
 
+		let profile;
+		try {
+			profile = User.normalizeProfile({
+				firstName: command.firstName,
+				lastName: command.lastName,
+				secondLastName: command.secondLastName ?? null,
+			});
+		} catch (err) {
+			if (err instanceof InvalidUserProfileError) {
+				return { status: "INVALID_PROFILE" };
+			}
+			throw err;
+		}
+
 		const passwordHash = await this.deps.passwordHasher.hash(command.password);
 
 		return this.deps.txManager.runInTransaction<RegisterResult>(async tx => {
@@ -45,12 +60,18 @@ export class RegisterHandler {
 					return { status: "ALREADY_CONFIRMED" };
 				}
 
-				await userRepo.updateCredentials(
-					existing.id,
+				const updatedUser = existing.updateCredentials(
 					passwordHash,
-					command.firstName,
-					command.lastName,
-					command.secondLastName ?? null
+					profile.firstName,
+					profile.lastName,
+					profile.secondLastName
+				);
+				await userRepo.updateCredentials(
+					updatedUser.id,
+					updatedUser.passwordHash,
+					updatedUser.firstName,
+					updatedUser.lastName,
+					updatedUser.secondLastName
 				);
 				await this.sendVerificationEmail(existing.id, command.email, emailVerificationRepo);
 				return { status: "OK" };
@@ -59,9 +80,9 @@ export class RegisterHandler {
 			const created = await userRepo.createUser({
 				email: emailVO,
 				passwordHash,
-				firstName: command.firstName,
-				lastName: command.lastName,
-				secondLastName: command.secondLastName ?? null,
+				firstName: profile.firstName,
+				lastName: profile.lastName,
+				secondLastName: profile.secondLastName,
 			});
 
 			await this.sendVerificationEmail(created.id, command.email, emailVerificationRepo);
@@ -84,7 +105,3 @@ export class RegisterHandler {
 		await service.sendVerificationEmail(userId, email);
 	}
 }
-
-
-
-

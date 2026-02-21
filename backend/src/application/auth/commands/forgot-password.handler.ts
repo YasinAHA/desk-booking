@@ -1,5 +1,6 @@
 import type { ForgotPasswordCommand } from "@application/auth/commands/forgot-password.command.js";
 import type { AuthDependencies, ForgotPasswordResult } from "@application/auth/types.js";
+import { EmailTemplateProvider } from "@application/auth/services/email-template-provider.js";
 import { AUTH_FORGOT_PASSWORD_MIN_RESPONSE_MS } from "@config/constants.js";
 import { createEmail, emailToString } from "@domain/auth/value-objects/email.js";
 import { userIdToString } from "@domain/auth/value-objects/user-id.js";
@@ -16,6 +17,8 @@ type ForgotPasswordDependencies = Pick<
 >;
 
 export class ForgotPasswordHandler {
+	private readonly emailTemplateProvider = new EmailTemplateProvider();
+
 	constructor(private readonly deps: ForgotPasswordDependencies) {}
 
 	async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
@@ -48,23 +51,14 @@ export class ForgotPasswordHandler {
 
 			const resetUrl = new URL(this.deps.passwordResetBaseUrl);
 			resetUrl.hash = `token=${encodeURIComponent(token)}`;
-			const htmlBody = [
-				"<div style=\"font-family: Arial, sans-serif; line-height: 1.5; color: #222;\">",
-				"<h2 style=\"margin: 0 0 12px;\">Reset your password</h2>",
-				"<p>We received a request to reset your password.</p>",
-				"<p style=\"margin: 20px 0;\">",
-				`<a href="${resetUrl.toString()}" style="background: #0b5fff; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none; display: inline-block;">Reset password</a>`,
-				"</p>",
-				"<p>If the button doesn't work, copy and paste this link:</p>",
-				`<p><a href="${resetUrl.toString()}">${resetUrl.toString()}</a></p>`,
-				"<p style=\"color: #666; font-size: 12px;\">If you did not request this, you can ignore this email.</p>",
-				"</div>",
-			].join("");
+			const template = this.emailTemplateProvider.buildPasswordResetTemplate(
+				resetUrl.toString()
+			);
 
 			await this.deps.emailOutbox.enqueue({
 				to: emailToString(user.email),
-				subject: "Reset your Desk Booking password",
-				body: htmlBody,
+				subject: template.subject,
+				body: template.body,
 				type: "password_reset",
 			});
 

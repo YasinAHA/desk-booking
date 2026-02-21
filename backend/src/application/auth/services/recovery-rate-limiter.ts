@@ -1,4 +1,4 @@
-type Bucket = {
+﻿type Bucket = {
 	count: number;
 	resetAtMs: number;
 };
@@ -26,4 +26,3 @@ export class RecoveryRateLimiter {
 		return true;
 	}
 }
-

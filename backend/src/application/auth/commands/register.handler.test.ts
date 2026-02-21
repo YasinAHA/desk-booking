@@ -133,6 +133,22 @@ test("RegisterHandler.execute rejects non-allowed domain", async () => {
 	assert.deepEqual(result, { status: "DOMAIN_NOT_ALLOWED" });
 });
 
+test("RegisterHandler.execute returns INVALID_PROFILE for blank profile names", async () => {
+	const handler = buildRegisterHandler(
+		mockUserRepo(),
+		mockEmailVerificationRepo(),
+		mockEmailOutbox()
+	);
+
+	const result = await handler.execute({
+		email: "admin@camerfirma.com",
+		password: "123456",
+		firstName: "   ",
+		lastName: "User",
+	});
+	assert.deepEqual(result, { status: "INVALID_PROFILE" });
+});
+
 test("RegisterHandler.execute returns ALREADY_CONFIRMED when user exists", async () => {
 	const hash = createPasswordHash("hash:pass");
 	const confirmedUser = new User(

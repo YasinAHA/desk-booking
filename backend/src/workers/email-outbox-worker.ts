@@ -29,13 +29,57 @@ function computeBackoffMs(attempts: number) {
 	return Math.min(backoffBaseMs * Math.pow(2, exp), backoffMaxMs);
 }
 
+function stripHtmlTags(input: string): string {
+	let inTag = false;
+	let output = "";
+	for (let i = 0; i < input.length; i += 1) {
+		const ch = input[i];
+		if (ch === "<") {
+			inTag = true;
+			continue;
+		}
+		if (ch === ">") {
+			inTag = false;
+			continue;
+		}
+		if (!inTag) {
+			output += ch;
+		}
+	}
+	return output;
+}
+
+function collapseBlankLines(input: string): string {
+	const lines = input.split("\n");
+	const out: string[] = [];
+	let blankCount = 0;
+	for (const line of lines) {
+		const isBlank = line.trim().length === 0;
+		if (isBlank) {
+			blankCount += 1;
+			if (blankCount <= 2) {
+				out.push("");
+			}
+			continue;
+		}
+		blankCount = 0;
+		out.push(line);
+	}
+	return out.join("\n");
+}
+
 function toPlainText(html: string) {
-	return html
-		.replaceAll(/<\s*br\s*\/?\s*>/gi, "\n")
-		.replaceAll(/<\s*\/p\s*>/gi, "\n")
-		.replaceAll(/<[^>]+>/g, "")
-		.replaceAll(/\n{3,}/g, "\n\n")
-		.trim();
+	const normalizedBreaks = html
+		.replaceAll("<br>", "\n")
+		.replaceAll("<br/>", "\n")
+		.replaceAll("<br />", "\n")
+		.replaceAll("<BR>", "\n")
+		.replaceAll("<BR/>", "\n")
+		.replaceAll("<BR />", "\n")
+		.replaceAll("</p>", "\n")
+		.replaceAll("</P>", "\n");
+
+	return collapseBlankLines(stripHtmlTags(normalizedBreaks)).trim();
 }
 
 async function claimBatch(): Promise<OutboxRow[]> {

@@ -6,7 +6,7 @@ const envSchema = z.object({
     NODE_ENV: z.string().default("development"),
     PORT: z.coerce.number().int().positive().default(3001),
     HOST: z.string().default("0.0.0.0"),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     JWT_SECRET: z.string().min(1),
     JWT_EXPIRATION: z.string().default("15m"),
     JWT_REFRESH_SECRET:
@@ -24,8 +24,8 @@ const envSchema = z.object({
     SMTP_FROM: z
         .string()
         .default("Desk Booking <no-reply@camerfirma.com>"),
-    APP_BASE_URL: z.string().url().default("http://localhost:3001"),
-    FRONTEND_BASE_URL: z.string().url().default("http://localhost:5500"),
+    APP_BASE_URL: z.url().default("http://localhost:3001"),
+    FRONTEND_BASE_URL: z.url().default("http://localhost:5500"),
     CORS_ORIGINS: z.string().default(""),
     DB_SSL: z.preprocess(
         value => {

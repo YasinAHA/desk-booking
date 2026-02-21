@@ -1,4 +1,4 @@
-import type { ChangePasswordCommand } from "@application/auth/commands/change-password.command.js";
+﻿import type { ChangePasswordCommand } from "@application/auth/commands/change-password.command.js";
 import type { AuthDependencies, ChangePasswordResult } from "@application/auth/types.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -26,11 +26,13 @@ export class ChangePasswordHandler {
 		}
 
 		const newPasswordHash = await this.deps.passwordHasher.hash(command.newPassword);
+		const updatedUser = user.changePassword(newPasswordHash);
 		await this.deps.txManager.runInTransaction(async tx => {
 			const userRepo = this.deps.userRepoFactory(tx);
-			await userRepo.updatePassword(user.id, newPasswordHash);
+			await userRepo.updatePassword(updatedUser.id, updatedUser.passwordHash);
 		});
 
 		return { status: "OK" };
 	}
 }
+

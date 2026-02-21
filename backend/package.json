@@ -5,6 +5,7 @@
     "scripts": {
         "dev": "tsx watch src/server.ts",
         "lint": "eslint src --max-warnings 0",
+        "lint:architecture": "eslint \"src/{domain,application,infrastructure,interfaces,composition}/**/*.ts\" --ignore-pattern \"**/*.test.ts\" --max-warnings 0",
         "lint:types": "tsc -p tsconfig.json --noEmit",
         "audit:prod": "npm audit --omit=dev --audit-level=high",
         "build": "tsc -p tsconfig.json",
