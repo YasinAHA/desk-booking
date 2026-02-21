@@ -10,7 +10,7 @@
         "lint-staged": "^16.2.6"
     },
     "scripts": {
-        "prepare": "husky",
+        "prepare": "husky || exit 0",
         "dev:db": "docker compose -f docker/docker-compose.yml up -d",
         "dev:api:prod:docker": "docker compose -f docker/docker-compose.yml --profile prod up -d backend-prod",
         "dev:api:prod:docker:logs": "docker compose -f docker/docker-compose.yml --profile prod logs -f backend-prod",

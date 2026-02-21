@@ -1,4 +1,4 @@
-﻿services:
+services:
   postgres:
     image: postgres:18
     container_name: deskbooking_pg
@@ -45,6 +45,7 @@
     environment:
       DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
       SMTP_HOST: mailpit
+      HUSKY: "0"
     command: sh -c "npm ci -w backend && npm -w backend run worker:outbox"
     depends_on:
       - postgres
@@ -63,6 +64,7 @@
       DATABASE_URL: postgres://deskbooking:deskbooking@postgres:5432/deskbooking
       SMTP_HOST: mailpit
       HOST: 0.0.0.0
+      HUSKY: "0"
     ports:
       - "3001:3001"
     command: sh -c "npm ci -w backend && npm -w backend run dev"
@@ -81,6 +83,7 @@
       SMTP_HOST: mailpit
       HOST: 0.0.0.0
       NODE_ENV: production
+      HUSKY: "0"
     ports:
       - "3002:3001"
     depends_on:
@@ -99,6 +102,7 @@
     environment:
       HOST: 0.0.0.0
       VITE_API_BASE_URL: http://localhost:3001
+      HUSKY: "0"
     ports:
       - "5173:5173"
     command: sh -c "npm ci -w frontend && npm -w frontend run dev -- --host 0.0.0.0 --port 5173"
@@ -111,6 +115,7 @@
     container_name: deskbooking_frontend_prod
     environment:
       VITE_API_BASE_URL: http://localhost:3001
+      HUSKY: "0"
     ports:
       - "8081:80"
     depends_on:
