@@ -25,6 +25,10 @@
         "db:seed:dev": "npm -w backend run db:seed -- dev",
         "db:seed:test": "npm -w backend run db:seed -- test",
         "db:seed:correction": "npm -w backend run db:seed -- correction",
+        "audit:prod:backend": "npm -w backend run audit:prod",
+        "audit:prod:frontend": "npm -w frontend audit --omit=dev --audit-level=high",
+        "audit:prod": "npm run audit:prod:backend && npm run audit:prod:frontend",
+        "audit:full": "npm audit",
         "qa:precommit": "npm -w backend run lint && npm -w backend run lint:types && npm -w frontend run lint && npm -w frontend run typecheck",
         "qa:prepush": "npm -w backend run test && npm -w frontend run test"
     },

@@ -107,6 +107,8 @@ En raíz:
 - `npm run db:seed:dev`
 - `npm run db:seed:test`
 - `npm run db:seed:correction`
+- `npm run audit:prod`
+- `npm run audit:full`
 - `npm run qa:precommit`
 - `npm run qa:prepush`
 
@@ -126,8 +128,9 @@ En frontend:
 - `npm -w frontend run typecheck`
 - `npm -w frontend run test`
 - `npm -w frontend run build`
+- `npm -w frontend run generate:openapi-types`
 
-Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm audit --omit=dev --audit-level=high`). Dev-only vulnerabilities from lint toolchains are tracked separately.
+Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm run audit:prod`). `npm run audit:full` is informational and may include dev-only vulnerabilities from lint/doc toolchains.
 
 ## Calidad global (monorepo)
 
