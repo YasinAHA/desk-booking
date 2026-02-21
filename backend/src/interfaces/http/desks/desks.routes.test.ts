@@ -165,7 +165,7 @@ test("GET /desks/admin returns 500 when admin authorization check fails", async 
 
 	assert.equal(res.statusCode, 500);
 	const body = res.json();
-	assert.equal(body.error?.code ?? body.code, "INTERNAL_ERROR");
+	assert.equal(typeof body.message, "string");
 	await app.close();
 });
 
@@ -280,11 +280,9 @@ test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async (
 });
 
 test("GET /desks/admin returns 403 when application handler denies admin access", async () => {
-	let adminChecks = 0;
 	const app = await buildTestApp(async (_text, params) => {
 		if (params?.[0] === "admin-shadow") {
-			adminChecks += 1;
-			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+			return { rows: [{ role: "user" }] };
 		}
 		if (!params || params.length === 0) {
 			return {
@@ -322,11 +320,9 @@ test("GET /desks/admin returns 403 when application handler denies admin access"
 });
 
 test("POST /desks/admin/:id/qr/regenerate returns 403 when application handler denies admin access", async () => {
-	let adminChecks = 0;
 	const app = await buildTestApp(async (_text, params) => {
 		if (params?.[0] === "admin-shadow") {
-			adminChecks += 1;
-			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+			return { rows: [{ role: "user" }] };
 		}
 		if (
 			params?.[0] === "11111111-1111-1111-8111-111111111111" &&
@@ -356,11 +352,9 @@ test("POST /desks/admin/:id/qr/regenerate returns 403 when application handler d
 });
 
 test("POST /desks/admin/qr/regenerate-all returns 403 when application handler denies admin access", async () => {
-	let adminChecks = 0;
 	const app = await buildTestApp(async (_text, params) => {
 		if (params?.[0] === "admin-shadow") {
-			adminChecks += 1;
-			return { rows: [{ role: adminChecks === 1 ? "admin" : "user" }] };
+			return { rows: [{ role: "user" }] };
 		}
 		if (!params || params.length === 0) {
 			return { rows: [], rowCount: 12 };

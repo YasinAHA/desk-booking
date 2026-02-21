@@ -1,4 +1,5 @@
-﻿import type { Email } from "@domain/auth/value-objects/email.js";
+﻿import { EmailAlreadyConfirmedError } from "@domain/auth/errors/auth-domain-errors.js";
+import type { Email } from "@domain/auth/value-objects/email.js";
 import type { PasswordHash } from "@domain/auth/value-objects/password-hash.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -71,7 +72,7 @@ export class User {
 	 */
 	confirmEmail(confirmedAt: string): User {
 		if (this.isConfirmed()) {
-			throw new Error("Email is already confirmed");
+			throw new EmailAlreadyConfirmedError();
 		}
 		return new User(
 			this.id,

@@ -1,6 +1,5 @@
-import { Pool } from "pg";
-
-import { env } from "@config/env.js";
+﻿import { env } from "@config/env.js";
+import { buildPgRuntimeConfig, createPgPool } from "@config/pg-runtime.js";
 import { sendEmail } from "@infrastructure/email/mailer.js";
 
 type OutboxRow = {
@@ -12,11 +11,13 @@ type OutboxRow = {
 	attempts: number;
 };
 
-const pool = new Pool({
-	connectionString: env.DATABASE_URL,
-	ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
-	max: env.DB_POOL_MAX,
-});
+const pool = createPgPool(
+	buildPgRuntimeConfig({
+		DATABASE_URL: env.DATABASE_URL,
+		DB_SSL: env.DB_SSL,
+		DB_POOL_MAX: env.DB_POOL_MAX,
+	})
+);
 
 const pollIntervalMs = env.OUTBOX_POLL_INTERVAL_MS;
 const batchSize = env.OUTBOX_BATCH_SIZE;
@@ -32,8 +33,8 @@ function computeBackoffMs(attempts: number) {
 function stripHtmlTags(input: string): string {
 	let inTag = false;
 	let output = "";
-	for (let i = 0; i < input.length; i += 1) {
-		const ch = input[i];
+	for (const ch of input) {
+		
 		if (ch === "<") {
 			inTag = true;
 			continue;
@@ -193,3 +194,4 @@ await main().catch(error => {
 	console.error("outbox worker fatal", error);
 	process.exit(1);
 });
+

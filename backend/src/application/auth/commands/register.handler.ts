@@ -3,6 +3,7 @@ import type { AuthDependencies, RegisterResult } from "@application/auth/types.j
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import { EmailVerificationService } from "@application/auth/services/email-verification.service.js";
 import { InvalidUserProfileError, User } from "@domain/auth/entities/user.js";
+import { InvalidEmailError } from "@domain/auth/errors/auth-domain-errors.js";
 import { createEmail } from "@domain/auth/value-objects/email.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
@@ -29,7 +30,10 @@ export class RegisterHandler {
 		let emailVO;
 		try {
 			emailVO = createEmail(command.email);
-		} catch {
+		} catch (error) {
+			if (!(error instanceof InvalidEmailError)) {
+				throw error;
+			}
 			return { status: "DOMAIN_NOT_ALLOWED" };
 		}
 
@@ -40,11 +44,11 @@ export class RegisterHandler {
 				lastName: command.lastName,
 				secondLastName: command.secondLastName ?? null,
 			});
-		} catch (err) {
-			if (err instanceof InvalidUserProfileError) {
+		} catch (error) {
+			if (error instanceof InvalidUserProfileError) {
 				return { status: "INVALID_PROFILE" };
 			}
-			throw err;
+			throw error;
 		}
 
 		const passwordHash = await this.deps.passwordHasher.hash(command.password);

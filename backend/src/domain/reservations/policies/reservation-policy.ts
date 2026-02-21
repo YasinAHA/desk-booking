@@ -1,5 +1,8 @@
 import { Reservation, type ReservationStatus } from "@domain/reservations/entities/reservation.js";
 
+export const RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM = "06:00";
+export const RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME = "12:00";
+
 export type QrCheckInPolicyInput = {
 	status: ReservationStatus;
 	reservationDate: string;
@@ -13,6 +16,16 @@ export type QrCheckInPolicyDecision =
 	| "can_check_in"
 	| "already_checked_in"
 	| "not_active";
+
+export type NoShowPolicyInput = {
+	status: ReservationStatus;
+	reservationDate: string;
+	timezone: string;
+	checkinCutoffTime: string;
+	now?: Date;
+};
+
+export type NoShowPolicyDecision = "mark_no_show" | "keep_reserved";
 
 export type SameDayBookingPolicyInput = {
 	reservationDate: string;
@@ -69,6 +82,13 @@ function parseTimeToMinutes(value: string): number | null {
 	return hour * 60 + minute;
 }
 
+function withTimeDefault(
+	value: string,
+	defaultValue: string
+): string {
+	return parseTimeToMinutes(value) === null ? defaultValue : value;
+}
+
 function isCheckInWindowOpen(input: QrCheckInPolicyInput): boolean {
 	const now = input.now ?? new Date();
 	const localDateTime = getLocalDateTime(input.timezone, now);
@@ -77,8 +97,18 @@ function isCheckInWindowOpen(input: QrCheckInPolicyInput): boolean {
 	}
 
 	const currentMinutes = parseTimeToMinutes(localDateTime.time);
-	const allowedFromMinutes = parseTimeToMinutes(input.checkinAllowedFrom);
-	const cutoffMinutes = parseTimeToMinutes(input.checkinCutoffTime);
+	const allowedFromMinutes = parseTimeToMinutes(
+		withTimeDefault(
+			input.checkinAllowedFrom,
+			RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM
+		)
+	);
+	const cutoffMinutes = parseTimeToMinutes(
+		withTimeDefault(
+			input.checkinCutoffTime,
+			RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME
+		)
+	);
 
 	if (
 		currentMinutes === null ||
@@ -99,13 +129,52 @@ export function isSameDayBookingClosed(input: SameDayBookingPolicyInput): boolea
 	}
 
 	const currentMinutes = parseTimeToMinutes(localDateTime.time);
-	const allowedFromMinutes = parseTimeToMinutes(input.checkinAllowedFrom);
+	const allowedFromMinutes = parseTimeToMinutes(
+		withTimeDefault(
+			input.checkinAllowedFrom,
+			RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM
+		)
+	);
 
 	if (currentMinutes === null || allowedFromMinutes === null) {
 		return false;
 	}
 
 	return currentMinutes >= allowedFromMinutes;
+}
+
+export function evaluateNoShowPolicy(
+	input: NoShowPolicyInput
+): NoShowPolicyDecision {
+	if (input.status !== "reserved") {
+		return "keep_reserved";
+	}
+
+	const now = input.now ?? new Date();
+	const localDateTime = getLocalDateTime(input.timezone, now);
+
+	if (localDateTime.date < input.reservationDate) {
+		return "keep_reserved";
+	}
+	if (localDateTime.date > input.reservationDate) {
+		return "mark_no_show";
+	}
+
+	const currentMinutes = parseTimeToMinutes(localDateTime.time);
+	const cutoffMinutes = parseTimeToMinutes(
+		withTimeDefault(
+			input.checkinCutoffTime,
+			RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME
+		)
+	);
+
+	if (currentMinutes === null || cutoffMinutes === null) {
+		return "keep_reserved";
+	}
+
+	return currentMinutes > cutoffMinutes
+		? "mark_no_show"
+		: "keep_reserved";
 }
 
 export function evaluateQrCheckInPolicy(

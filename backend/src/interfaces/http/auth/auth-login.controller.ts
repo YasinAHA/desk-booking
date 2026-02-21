@@ -3,18 +3,35 @@ import type { RefreshSessionHandler } from "@application/auth/commands/refresh-s
 import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import type { LoginResult } from "@application/auth/types.js";
 import type { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
-import {
-	AUTH_LOGIN_RATE_LIMIT,
-	AUTH_REFRESH_RATE_LIMIT,
-	AUTH_VERIFY_RATE_LIMIT,
-} from "@config/constants.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
-import { applyRateLimit } from "@interfaces/http/rate-limit.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
 import { loginSchema, verifySchema } from "./auth.schemas.js";
+
+type StatusHttpError = {
+	statusCode: number;
+	code: string;
+	message: string;
+};
+
+const LOGIN_STATUS_HTTP_ERRORS: Record<
+	Exclude<LoginResult["status"], "OK">,
+	StatusHttpError
+> = {
+	NOT_CONFIRMED: {
+		statusCode: 401,
+		code: "EMAIL_NOT_CONFIRMED",
+		message: "Tu email aun no esta confirmado.",
+	},
+	INVALID_CREDENTIALS: {
+		statusCode: 401,
+		code: "INVALID_CREDENTIALS",
+		message: "Credenciales invalidas.",
+	},
+};
 
 export class AuthLoginController {
 	constructor(
@@ -26,8 +43,6 @@ export class AuthLoginController {
 	) {}
 
 	async login(req: FastifyRequest, reply: FastifyReply) {
-		applyRateLimit(reply, AUTH_LOGIN_RATE_LIMIT);
-
 		const parse = loginSchema.safeParse(req.body);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
@@ -38,12 +53,9 @@ export class AuthLoginController {
 			password: parse.data.password,
 		};
 		const result = await this.loginHandler.execute(query);
-
-		if (result.status === "NOT_CONFIRMED") {
-			throwHttpError(401, "EMAIL_NOT_CONFIRMED", "Tu email aun no esta confirmado.");
-		}
 		if (result.status !== "OK") {
-			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
+			const error = LOGIN_STATUS_HTTP_ERRORS[result.status];
+			throwHttpError(error.statusCode, error.code, error.message);
 		}
 
 		const session = await this.authSessionLifecycleService.issueForUser(result.user);
@@ -59,7 +71,6 @@ export class AuthLoginController {
 	}
 
 	async verify(req: FastifyRequest, reply: FastifyReply) {
-		applyRateLimit(reply, AUTH_VERIFY_RATE_LIMIT);
 		req.log.info({ event: "auth.verify" }, "Verify request received");
 
 		const parse = verifySchema.safeParse(req.body);
@@ -79,8 +90,6 @@ export class AuthLoginController {
 	}
 
 	async refresh(req: FastifyRequest, reply: FastifyReply) {
-		applyRateLimit(reply, AUTH_REFRESH_RATE_LIMIT);
-
 		const parse = verifySchema.safeParse(req.body);
 		if (!parse.success) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");

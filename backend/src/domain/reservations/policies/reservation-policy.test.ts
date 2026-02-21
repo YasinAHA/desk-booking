@@ -2,6 +2,7 @@
 import test from "node:test";
 
 import {
+	evaluateNoShowPolicy,
 	evaluateQrCheckInPolicy,
 	isWorkingDayReservationDate,
 } from "@domain/reservations/policies/reservation-policy.js";
@@ -91,4 +92,40 @@ test("isWorkingDayReservationDate returns false for weekend", () => {
 
 test("isWorkingDayReservationDate returns true for work day", () => {
 	assert.equal(isWorkingDayReservationDate("2099-02-23"), true);
+});
+
+test("evaluateNoShowPolicy marks no_show after cutoff for same local day", () => {
+	const decision = evaluateNoShowPolicy({
+		status: "reserved",
+		reservationDate: "2026-02-21",
+		timezone: "Europe/Madrid",
+		checkinCutoffTime: "12:00",
+		now: new Date("2026-02-21T11:01:00.000Z"),
+	});
+
+	assert.equal(decision, "mark_no_show");
+});
+
+test("evaluateNoShowPolicy keeps reserved at cutoff boundary", () => {
+	const decision = evaluateNoShowPolicy({
+		status: "reserved",
+		reservationDate: "2026-02-21",
+		timezone: "UTC",
+		checkinCutoffTime: "12:00",
+		now: new Date("2026-02-21T12:00:00.000Z"),
+	});
+
+	assert.equal(decision, "keep_reserved");
+});
+
+test("evaluateNoShowPolicy marks no_show when local day is already past", () => {
+	const decision = evaluateNoShowPolicy({
+		status: "reserved",
+		reservationDate: "2026-02-20",
+		timezone: "Europe/Madrid",
+		checkinCutoffTime: "12:00",
+		now: new Date("2026-02-21T08:00:00.000Z"),
+	});
+
+	assert.equal(decision, "mark_no_show");
 });

@@ -4,6 +4,7 @@ import type { EmailVerificationRepository } from "@application/auth/ports/email-
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
 import type { PasswordResetRepository, ResetPasswordResult } from "@application/auth/ports/password-reset-repository.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
+import type { RecoveryAttemptPolicyService } from "@application/auth/services/recovery-attempt-policy.service.js";
 import type {
 	TransactionManager,
 	TransactionalContext,
@@ -29,13 +30,17 @@ export type RegisterResult =
 	| { status: "DOMAIN_NOT_ALLOWED" }
 	| { status: "INVALID_PROFILE" };
 
-export type ForgotPasswordResult = { status: "OK" };
+export type ForgotPasswordResult =
+	| { status: "OK"; emailHash?: string }
+	| { status: "RATE_LIMITED"; emailHash: string };
 
 export type ChangePasswordResult =
 	| { status: "OK" }
 	| { status: "INVALID_CREDENTIALS" };
 
-export type ResetPasswordHandlerResult = ResetPasswordResult;
+export type ResetPasswordHandlerResult =
+	| { status: "RATE_LIMITED"; tokenHash: string }
+	| { status: ResetPasswordResult; tokenHash: string };
 
 export type UserRepoFactory = (tx: TransactionalContext) => UserRepository;
 export type EmailVerificationRepoFactory = (
@@ -54,6 +59,7 @@ export type AuthDependencies = {
 	userRepoFactory: UserRepoFactory;
 	emailVerificationRepoFactory: EmailVerificationRepoFactory;
 	passwordResetRepoFactory: PasswordResetRepoFactory;
+	recoveryAttemptPolicyService: RecoveryAttemptPolicyService;
 	emailOutbox: EmailOutbox;
 	confirmationBaseUrl: string;
 	passwordResetBaseUrl: string;

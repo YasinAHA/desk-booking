@@ -24,6 +24,10 @@ import {
 	type Reservation,
 	type ReservationSource,
 } from "@domain/reservations/entities/reservation.js";
+import {
+	RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM,
+	RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME,
+} from "@domain/reservations/policies/reservation-policy.js";
 
 type DbQueryResult = {
 	rows: unknown[];
@@ -207,9 +211,9 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		checkinAllowedFrom: string;
 	} | null> {
 		const result = await this.db.query(
-			"select r.id, r.user_id, r.desk_id, r.office_id, r.reservation_date::text as reservation_date, " +
+				"select r.id, r.user_id, r.desk_id, r.office_id, r.reservation_date::text as reservation_date, " +
 				"r.status, r.source, r.cancelled_at::text as cancelled_at, o.timezone, " +
-				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from " +
+				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from ` +
 				"from reservations r " +
 				"join offices o on o.id = r.office_id " +
 				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
@@ -275,7 +279,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 	): Promise<{ timezone: string; checkinAllowedFrom: string } | null> {
 		const result = await this.db.query(
 			"select o.timezone, " +
-				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from " +
+				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from ` +
 			"from desks d " +
 			"join offices o on o.id = d.office_id " +
 			"left join reservation_policies p_office on p_office.office_id = o.id " +
@@ -300,10 +304,10 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		qrPublicId: string
 	): Promise<QrCheckInCandidate | null> {
 		const result = await this.db.query(
-			"select r.id, r.user_id, r.desk_id, r.office_id, r.status, r.source, r.cancelled_at::text as cancelled_at, " +
+				"select r.id, r.user_id, r.desk_id, r.office_id, r.status, r.source, r.cancelled_at::text as cancelled_at, " +
 				"r.reservation_date::text as reservation_date, o.timezone, " +
-				"coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)::text as checkin_allowed_from, " +
-				"coalesce(p_office.checkin_cutoff_time, p_org.checkin_cutoff_time, '12:00'::time)::text as checkin_cutoff_time " +
+				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from, ` +
+				`coalesce(p_office.checkin_cutoff_time, p_org.checkin_cutoff_time, '${RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME}'::time)::text as checkin_cutoff_time ` +
 				"from reservations r " +
 				"join desks d on d.id = r.desk_id " +
 				"join offices o on o.id = r.office_id " +

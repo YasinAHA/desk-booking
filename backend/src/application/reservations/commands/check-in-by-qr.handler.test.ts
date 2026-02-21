@@ -114,7 +114,7 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 			assert.equal(qrPublicId, "qr-123");
 			return {
 				reservation: buildReservation("reserved", today),
-				timezone: "Europe/Madrid",
+				timezone: "UTC",
 				checkinAllowedFrom: "00:00",
 				checkinCutoffTime: "23:59",
 			};

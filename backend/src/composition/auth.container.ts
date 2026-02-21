@@ -55,7 +55,6 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	logoutHandler: LogoutHandler;
 	verifyTokenHandler: VerifyTokenHandler;
 	refreshSessionHandler: RefreshSessionHandler;
-	recoveryAttemptPolicyService: RecoveryAttemptPolicyService;
 } {
 	const dbApp = app as AppWithDb;
 	const passwordHasher = new Argon2PasswordHasher();
@@ -89,6 +88,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		userRepoFactory,
 		emailVerificationRepoFactory,
 		passwordResetRepoFactory,
+		recoveryAttemptPolicyService,
 		emailOutbox,
 		confirmationBaseUrl: env.APP_BASE_URL,
 		passwordResetBaseUrl: env.FRONTEND_BASE_URL,
@@ -110,7 +110,6 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		refreshSessionHandler: new RefreshSessionHandler({
 			authSessionLifecycleService: app.authSessionLifecycleService,
 		}),
-		recoveryAttemptPolicyService,
 	};
 }
 

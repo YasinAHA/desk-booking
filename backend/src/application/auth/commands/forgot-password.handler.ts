@@ -1,7 +1,8 @@
-import type { ForgotPasswordCommand } from "@application/auth/commands/forgot-password.command.js";
+﻿import type { ForgotPasswordCommand } from "@application/auth/commands/forgot-password.command.js";
 import type { AuthDependencies, ForgotPasswordResult } from "@application/auth/types.js";
 import { EmailTemplateProvider } from "@application/auth/services/email-template-provider.js";
 import { AUTH_FORGOT_PASSWORD_MIN_RESPONSE_MS } from "@config/constants.js";
+import { InvalidEmailError } from "@domain/auth/errors/auth-domain-errors.js";
 import { createEmail, emailToString } from "@domain/auth/value-objects/email.js";
 import { userIdToString } from "@domain/auth/value-objects/user-id.js";
 
@@ -12,6 +13,7 @@ type ForgotPasswordDependencies = Pick<
 	| "txManager"
 	| "userRepo"
 	| "passwordResetRepoFactory"
+	| "recoveryAttemptPolicyService"
 	| "emailOutbox"
 	| "passwordResetBaseUrl"
 >;
@@ -24,20 +26,30 @@ export class ForgotPasswordHandler {
 	async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
 		const startedAtMs = Date.now();
 		try {
+			const attempt = this.deps.recoveryAttemptPolicyService.consumeForgotPasswordAttempt(
+				command.email
+			);
+			if (!attempt.allowed) {
+				return { status: "RATE_LIMITED", emailHash: attempt.emailHash };
+			}
+
 			if (!this.deps.authPolicy.isAllowedEmail(command.email)) {
-				return { status: "OK" };
+				return { status: "OK", emailHash: attempt.emailHash };
 			}
 
 			let emailVO;
 			try {
 				emailVO = createEmail(command.email);
-			} catch {
-				return { status: "OK" };
+			} catch (error) {
+				if (!(error instanceof InvalidEmailError)) {
+					throw error;
+				}
+				return { status: "OK", emailHash: attempt.emailHash };
 			}
 
 			const user = await this.deps.userRepo.findByEmail(emailVO);
 			if (!user) {
-				return { status: "OK" };
+				return { status: "OK", emailHash: attempt.emailHash };
 			}
 
 			const token = this.deps.tokenService.generate();
@@ -62,7 +74,7 @@ export class ForgotPasswordHandler {
 				type: "password_reset",
 			});
 
-			return { status: "OK" };
+			return { status: "OK", emailHash: attempt.emailHash };
 		} finally {
 			const elapsedMs = Date.now() - startedAtMs;
 			if (elapsedMs < AUTH_FORGOT_PASSWORD_MIN_RESPONSE_MS) {
