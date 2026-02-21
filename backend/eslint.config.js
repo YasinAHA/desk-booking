@@ -52,6 +52,16 @@ export default defineConfig(
 		},
 	},
 	{
+		files: ["src/e2e/**/*.ts"],
+		rules: {
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/no-floating-promises": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"sonarjs/no-hardcoded-passwords": "off",
+		},
+	},
+	{
 		files: ["src/interfaces/http/**/*.ts", "src/app.ts"],
 		rules: {
 			"@typescript-eslint/require-await": "off",
