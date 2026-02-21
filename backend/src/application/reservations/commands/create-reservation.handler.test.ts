@@ -1,6 +1,7 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
 import { createTransactionalContext, type TransactionManager } from "@application/common/ports/transaction-manager.js";
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
@@ -34,7 +35,7 @@ function mockCommandRepo(
 			throw new Error("create not mocked");
 		},
 		cancel: async () => false,
-		checkInByQr: async () => "not_found",
+		checkInReservation: async () => "not_active",
 		...overrides,
 	};
 }
@@ -48,6 +49,7 @@ function mockQueryRepo(
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
 		isSameDayBookingClosedForDesk: async () => false,
+		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
 }
@@ -63,6 +65,12 @@ function mockTxManager(): TransactionManager {
 	};
 }
 
+function mockNoShowPolicyService(): NoShowPolicyService {
+	return {
+		markNoShowExpiredForDate: async () => {},
+	};
+}
+
 test("CreateReservationHandler.execute throws on past date", async () => {
 	const commandRepo = mockCommandRepo({
 		create: async () => {
@@ -74,6 +82,7 @@ test("CreateReservationHandler.execute throws on past date", async () => {
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -98,6 +107,7 @@ test("CreateReservationHandler.execute throws on invalid calendar date", async (
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -122,6 +132,7 @@ test("CreateReservationHandler.execute throws desk conflict before user/day conf
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -146,6 +157,7 @@ test("CreateReservationHandler.execute throws user/day conflict when desk is fre
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -179,6 +191,7 @@ test("CreateReservationHandler.execute inserts and returns id", async () => {
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	const id = await handler.execute({
@@ -196,6 +209,7 @@ test("CreateReservationHandler.execute throws on weekend booking", async () => {
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -219,6 +233,7 @@ test("CreateReservationHandler.execute throws when same-day cutoff has passed", 
 		txManager: mockTxManager(),
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
 	});
 
 	await assert.rejects(
@@ -231,3 +246,6 @@ test("CreateReservationHandler.execute throws when same-day cutoff has passed", 
 		ReservationSameDayBookingClosedError
 	);
 });
+
+
+

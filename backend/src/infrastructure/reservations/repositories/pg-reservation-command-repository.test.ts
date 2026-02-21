@@ -8,6 +8,7 @@ import {
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
+import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgReservationCommandRepository } from "@infrastructure/reservations/repositories/pg-reservation-command-repository.js";
 import { PgErrorTranslator } from "@infrastructure/services/error-translator.js";
@@ -92,19 +93,53 @@ test("PgReservationCommandRepository.create throws generic conflict on unknown u
 	);
 });
 
-test("PgReservationCommandRepository.checkInByQr returns semantic status", async () => {
+test("PgReservationCommandRepository.checkInReservation returns checked_in when update affects a row", async () => {
 	const repo = new PgReservationCommandRepository(
 		{
-			query: async () => ({ rows: [{ result: "already_checked_in" }] }),
+			query: async text => {
+				if (text.startsWith("update reservations")) {
+					return { rows: [{ id: "res-1" }], rowCount: 1 };
+				}
+				return { rows: [], rowCount: 0 };
+			},
 		},
 		new PgErrorTranslator()
 	);
 
-	const result = await repo.checkInByQr(
-		createUserId("user-1"),
-		"2026-02-20",
-		"qr-public-id"
+	const result = await repo.checkInReservation(createReservationId("res-1"));
+	assert.equal(result, "checked_in");
+});
+
+test("PgReservationCommandRepository.checkInReservation returns already_checked_in when status is checked_in", async () => {
+	const repo = new PgReservationCommandRepository(
+		{
+			query: async text => {
+				if (text.startsWith("update reservations")) {
+					return { rows: [], rowCount: 0 };
+				}
+				return { rows: [{ status: "checked_in" }], rowCount: 1 };
+			},
+		},
+		new PgErrorTranslator()
 	);
 
+	const result = await repo.checkInReservation(createReservationId("res-1"));
 	assert.equal(result, "already_checked_in");
+});
+
+test("PgReservationCommandRepository.checkInReservation returns not_active for non-reserved status", async () => {
+	const repo = new PgReservationCommandRepository(
+		{
+			query: async text => {
+				if (text.startsWith("update reservations")) {
+					return { rows: [], rowCount: 0 };
+				}
+				return { rows: [{ status: "cancelled" }], rowCount: 1 };
+			},
+		},
+		new PgErrorTranslator()
+	);
+
+	const result = await repo.checkInReservation(createReservationId("res-1"));
+	assert.equal(result, "not_active");
 });

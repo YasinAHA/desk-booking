@@ -3,6 +3,7 @@ import type {
 	TransactionManager,
 	TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
+import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import {
@@ -14,6 +15,7 @@ import {
 	UserAlreadyHasReservationError,
 	type ReservationSource,
 } from "@domain/reservations/entities/reservation.js";
+import { isWorkingDayReservationDate } from "@domain/reservations/policies/reservation-policy.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
@@ -29,12 +31,8 @@ type CreateReservationDependencies = {
 	txManager: TransactionManager;
 	commandRepoFactory: (tx: TransactionalContext) => ReservationCommandRepository;
 	queryRepoFactory: (tx: TransactionalContext) => ReservationQueryRepository;
+	noShowPolicyServiceFactory: (tx: TransactionalContext) => NoShowPolicyService;
 };
-
-function isWeekendReservationDate(date: string): boolean {
-	const dayOfWeek = new Date(`${date}T00:00:00.000Z`).getUTCDay();
-	return dayOfWeek === 0 || dayOfWeek === 6;
-}
 
 export class CreateReservationHandler {
 	constructor(private readonly deps: CreateReservationDependencies) {}
@@ -60,13 +58,17 @@ export class CreateReservationHandler {
 		}
 
 		const reservationDateString = reservationDateToString(reservationDate);
-		if (isWeekendReservationDate(reservationDateString)) {
+		if (!isWorkingDayReservationDate(reservationDateString)) {
 			throw new ReservationOnNonWorkingDayError();
 		}
 
 		return this.deps.txManager.runInTransaction(async tx => {
 			const queryRepo = this.deps.queryRepoFactory(tx);
 			const commandRepo = this.deps.commandRepoFactory(tx);
+			const noShowPolicyService = this.deps.noShowPolicyServiceFactory(tx);
+
+			await noShowPolicyService.markNoShowExpiredForDate(reservationDateString);
+
 			const isSameDayBookingClosed = await queryRepo.isSameDayBookingClosedForDesk(
 				deskIdVO,
 				reservationDateString

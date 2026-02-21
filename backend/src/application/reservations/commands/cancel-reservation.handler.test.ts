@@ -19,7 +19,7 @@ function mockCommandRepo(
 			throw new Error("create not mocked");
 		},
 		cancel: async () => false,
-		checkInByQr: async () => "not_found",
+		checkInReservation: async () => "not_active",
 		...overrides,
 	};
 }
@@ -33,6 +33,7 @@ function mockQueryRepo(
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
 		isSameDayBookingClosedForDesk: async () => false,
+		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
 }
@@ -112,3 +113,6 @@ test("CancelReservationHandler.execute throws when cancellation window is closed
 		ReservationCancellationWindowClosedError
 	);
 });
+
+
+

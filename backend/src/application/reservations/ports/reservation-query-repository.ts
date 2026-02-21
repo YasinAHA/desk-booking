@@ -14,6 +14,15 @@ export type ReservationRecord = {
 	cancelledAt: string | null;
 };
 
+export type QrCheckInCandidate = {
+	id: ReservationId;
+	status: string;
+	reservationDate: string;
+	timezone: string;
+	checkinAllowedFrom: string;
+	checkinCutoffTime: string;
+};
+
 export interface ReservationQueryRepository {
 	findByIdForUser(
 		reservationId: ReservationId,
@@ -30,4 +39,9 @@ export interface ReservationQueryRepository {
 	hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean>;
 	hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean>;
 	isSameDayBookingClosedForDesk(deskId: DeskId, date: string): Promise<boolean>;
+	findQrCheckInCandidate(
+		userId: UserId,
+		date: string,
+		qrPublicId: string
+	): Promise<QrCheckInCandidate | null>;
 }

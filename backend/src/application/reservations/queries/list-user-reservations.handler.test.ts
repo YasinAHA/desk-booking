@@ -20,6 +20,7 @@ function mockQueryRepo(
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
 		isSameDayBookingClosedForDesk: async () => false,
+		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
 }
@@ -48,3 +49,5 @@ test("ListUserReservationsHandler.execute returns rows", async () => {
 	const result = await handler.execute({ userId: "user" });
 	assert.deepEqual(result, rows);
 });
+
+
