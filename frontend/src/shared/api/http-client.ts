@@ -42,11 +42,14 @@ const NO_REFRESH_PATHS = new Set([
 
 function buildHeaders(
   auth: boolean,
-  accessToken: string | null
+  accessToken: string | null,
+  hasJsonBody: boolean
 ): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json"
-  };
+  const headers: Record<string, string> = {};
+
+  if (hasJsonBody) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (auth && accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
@@ -116,9 +119,10 @@ export async function request<TResponse, TBody = undefined>(
   const storedAccessToken = getStoredTokens()?.accessToken ?? null;
   const requestUrl = buildRequestUrl(options.path, options.query);
 
+  const hasJsonBody = options.body !== undefined;
   const response = await fetch(requestUrl, {
     method: options.method,
-    headers: buildHeaders(auth, storedAccessToken),
+    headers: buildHeaders(auth, storedAccessToken, hasJsonBody),
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal
   });
@@ -143,7 +147,7 @@ export async function request<TResponse, TBody = undefined>(
     if (refreshedAccessToken) {
       const retried = await fetch(requestUrl, {
         method: options.method,
-        headers: buildHeaders(true, refreshedAccessToken),
+        headers: buildHeaders(true, refreshedAccessToken, hasJsonBody),
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         signal: options.signal
       });

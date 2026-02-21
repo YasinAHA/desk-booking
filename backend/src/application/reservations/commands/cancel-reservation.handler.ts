@@ -35,6 +35,7 @@ export class CancelReservationHandler {
 		}
 		const now = this.deps.nowProvider?.();
 		if (
+			found.reservation.status === "reserved" &&
 			isSameDayBookingClosed({
 				reservationDate: found.reservation.reservationDate,
 				timezone: found.timezone,

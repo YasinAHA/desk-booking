@@ -281,6 +281,44 @@ test("DELETE /reservations/:id returns 409 for checked-in reservation", async ()
 	await app.close();
 });
 
+test("DELETE /reservations/:id returns 409 for cancelled reservation", async () => {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
+			return {
+				rows: [
+					{
+						id: "22222222-2222-2222-8222-222222222222",
+						user_id: "user-1",
+						desk_id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
+						reservation_date: "2099-01-01",
+						status: "cancelled",
+						source: "user",
+						cancelled_at: "2099-01-01T08:00:00.000Z",
+						timezone: "UTC",
+						checkin_allowed_from: "23:59:59",
+					},
+				],
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "DELETE",
+		url: "/reservations/22222222-2222-2222-8222-222222222222",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "RESERVATION_NOT_CANCELLABLE");
+	await app.close();
+});
+
 test("DELETE /reservations/:id returns 409 when cancellation window is closed", async () => {
 	const today = new Date().toISOString().slice(0, 10);
 	const app = await buildTestApp(async (_text, params) => {

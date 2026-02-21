@@ -1,7 +1,7 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import Fastify, { type FastifyError, type FastifyInstance, type FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 
 import { ZodError } from "zod";
@@ -34,6 +34,14 @@ function tryParseBody(body: unknown): unknown {
     } catch {
         return body;
     }
+}
+
+function isFastifyErrorWithStatus(err: unknown): err is FastifyError {
+	if (!err || typeof err !== "object") {
+		return false;
+	}
+	const maybeErr = err as { statusCode?: unknown };
+	return typeof maybeErr.statusCode === "number";
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -161,6 +169,12 @@ export async function buildApp(): Promise<FastifyInstance> {
     app.setErrorHandler((err, _req, reply) => {
         if (err instanceof ZodError) {
             return sendError(reply, 400, "BAD_REQUEST", "Invalid payload");
+        }
+        if (isFastifyErrorWithStatus(err)) {
+            const statusCode = err.statusCode ?? 500;
+            const code = err.code ?? (statusCode >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST");
+            const message = err.message || (statusCode >= 500 ? "Unexpected error" : "Bad request");
+            return sendError(reply, statusCode, code, message);
         }
         if (isHttpError(err)) {
             return sendError(reply, err.statusCode, err.code, err.message);

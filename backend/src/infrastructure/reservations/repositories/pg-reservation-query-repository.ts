@@ -46,7 +46,7 @@ type ActiveReservationRow = {
 	desk_id: string;
 	office_id: string;
 	reservation_date: string;
-	status: "reserved" | "checked_in";
+	status: "reserved" | "checked_in" | "cancelled" | "no_show";
 	source: ReservationSource;
 	cancelled_at: string | null;
 	timezone: string;
@@ -94,7 +94,10 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 		typeof row.desk_id === "string" &&
 		typeof row.office_id === "string" &&
 		typeof row.reservation_date === "string" &&
-		(row.status === "reserved" || row.status === "checked_in") &&
+		(row.status === "reserved" ||
+			row.status === "checked_in" ||
+			row.status === "cancelled" ||
+			row.status === "no_show") &&
 		(row.source === "user" ||
 			row.source === "admin" ||
 			row.source === "walk_in" ||
@@ -218,7 +221,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 				"join offices o on o.id = r.office_id " +
 				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
 				"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
-				"where r.id = $1 and r.user_id = $2 and r.status in ('reserved', 'checked_in')",
+				"where r.id = $1 and r.user_id = $2",
 			[reservationIdToString(reservationId), userIdToString(userId)]
 		);
 		const row = toActiveReservationRow(result.rows[0]);
