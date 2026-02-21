@@ -141,6 +141,34 @@ test("GET /desks/admin returns 403 for non-admin user", async () => {
 	await app.close();
 });
 
+test("GET /desks/admin returns 500 when admin authorization check fails", async () => {
+	const app = await buildTestApp(async (_text, params) => {
+		if (params?.[0] === "admin-err") {
+			throw new Error("db unavailable");
+		}
+		return { rows: [] };
+	}, "admin-err");
+
+	const token = await signAccessToken({
+		id: "admin-err",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "Err",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/desks/admin",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 500);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "INTERNAL_ERROR");
+	await app.close();
+});
+
 test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 	const app = await buildTestApp(async (_text, params) => {
 		if (params?.[0] === "admin-1") {

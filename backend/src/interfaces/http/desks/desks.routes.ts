@@ -16,27 +16,22 @@ function withAdmin(app: Parameters<typeof withAuth>[0]): { preHandler: preHandle
 	const checkAdminAccessHandler = buildCheckAdminAccessHandler(app);
 
 	const ensureAdmin: preHandlerHookHandler = (req, reply, done) => {
-		checkAdminAccessHandler
+		void checkAdminAccessHandler
 			.execute({ userId: req.user.id })
 			.then(isAdmin => {
 				if (!isAdmin) {
 					sendError(reply, 403, "FORBIDDEN", "Forbidden");
-					return;
 				}
-				done();
 			})
 			.catch(error => {
 				req.log.error(
 					{ event: "auth.admin_access_error", userId: req.user.id, error },
 					"Admin authorization check failed"
 				);
-				sendError(reply, 500, "INTERNAL_SERVER_ERROR", "Internal server error");
-				done();
+				sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
 			})
 			.finally(() => {
-				if (!reply.sent) {
 				done();
-				}
 			});
 	};
 

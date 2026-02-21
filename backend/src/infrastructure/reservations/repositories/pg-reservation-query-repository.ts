@@ -1,4 +1,4 @@
-﻿import type {
+import type {
 	ReservationQueryRepository,
 	ReservationRecord,
 	QrCheckInCandidate,
@@ -45,7 +45,7 @@ type ReservationRecordRow = {
 
 type QrCheckInCandidateRow = {
 	id: string;
-	status: string;
+	status: "reserved" | "checked_in" | "cancelled" | "no_show";
 	reservation_date: string;
 	timezone: string;
 	checkin_allowed_from: string;
@@ -104,7 +104,7 @@ function isQrCheckInCandidateRow(value: unknown): value is QrCheckInCandidateRow
 	const row = value as Record<string, unknown>;
 	return (
 		typeof row.id === "string" &&
-		typeof row.status === "string" &&
+		(row.status === "reserved" || row.status === "checked_in" || row.status === "cancelled" || row.status === "no_show") &&
 		typeof row.reservation_date === "string" &&
 		typeof row.timezone === "string" &&
 		typeof row.checkin_allowed_from === "string" &&
@@ -243,3 +243,4 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		};
 	}
 }
+

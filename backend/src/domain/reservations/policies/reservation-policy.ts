@@ -1,5 +1,7 @@
-﻿export type QrCheckInPolicyInput = {
-	status: string;
+import { Reservation, type ReservationStatus } from "@domain/reservations/entities/reservation.js";
+
+export type QrCheckInPolicyInput = {
+	status: ReservationStatus;
 	reservationDate: string;
 	timezone: string;
 	checkinAllowedFrom: string;
@@ -85,10 +87,10 @@ function isCheckInWindowOpen(input: QrCheckInPolicyInput): boolean {
 export function evaluateQrCheckInPolicy(
 	input: QrCheckInPolicyInput
 ): QrCheckInPolicyDecision {
-	if (input.status === "checked_in") {
+	if (Reservation.isAlreadyCheckedInStatus(input.status)) {
 		return "already_checked_in";
 	}
-	if (input.status !== "reserved") {
+	if (!Reservation.canCheckInFromStatus(input.status)) {
 		return "not_active";
 	}
 	if (!isCheckInWindowOpen(input)) {
@@ -101,3 +103,4 @@ export function isWorkingDayReservationDate(date: string): boolean {
 	const dayOfWeek = new Date(`${date}T00:00:00.000Z`).getUTCDay();
 	return dayOfWeek !== 0 && dayOfWeek !== 6;
 }
+

@@ -126,6 +126,14 @@ export class Reservation {
 			cancelledAt: cancelledAtIso,
 		});
 	}
+
+	static isAlreadyCheckedInStatus(status: ReservationStatus): boolean {
+		return status === "checked_in";
+	}
+
+	static canCheckInFromStatus(status: ReservationStatus): boolean {
+		return status === "reserved";
+	}
 }
 
 // Re-export from value object for convenience
