@@ -14,6 +14,7 @@ import { recordRequest } from "@interfaces/http/metrics/metrics.js";
 import { metricsRoutes } from "@interfaces/http/metrics/metrics.routes.js";
 import { registerAuthPlugin } from "@interfaces/http/plugins/auth.js";
 import { registerDbPlugin } from "@interfaces/http/plugins/db.js";
+import { registerSwaggerPlugin } from "@interfaces/http/plugins/swagger.js";
 import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies.js";
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
 
@@ -129,6 +130,11 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     // --- Auth ---
     await app.register(registerAuthPlugin);
+
+    // --- OpenAPI / Swagger (non-prod, non-test) ---
+    if (env.NODE_ENV !== "production" && env.NODE_ENV !== "test") {
+        await registerSwaggerPlugin(app);
+    }
 
     // --- Error handler ---
     app.setErrorHandler((err, _req, reply) => {
