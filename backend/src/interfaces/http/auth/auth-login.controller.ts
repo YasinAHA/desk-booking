@@ -10,17 +10,11 @@ import {
 	AUTH_VERIFY_RATE_LIMIT,
 } from "@config/constants.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
+import { applyRateLimit } from "@interfaces/http/rate-limit.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { mapLoginResponse, mapVerifyResponse } from "./auth.mappers.js";
 import { loginSchema, verifySchema } from "./auth.schemas.js";
-
-function applyRateLimit(
-	reply: FastifyReply,
-	config: { max: number; timeWindow?: string; timeWindowMs?: number }
-): void {
-	reply.rateLimit?.(config);
-}
 
 export class AuthLoginController {
 	constructor(

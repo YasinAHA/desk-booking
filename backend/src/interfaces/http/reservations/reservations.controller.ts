@@ -17,7 +17,11 @@ import {
 	ReservationSameDayBookingClosedError,
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
-import { throwHttpError } from "@interfaces/http/http-errors.js";
+import {
+	throwHttpError,
+	throwMappedHttpError,
+	type HttpErrorMapping,
+} from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import {
@@ -30,6 +34,72 @@ import {
 	createReservationSchema,
 	reservationIdParamSchema,
 } from "./reservations.schemas.js";
+
+const CANCEL_ERROR_MAPPINGS: readonly HttpErrorMapping[] = [
+	{
+		matches: err => err instanceof ReservationDateInPastError,
+		statusCode: 400,
+		code: "DATE_IN_PAST",
+		message: "Date in past",
+	},
+	{
+		matches: err => err instanceof ReservationNotCancellableError,
+		statusCode: 409,
+		code: "RESERVATION_NOT_CANCELLABLE",
+		message: "No se puede cancelar una reserva ya iniciada.",
+	},
+	{
+		matches: err => err instanceof ReservationCancellationWindowClosedError,
+		statusCode: 409,
+		code: "CANCELLATION_WINDOW_CLOSED",
+		message: "La jornada ya ha comenzado. Ya no se puede cancelar la reserva de hoy.",
+	},
+];
+
+const CREATE_ERROR_MAPPINGS: readonly HttpErrorMapping[] = [
+	{
+		matches: err => err instanceof ReservationDateInvalidError,
+		statusCode: 400,
+		code: "DATE_INVALID",
+		message: "Invalid reservation date",
+	},
+	{
+		matches: err => err instanceof ReservationDateInPastError,
+		statusCode: 400,
+		code: "DATE_IN_PAST",
+		message: "Date in past",
+	},
+	{
+		matches: err => err instanceof ReservationOnNonWorkingDayError,
+		statusCode: 400,
+		code: "NON_WORKING_DAY",
+		message: "No se permite reservar en fin de semana.",
+	},
+	{
+		matches: err => err instanceof ReservationSameDayBookingClosedError,
+		statusCode: 409,
+		code: "SAME_DAY_BOOKING_CLOSED",
+		message: "La jornada ya ha comenzado. Para hoy solo se permite walk-in.",
+	},
+	{
+		matches: err => err instanceof DeskAlreadyReservedError,
+		statusCode: 409,
+		code: "DESK_ALREADY_RESERVED",
+		message: "Ese escritorio ya está reservado.",
+	},
+	{
+		matches: err => err instanceof UserAlreadyHasReservationError,
+		statusCode: 409,
+		code: "USER_ALREADY_HAS_RESERVATION",
+		message: "Ya tienes una reserva activa para ese día.",
+	},
+	{
+		matches: err => err instanceof ReservationConflictError,
+		statusCode: 409,
+		code: "CONFLICT",
+		message: "Reservation conflict",
+	},
+];
 
 /**
  * ReservationController: Handles HTTP layer concerns for reservation operations
@@ -101,24 +171,7 @@ export class ReservationController {
 
 			return reply.status(204).send();
 		} catch (err) {
-			if (err instanceof ReservationDateInPastError) {
-				throwHttpError(400, "DATE_IN_PAST", "Date in past");
-			}
-			if (err instanceof ReservationNotCancellableError) {
-				throwHttpError(
-					409,
-					"RESERVATION_NOT_CANCELLABLE",
-					"No se puede cancelar una reserva ya iniciada."
-				);
-			}
-			if (err instanceof ReservationCancellationWindowClosedError) {
-				throwHttpError(
-					409,
-					"CANCELLATION_WINDOW_CLOSED",
-					"La jornada ya ha comenzado. Ya no se puede cancelar la reserva de hoy."
-				);
-			}
-
+			throwMappedHttpError(err, CANCEL_ERROR_MAPPINGS);
 			throw err;
 		}
 	}
@@ -183,35 +236,7 @@ export class ReservationController {
 	}
 
 	private rethrowCreateError(err: unknown): never {
-		if (err instanceof ReservationDateInvalidError) {
-			throwHttpError(400, "DATE_INVALID", "Invalid reservation date");
-		}
-		if (err instanceof ReservationDateInPastError) {
-			throwHttpError(400, "DATE_IN_PAST", "Date in past");
-		}
-		if (err instanceof ReservationOnNonWorkingDayError) {
-			throwHttpError(400, "NON_WORKING_DAY", "No se permite reservar en fin de semana.");
-		}
-		if (err instanceof ReservationSameDayBookingClosedError) {
-			throwHttpError(
-				409,
-				"SAME_DAY_BOOKING_CLOSED",
-				"La jornada ya ha comenzado. Para hoy solo se permite walk-in."
-			);
-		}
-		if (err instanceof DeskAlreadyReservedError) {
-			throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
-		}
-		if (err instanceof UserAlreadyHasReservationError) {
-			throwHttpError(
-				409,
-				"USER_ALREADY_HAS_RESERVATION",
-				"Ya tienes una reserva activa para ese día."
-			);
-		}
-		if (err instanceof ReservationConflictError) {
-			throwHttpError(409, "CONFLICT", "Reservation conflict");
-		}
+		throwMappedHttpError(err, CREATE_ERROR_MAPPINGS);
 		throw err;
 	}
 }

@@ -36,6 +36,13 @@ export class HttpError extends Error {
     }
 }
 
+export type HttpErrorMapping = {
+	matches: (err: unknown) => boolean;
+	statusCode: number;
+	code: string;
+	message: string;
+};
+
 export function throwHttpError(
     statusCode: number,
     code: string,
@@ -46,4 +53,15 @@ export function throwHttpError(
 
 export function isHttpError(err: unknown): err is HttpError {
     return err instanceof HttpError;
+}
+
+export function throwMappedHttpError(
+	err: unknown,
+	mappings: readonly HttpErrorMapping[]
+): void {
+	for (const mapping of mappings) {
+		if (mapping.matches(err)) {
+			throwHttpError(mapping.statusCode, mapping.code, mapping.message);
+		}
+	}
 }

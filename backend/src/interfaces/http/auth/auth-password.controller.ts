@@ -11,13 +11,10 @@ import {
 	AUTH_RESET_PASSWORD_RATE_LIMIT,
 } from "@config/constants.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
+import { applyRateLimit } from "@interfaces/http/rate-limit.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from "./auth.schemas.js";
-
-function applyRateLimit(reply: FastifyReply, config: { max: number; timeWindow?: string; timeWindowMs?: number }): void {
-	reply.rateLimit?.(config);
-}
 
 export class AuthPasswordController {
 	constructor(
