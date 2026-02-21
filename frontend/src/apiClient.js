@@ -217,6 +217,17 @@ export async function listMyReservations(token) {
 	});
 }
 
+export async function checkInByQr(date, qrPublicId, token) {
+	return request("/reservations/check-in/qr", {
+		method: "POST",
+		headers: authHeaders(token),
+		body: JSON.stringify({
+			date,
+			qr_public_id: qrPublicId,
+		}),
+	});
+}
+
 export async function getAdminDesks(token) {
 	return request("/desks/admin", {
 		headers: authHeaders(token),

@@ -97,7 +97,7 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 	async cancel(reservationId: ReservationId, userId: UserId): Promise<boolean> {
 		const result = await this.db.query(
 			"update reservations set status = 'cancelled', cancelled_at = now() " +
-				"where id = $1 and user_id = $2 and status in ('reserved', 'checked_in') " +
+				"where id = $1 and user_id = $2 and status = 'reserved' " +
 				"returning id",
 			[reservationIdToString(reservationId), userIdToString(userId)]
 		);

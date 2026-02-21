@@ -28,6 +28,8 @@ type DbClient = {
 type ActiveReservationRow = {
 	id: string;
 	reservation_date: string;
+	status: "reserved" | "checked_in";
+	is_same_day_booking_closed: boolean;
 };
 
 type ReservationRecordRow = {
@@ -46,7 +48,12 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 	}
 
 	const row = value as Record<string, unknown>;
-	return typeof row.id === "string" && typeof row.reservation_date === "string";
+	return (
+		typeof row.id === "string" &&
+		typeof row.reservation_date === "string" &&
+		(row.status === "reserved" || row.status === "checked_in") &&
+		typeof row.is_same_day_booking_closed === "boolean"
+	);
 }
 
 function toActiveReservationRow(value: unknown): ActiveReservationRow | null {
@@ -98,21 +105,37 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		);
 	}
 
-	async findActiveByIdForUser(
+	async findByIdForUser(
 		reservationId: ReservationId,
 		userId: UserId
-	): Promise<{ id: ReservationId; reservationDate: string } | null> {
+	): Promise<{
+		id: ReservationId;
+		reservationDate: string;
+		status: "reserved" | "checked_in";
+		isSameDayBookingClosed: boolean;
+	} | null> {
 		const result = await this.db.query(
-			"select id, reservation_date::text as reservation_date " +
-				"from reservations " +
-				"where id = $1 and user_id = $2 and status in ('reserved', 'checked_in')",
+			"select r.id, r.reservation_date::text as reservation_date, r.status, (" +
+				"r.reservation_date = (now() at time zone o.timezone)::date and " +
+				"(now() at time zone o.timezone)::time >= coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)" +
+			") as is_same_day_booking_closed " +
+				"from reservations r " +
+				"join offices o on o.id = r.office_id " +
+				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
+				"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
+				"where r.id = $1 and r.user_id = $2 and r.status in ('reserved', 'checked_in')",
 			[reservationIdToString(reservationId), userIdToString(userId)]
 		);
 			const row = toActiveReservationRow(result.rows[0]);
 			if (!row) {
 				return null;
 			}
-		return { id: createReservationId(row.id), reservationDate: row.reservation_date };
+		return {
+			id: createReservationId(row.id),
+			reservationDate: row.reservation_date,
+			status: row.status,
+			isSameDayBookingClosed: row.is_same_day_booking_closed,
+		};
 	}
 
 	async listForUser(userId: UserId): Promise<ReservationRecord[]> {
@@ -159,5 +182,23 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			[deskIdToString(deskId), date]
 		);
 		return result.rows.length > 0;
+	}
+
+	async isSameDayBookingClosedForDesk(deskId: DeskId, date: string): Promise<boolean> {
+		const result = await this.db.query(
+			"select (" +
+				"$2::date = (now() at time zone o.timezone)::date and " +
+				"(now() at time zone o.timezone)::time >= coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '06:00'::time)" +
+			") as is_same_day_booking_closed " +
+			"from desks d " +
+			"join offices o on o.id = d.office_id " +
+			"left join reservation_policies p_office on p_office.office_id = o.id " +
+			"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
+			"where d.id = $1 and d.status = 'active' " +
+			"limit 1",
+			[deskIdToString(deskId), date]
+		);
+		const row = result.rows[0] as { is_same_day_booking_closed?: unknown } | undefined;
+		return row?.is_same_day_booking_closed === true;
 	}
 }

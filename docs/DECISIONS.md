@@ -32,6 +32,7 @@ Registro de decisiones clave para mantener coherencia técnica.
 | 2026-02-17 | backend | Arquitectura v0.6.0: layer-first + feature por capa | Modularizar sin romper Clean Architecture: composition root fuera de interfaces, CQRS en application (auth/reservations completo; desks parcial), y migraciones como fuente única de esquema. | [ADR-0003](adr/ADR-0003-layer-first-feature-grouping-v0.6.md) |
 | 2026-02-17 | backend | Migraciones como fuente única de esquema | Reducir drift entre entornos limitando `docker init` a bootstrap mínimo. | [ADR-0004](adr/ADR-0004-migrations-as-single-source-of-truth.md) |
 | 2026-02-17 | core | Estructura de docs para monorepo | Separar global/backend/frontend/adr y aislar planificación por alcance. | [ADR-0005](adr/ADR-0005-docs-structure-monorepo.md) |
+| 2026-02-21 | backend | Reservas multi-día pospuestas a post-entrega | Evitar complejidad y riesgo de regresión por colisiones; priorizar estabilidad de flujos críticos (reserva/cancelación/check-in/walk-in) para el hito del 23-02-2026. | - |
 
 
 

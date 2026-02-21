@@ -10,7 +10,11 @@ import {
 	DeskAlreadyReservedError,
 	ReservationDateInvalidError,
 	ReservationConflictError,
+	ReservationCancellationWindowClosedError,
 	ReservationDateInPastError,
+	ReservationNotCancellableError,
+	ReservationOnNonWorkingDayError,
+	ReservationSameDayBookingClosedError,
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
@@ -78,6 +82,16 @@ export class ReservationController {
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
 			}
+			if (err instanceof ReservationOnNonWorkingDayError) {
+				throwHttpError(400, "NON_WORKING_DAY", "No se permite reservar en fin de semana.");
+			}
+			if (err instanceof ReservationSameDayBookingClosedError) {
+				throwHttpError(
+					409,
+					"SAME_DAY_BOOKING_CLOSED",
+					"La jornada ya ha comenzado. Para hoy solo se permite walk-in."
+				);
+			}
 
 			if (err instanceof DeskAlreadyReservedError) {
 				throwHttpError(409, "DESK_ALREADY_RESERVED", "Ese escritorio ya está reservado.");
@@ -129,6 +143,20 @@ export class ReservationController {
 		} catch (err) {
 			if (err instanceof ReservationDateInPastError) {
 				throwHttpError(400, "DATE_IN_PAST", "Date in past");
+			}
+			if (err instanceof ReservationNotCancellableError) {
+				throwHttpError(
+					409,
+					"RESERVATION_NOT_CANCELLABLE",
+					"No se puede cancelar una reserva ya iniciada."
+				);
+			}
+			if (err instanceof ReservationCancellationWindowClosedError) {
+				throwHttpError(
+					409,
+					"CANCELLATION_WINDOW_CLOSED",
+					"La jornada ya ha comenzado. Ya no se puede cancelar la reserva de hoy."
+				);
 			}
 
 			throw err;

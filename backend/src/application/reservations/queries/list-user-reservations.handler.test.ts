@@ -15,10 +15,11 @@ function mockQueryRepo(
 	overrides: Partial<ReservationQueryRepository> = {}
 ): ReservationQueryRepository {
 	return {
-		findActiveByIdForUser: async () => null,
+		findByIdForUser: async () => null,
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
+		isSameDayBookingClosedForDesk: async () => false,
 		...overrides,
 	};
 }

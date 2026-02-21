@@ -9,6 +9,8 @@ import {
 	DeskAlreadyReservedError,
 	ReservationDateInvalidError,
 	ReservationDateInPastError,
+	ReservationOnNonWorkingDayError,
+	ReservationSameDayBookingClosedError,
 	UserAlreadyHasReservationError,
 	type ReservationSource,
 } from "@domain/reservations/entities/reservation.js";
@@ -28,6 +30,11 @@ type CreateReservationDependencies = {
 	commandRepoFactory: (tx: TransactionalContext) => ReservationCommandRepository;
 	queryRepoFactory: (tx: TransactionalContext) => ReservationQueryRepository;
 };
+
+function isWeekendReservationDate(date: string): boolean {
+	const dayOfWeek = new Date(`${date}T00:00:00.000Z`).getUTCDay();
+	return dayOfWeek === 0 || dayOfWeek === 6;
+}
 
 export class CreateReservationHandler {
 	constructor(private readonly deps: CreateReservationDependencies) {}
@@ -53,10 +60,20 @@ export class CreateReservationHandler {
 		}
 
 		const reservationDateString = reservationDateToString(reservationDate);
+		if (isWeekendReservationDate(reservationDateString)) {
+			throw new ReservationOnNonWorkingDayError();
+		}
 
 		return this.deps.txManager.runInTransaction(async tx => {
 			const queryRepo = this.deps.queryRepoFactory(tx);
 			const commandRepo = this.deps.commandRepoFactory(tx);
+			const isSameDayBookingClosed = await queryRepo.isSameDayBookingClosedForDesk(
+				deskIdVO,
+				reservationDateString
+			);
+			if (isSameDayBookingClosed) {
+				throw new ReservationSameDayBookingClosedError();
+			}
 
 			// Deterministic UX: check desk conflict first, then user/day conflict.
 			const deskAlreadyReserved = await queryRepo.hasActiveReservationForDeskOnDate(

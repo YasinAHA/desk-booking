@@ -7,12 +7,12 @@ import { createReservationId } from "@domain/reservations/value-objects/reservat
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgReservationQueryRepository } from "@infrastructure/reservations/repositories/pg-reservation-query-repository.js";
 
-test("PgReservationQueryRepository.findActiveByIdForUser returns null when missing", async () => {
+test("PgReservationQueryRepository.findByIdForUser returns null when missing", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async () => ({ rows: [] }),
 	});
 
-	const result = await repo.findActiveByIdForUser(
+	const result = await repo.findByIdForUser(
 		createReservationId("res-1"),
 		createUserId("user-1")
 	);
@@ -92,4 +92,20 @@ test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns fal
 		"2026-02-20"
 	);
 	assert.equal(result, false);
+});
+
+test("PgReservationQueryRepository.isSameDayBookingClosedForDesk returns true when query says so", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (text, params) => {
+			assert.ok(text.includes("as is_same_day_booking_closed"));
+			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
+			return { rows: [{ is_same_day_booking_closed: true }] };
+		},
+	});
+
+	const result = await repo.isSameDayBookingClosedForDesk(
+		createDeskId("desk-1"),
+		"2026-02-20"
+	);
+	assert.equal(result, true);
 });

@@ -1,5 +1,6 @@
 import {
 	cancelReservation,
+	checkInByQr,
 	changePassword,
 	createReservation,
 	forgotPassword,
@@ -25,6 +26,7 @@ const registerForm = document.getElementById("registerForm");
 const forgotPasswordForm = document.getElementById("forgotPasswordForm");
 const resetPasswordForm = document.getElementById("resetPasswordForm");
 const changePasswordForm = document.getElementById("changePasswordForm");
+const qrCheckInForm = document.getElementById("qrCheckInForm");
 
 const emailInput = document.getElementById("emailInput");
 const passwordInput = document.getElementById("passwordInput");
@@ -40,6 +42,7 @@ const resetPasswordInput = document.getElementById("resetPasswordInput");
 const toggleManualTokenBtn = document.getElementById("toggleManualTokenBtn");
 const currentPasswordInput = document.getElementById("currentPasswordInput");
 const newPasswordInput = document.getElementById("newPasswordInput");
+const qrPublicIdInput = document.getElementById("qrPublicIdInput");
 
 const logoutBtn = document.getElementById("logoutBtn");
 const tabLogin = document.getElementById("tabLogin");
@@ -65,6 +68,7 @@ const registerSubmit = registerForm.querySelector("button[type='submit']");
 const forgotSubmit = forgotPasswordForm.querySelector("button[type='submit']");
 const resetSubmit = resetPasswordForm.querySelector("button[type='submit']");
 const changeSubmit = changePasswordForm.querySelector("button[type='submit']");
+let pendingDeskQr = null;
 
 function setStatus(message, type = "info") {
 	statusEl.textContent = message;
@@ -112,6 +116,8 @@ function getErrorMessage(err, fallback) {
 		INVALID_TOKEN: "Token inválido.",
 		EXPIRED_TOKEN: "Token expirado.",
 		TOKEN_ALREADY_USED: "El token ya fue utilizado.",
+		RESERVATION_NOT_FOUND: "No existe una reserva válida para ese QR y fecha.",
+		RESERVATION_NOT_ACTIVE: "La reserva no está activa para check-in.",
 	};
 	return map[code] ?? err?.message ?? fallback;
 }
@@ -168,12 +174,29 @@ function extractResetTokenFromLocation() {
 	return { token: null, source: null };
 }
 
-function removeTokenFromUrl(source) {
+function extractDeskQrFromLocation() {
+	const fromHash = new URLSearchParams(globalThis.location.hash.replace(/^#/, "")).get("desk_qr");
+	if (fromHash) {
+		return { qrPublicId: fromHash, source: "hash" };
+	}
+
+	const fromQuery = new URLSearchParams(globalThis.location.search).get("desk_qr");
+	if (fromQuery) {
+		return { qrPublicId: fromQuery, source: "query" };
+	}
+
+	return { qrPublicId: null, source: null };
+}
+
+function removeParamFromUrl(source, key) {
 	const url = new URL(globalThis.location.href);
 	if (source === "hash") {
-		url.hash = "";
+		const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+		hashParams.delete(key);
+		const nextHash = hashParams.toString();
+		url.hash = nextHash ? `#${nextHash}` : "";
 	} else if (source === "query") {
-		url.searchParams.delete("token");
+		url.searchParams.delete(key);
 	}
 	history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
@@ -481,6 +504,39 @@ function printAllDeskQr(items) {
 	}, 7000);
 }
 
+function getCheckInDateForFlow() {
+	if (dateInput.value) {
+		return dateInput.value;
+	}
+	const today = new Date().toISOString().slice(0, 10);
+	dateInput.value = today;
+	return today;
+}
+
+async function runQrCheckInFlow(qrPublicId, options = {}) {
+	const auto = options.auto === true;
+	if (!state.token) {
+		if (auto) {
+			pendingDeskQr = qrPublicId;
+			setStatus("QR detectado. Inicia sesión para completar el check-in.", "info");
+		} else {
+			setStatus("Debes iniciar sesión para hacer check-in.", "error");
+		}
+		return false;
+	}
+
+	const date = getCheckInDateForFlow();
+	const result = await checkInByQr(date, qrPublicId, state.token);
+	if (result?.status === "already_checked_in") {
+		setStatus("Ya estabas en estado check-in para esta reserva.", "info");
+	} else {
+		setStatus("Check-in confirmado.", "success");
+	}
+	await refreshData({ silent: true });
+	pendingDeskQr = null;
+	return true;
+}
+
 function renderAdminDesks() {
 	adminDesksGrid.innerHTML = "";
 	if (!state.token || !state.adminDesks?.length) {
@@ -642,6 +698,9 @@ loginForm.addEventListener("submit", async event => {
 		localStorage.setItem(REFRESH_TOKEN_KEY, result.refreshToken);
 		updateAuthUI();
 		await refreshData();
+		if (pendingDeskQr) {
+			await runQrCheckInFlow(pendingDeskQr, { auto: true });
+		}
 		setStatus("Login correcto.", "success");
 	} catch (err) {
 		setStatus(getErrorMessage(err, "Error de login"), "error");
@@ -738,6 +797,28 @@ changePasswordForm.addEventListener("submit", async event => {
 	}
 });
 
+qrCheckInForm.addEventListener("submit", async event => {
+	event.preventDefault();
+	const qrPublicId = qrPublicIdInput.value.trim();
+	if (!qrPublicId) {
+		setStatus("Introduce el código QR público.", "error");
+		return;
+	}
+
+	try {
+		setLoading(true, "Procesando check-in...");
+		await runQrCheckInFlow(qrPublicId, { auto: false });
+		qrCheckInForm.reset();
+	} catch (err) {
+		if (handleSessionExpired(err)) {
+			return;
+		}
+		setStatus(getErrorMessage(err, "No se pudo completar el check-in."), "error");
+	} finally {
+		setLoading(false);
+	}
+});
+
 logoutBtn.addEventListener("click", async () => {
 	try {
 		setLoading(true, "Cerrando sesión...");
@@ -781,10 +862,18 @@ if (resetTokenFromUrl) {
 	resetTokenInput.value = resetTokenFromUrl;
 	setResetTokenManualMode(false);
 	setRecoveryTab("reset");
-	removeTokenFromUrl(resetTokenSource);
+	removeParamFromUrl(resetTokenSource, "token");
 } else {
 	setResetTokenManualMode(true);
 	setRecoveryTab("forgot");
+}
+
+const { qrPublicId: deskQrFromUrl, source: deskQrSource } = extractDeskQrFromLocation();
+if (deskQrFromUrl) {
+	pendingDeskQr = deskQrFromUrl;
+	qrPublicIdInput.value = deskQrFromUrl;
+	removeParamFromUrl(deskQrSource, "desk_qr");
+	setStatus("QR detectado. Inicia sesión para completar el check-in.", "info");
 }
 
 dateInput.value = new Date().toISOString().slice(0, 10);
@@ -805,6 +894,9 @@ if (storedToken) {
 		updateAuthUI();
 		setStatus("Sesión válida.", "success");
 		await refreshData();
+		if (pendingDeskQr) {
+			await runQrCheckInFlow(pendingDeskQr, { auto: true });
+		}
 	} catch {
 		if (storedRefreshToken) {
 			try {
@@ -816,6 +908,9 @@ if (storedToken) {
 				updateAuthUI();
 				setStatus("Sesión renovada.", "success");
 				await refreshData();
+				if (pendingDeskQr) {
+					await runQrCheckInFlow(pendingDeskQr, { auto: true });
+				}
 			} catch {
 				clearAuth();
 				setAdminDesks([]);

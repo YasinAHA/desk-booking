@@ -15,11 +15,19 @@ export type ReservationRecord = {
 };
 
 export interface ReservationQueryRepository {
-	findActiveByIdForUser(
+	findByIdForUser(
 		reservationId: ReservationId,
 		userId: UserId
-	): Promise<{ id: ReservationId; reservationDate: string } | null>;
+	): Promise<
+		{
+			id: ReservationId;
+			reservationDate: string;
+			status: "reserved" | "checked_in";
+			isSameDayBookingClosed: boolean;
+		} | null
+	>;
 	listForUser(userId: UserId): Promise<ReservationRecord[]>;
 	hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean>;
 	hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean>;
+	isSameDayBookingClosedForDesk(deskId: DeskId, date: string): Promise<boolean>;
 }

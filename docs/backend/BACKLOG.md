@@ -34,6 +34,13 @@ Nota: este backlog no compite con `docs/backend/TASKS.md` mientras estemos en mo
 - [ ] Vista mensual o semanal de ocupación.
 - [ ] Filtros en historial de reservas.
 - [ ] Calendario de festivos.
+- [ ] Endpoint de reservas multi-día (`/reservations/bulk`) diferido a post-entrega:
+  - No implementar antes del hito `2026-02-23` por riesgo de colisiones y regresiones en flujo crítico.
+  - Diseño objetivo cuando se retome:
+    - entrada por fechas explícitas (no rangos abiertos),
+    - límite de items por petición,
+    - resultado parcial por fecha (sin all-or-nothing),
+    - controles anti-acaparamiento (límite semanal por usuario).
 
 ## 6) Deploy y CI/CD
 - [ ] Pipeline de despliegue para entorno de corrección (manual o semiautomático).

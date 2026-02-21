@@ -35,6 +35,27 @@ export class ReservationDateInPastError extends Error {
 	}
 }
 
+export class ReservationOnNonWorkingDayError extends Error {
+	constructor() {
+		super("Reservation date is not a working day");
+		this.name = "ReservationOnNonWorkingDayError";
+	}
+}
+
+export class ReservationSameDayBookingClosedError extends Error {
+	constructor() {
+		super("Same-day reservation window has closed");
+		this.name = "ReservationSameDayBookingClosedError";
+	}
+}
+
+export class ReservationCancellationWindowClosedError extends Error {
+	constructor() {
+		super("Reservation cancellation window has closed");
+		this.name = "ReservationCancellationWindowClosedError";
+	}
+}
+
 export class ReservationDateInvalidError extends Error {
 	constructor() {
 		super("Reservation date is invalid");

@@ -10,6 +10,15 @@ process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
 const { reservationsRoutes } = await import("./reservations.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
 
+function buildFutureDate(daysAhead = 7): string {
+	const d = new Date();
+	d.setDate(d.getDate() + daysAhead);
+	while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+		d.setDate(d.getDate() + 1);
+	}
+	return d.toISOString().slice(0, 10);
+}
+
 type DbQueryResult = {
 	rows: unknown[];
 	rowCount?: number | null;
@@ -75,6 +84,7 @@ test("POST /reservations returns 401 without token", async () => {
 });
 
 test("POST /reservations returns desk-specific conflict message", async () => {
+	const futureDate = buildFutureDate();
 	const app = await buildTestApp(async text => {
 		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
 			return { rows: [{ 1: 1 }] };
@@ -90,7 +100,7 @@ test("POST /reservations returns desk-specific conflict message", async () => {
 		url: "/reservations",
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
-			date: "2026-02-20",
+			date: futureDate,
 			desk_id: "11111111-1111-1111-1111-111111111111",
 		},
 	});
@@ -102,6 +112,7 @@ test("POST /reservations returns desk-specific conflict message", async () => {
 });
 
 test("POST /reservations returns user/day-specific conflict message", async () => {
+	const futureDate = buildFutureDate();
 	const app = await buildTestApp(async text => {
 		if (text.includes("where desk_id = $1 and reservation_date = $2")) {
 			return { rows: [] };
@@ -117,7 +128,7 @@ test("POST /reservations returns user/day-specific conflict message", async () =
 		url: "/reservations",
 		headers: { Authorization: `Bearer ${buildToken(app)}` },
 		payload: {
-			date: "2026-02-20",
+			date: futureDate,
 			desk_id: "11111111-1111-1111-1111-111111111111",
 		},
 	});
@@ -149,7 +160,7 @@ test("POST /reservations returns DATE_INVALID for invalid calendar date", async 
 
 test("DELETE /reservations/:id returns 404 when not found", async () => {
 	const app = await buildTestApp(async text => {
-		if (text.startsWith("select id, reservation_date")) {
+		if (text.includes("as is_same_day_booking_closed")) {
 			return { rows: [] };
 		}
 		return { rows: [], rowCount: 0 };
@@ -167,8 +178,17 @@ test("DELETE /reservations/:id returns 404 when not found", async () => {
 
 test("DELETE /reservations/:id returns 400 when date is past", async () => {
 	const app = await buildTestApp(async text => {
-		if (text.startsWith("select id, reservation_date")) {
-			return { rows: [{ reservation_date: "2020-01-01", id: "res-1" }] };
+		if (text.includes("as is_same_day_booking_closed")) {
+			return {
+				rows: [
+					{
+						reservation_date: "2020-01-01",
+						id: "res-1",
+						status: "reserved",
+						is_same_day_booking_closed: false,
+					},
+				],
+			};
 		}
 		return { rows: [], rowCount: 0 };
 	});
@@ -180,6 +200,112 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 	});
 
 	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
+test("DELETE /reservations/:id returns 409 for checked-in reservation", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("as is_same_day_booking_closed")) {
+			return {
+				rows: [
+					{
+						reservation_date: "2099-01-01",
+						id: "res-1",
+						status: "checked_in",
+						is_same_day_booking_closed: false,
+					},
+				],
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "DELETE",
+		url: "/reservations/22222222-2222-2222-2222-222222222222",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "RESERVATION_NOT_CANCELLABLE");
+	await app.close();
+});
+
+test("DELETE /reservations/:id returns 409 when cancellation window is closed", async () => {
+	const today = new Date().toISOString().slice(0, 10);
+	const app = await buildTestApp(async text => {
+		if (text.includes("as is_same_day_booking_closed")) {
+			return {
+				rows: [
+					{
+						reservation_date: today,
+						id: "res-1",
+						status: "reserved",
+						is_same_day_booking_closed: true,
+					},
+				],
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "DELETE",
+		url: "/reservations/22222222-2222-2222-2222-222222222222",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "CANCELLATION_WINDOW_CLOSED");
+	await app.close();
+});
+
+test("POST /reservations returns NON_WORKING_DAY on weekend date", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: "2099-02-21",
+			desk_id: "11111111-1111-1111-1111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "NON_WORKING_DAY");
+	await app.close();
+});
+
+test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
+	const today = new Date().toISOString().slice(0, 10);
+	const day = new Date(`${today}T00:00:00.000Z`).getUTCDay();
+	const nonWeekendDate =
+		day === 0 || day === 6 ? buildFutureDate(2) : today;
+	const app = await buildTestApp(async text => {
+		if (text.includes("as is_same_day_booking_closed")) {
+			return { rows: [{ is_same_day_booking_closed: true }] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		payload: {
+			date: nonWeekendDate,
+			desk_id: "11111111-1111-1111-1111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 409);
+	const body = res.json();
+	assert.equal(body.error?.code ?? body.code, "SAME_DAY_BOOKING_CLOSED");
 	await app.close();
 });
 

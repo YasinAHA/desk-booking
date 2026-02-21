@@ -1,6 +1,10 @@
 ﻿import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/types.js";
-import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
+import {
+	ReservationCancellationWindowClosedError,
+	ReservationDateInPastError,
+	ReservationNotCancellableError,
+} from "@domain/reservations/entities/reservation.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
@@ -22,10 +26,16 @@ export class CancelReservationHandler {
 		const userIdVO = createUserId(command.userId);
 		const reservationIdVO = createReservationId(command.reservationId);
 
-		const found = await this.deps.queryRepo.findActiveByIdForUser(reservationIdVO, userIdVO);
+		const found = await this.deps.queryRepo.findByIdForUser(reservationIdVO, userIdVO);
 
 		if (!found?.reservationDate) {
 			return false;
+		}
+		if (found.status !== "reserved") {
+			throw new ReservationNotCancellableError(found.status);
+		}
+		if (found.isSameDayBookingClosed) {
+			throw new ReservationCancellationWindowClosedError();
 		}
 
 		let reservationDate: ReservationDate;

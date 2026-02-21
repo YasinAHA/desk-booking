@@ -151,8 +151,20 @@
 				<ul id="reservationsList" class="list"></ul>
 			</section>
 
+			<section class="card">
+				<h2>Check-in QR</h2>
+				<p class="subtitle">Introduce el código QR público del escritorio para hacer check-in.</p>
+				<form id="qrCheckInForm" class="form">
+					<label>
+						QR público
+						<input type="text" id="qrPublicIdInput" required placeholder="qr_public_id" />
+					</label>
+					<button type="submit" class="btn">Confirmar check-in</button>
+				</form>
+			</section>
+
 			<section class="card hidden" id="adminSection">
-	<h2>Admin QR</h2>
+		<h2>Admin QR</h2>
 	<p class="subtitle">Gestión básica de QR por escritorio (listar, regenerar, imprimir).</p>
 	<div class="admin-toolbar">
 		<button id="regenerateAllQrBtn" class="btn btn-ghost" type="button">Regenerar QR de todos</button>
