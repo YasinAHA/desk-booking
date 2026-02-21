@@ -111,6 +111,24 @@ En backend:
 
 Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm audit --omit=dev --audit-level=high`). Dev-only vulnerabilities from lint toolchains are tracked separately.
 
+## Calidad global (monorepo)
+
+- Hooks en raíz de repo (`husky`) para backend y frontend.
+- `pre-commit`: `lint` + `typecheck`.
+- `pre-push`: `test`.
+- Objetivo: quality gates unificados y evitar drift entre áreas.
+- Regla operativa: no merge a `main`/`next` con CI en rojo.
+
+## Observabilidad global (Sentry)
+
+- Estrategia global habilitable por entorno para backend y frontend.
+- Variables previstas:
+  - `SENTRY_DSN_BACKEND`
+  - `SENTRY_DSN_FRONTEND`
+  - `SENTRY_ENV`
+  - `APP_VERSION`
+- Regla de seguridad: nunca enviar tokens, emails ni datos sensibles.
+
 ## API (resumen)
 
 - `POST /auth/register`

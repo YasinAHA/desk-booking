@@ -1,4 +1,4 @@
-﻿# AI Guide
+# AI Guide
 
 Guía global para colaboración asistida por IA en el monorepo.
 
@@ -30,6 +30,8 @@ Guía global para colaboración asistida por IA en el monorepo.
 - Commits y tags en inglés, siguiendo convención existente.
 - No mezclar refactor estructural y feature nueva en el mismo bloque de trabajo.
 - Antes de cerrar bloque: `lint`, `lint:types`, `build`, `test` (si aplica al área).
+- Si se modifica estrategia de calidad global (`husky`, `lint-staged`, `commitlint`), actualizar `README.md`.
+- Si se modifica estrategia de observabilidad global (`Sentry`), actualizar `README.md` y guías por área.
 
 ## Cierre documental de versiones
 - Los planes temporales se archivan en `docs/*/archive/` al cierre de la versión.
