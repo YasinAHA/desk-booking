@@ -121,9 +121,9 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @param payload User data to encode in token
 	 * @returns Signed JWT token string
 	 */
-	createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti" | "iat">): string {
+	async createAccessToken(payload: Omit<AccessTokenPayload, "type" | "jti" | "iat">): Promise<string> {
 		const jti = randomUUID();
-		return this.jwtProvider.sign(
+		return await this.jwtProvider.sign(
 			{
 				...payload,
 				jti,
@@ -140,11 +140,11 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @param payload User data to encode in token
 	 * @returns Signed JWT token string
 	 */
-	createRefreshToken(
+	async createRefreshToken(
 		payload: Omit<RefreshTokenPayload, "type" | "jti" | "iat" | "exp">
-	): string {
+	): Promise<string> {
 		const jti = randomUUID();
-		return this.jwtProvider.sign(
+		return await this.jwtProvider.sign(
 			{
 				...payload,
 				jti,
@@ -162,7 +162,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @returns Decoded payload if valid and not revoked, throws otherwise
 	 */
 	async verifyAccessToken(token: string): Promise<AccessTokenPayload> {
-		const payload = this.jwtProvider.verify(token);
+		const payload = await this.jwtProvider.verify(token);
 
 		if (!isAccessTokenPayload(payload)) {
 			throw new InvalidTokenError("Invalid token structure");
@@ -184,7 +184,7 @@ export class JwtTokenService implements AuthSessionTokenService {
 	 * @returns Decoded payload if valid and not revoked, throws otherwise
 	 */
 	async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
-		const payload = this.jwtProvider.verify(token);
+		const payload = await this.jwtProvider.verify(token);
 
 		if (!isRefreshTokenPayload(payload)) {
 			throw new InvalidTokenError("Invalid refresh token structure");

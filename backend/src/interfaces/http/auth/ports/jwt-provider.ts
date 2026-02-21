@@ -23,7 +23,7 @@ export interface JwtProvider {
 	 * @param options Signing options (expiresIn, issuer, audience, custom secret)
 	 * @returns Signed JWT string
 	 */
-	sign(payload: Record<string, unknown>, options: SignOptions): string;
+	sign(payload: Record<string, unknown>, options: SignOptions): Promise<string>;
 
 	/**
 	 * Verify and decode a JWT token
@@ -32,5 +32,5 @@ export interface JwtProvider {
 	 * @returns Decoded payload (must be narrowed by caller)
 	 * @throws If token is invalid or verification fails
 	 */
-	verify(token: string, options?: VerifyOptions): unknown;
+	verify(token: string, options?: VerifyOptions): Promise<unknown>;
 }

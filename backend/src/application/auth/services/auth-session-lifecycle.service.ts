@@ -19,10 +19,10 @@ export type RotatedSessionTokens = {
 export class AuthSessionLifecycleService {
 	constructor(private readonly tokenService: AuthSessionTokenService) {}
 
-	issueForUser(user: AuthUser): IssuedSessionTokens {
+	async issueForUser(user: AuthUser): Promise<IssuedSessionTokens> {
 		return {
-			accessToken: this.tokenService.createAccessToken(user),
-			refreshToken: this.tokenService.createRefreshToken(user),
+			accessToken: await this.tokenService.createAccessToken(user),
+			refreshToken: await this.tokenService.createRefreshToken(user),
 			user,
 		};
 	}
@@ -44,8 +44,8 @@ export class AuthSessionLifecycleService {
 		};
 
 		return {
-			accessToken: this.tokenService.createAccessToken(user),
-			refreshToken: this.tokenService.createRefreshToken(user),
+			accessToken: await this.tokenService.createAccessToken(user),
+			refreshToken: await this.tokenService.createRefreshToken(user),
 			userId: user.id,
 		};
 	}

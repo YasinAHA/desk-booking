@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import argon2 from "argon2";
 import Fastify from "fastify";
+import { SignJWT } from "jose";
 
 process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/db";
 process.env.JWT_SECRET = "test-secret";
@@ -47,6 +49,24 @@ function getRequiredString(body: Record<string, unknown>, key: string): string {
 		throw new TypeError(`Expected string field: ${key}`);
 	}
 	return value;
+}
+
+async function signAccessToken(payload: {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
+}): Promise<string> {
+	return await new SignJWT({
+		...payload,
+		jti: randomUUID(),
+		type: "access",
+	})
+		.setProtectedHeader({ alg: "HS256", typ: "JWT" })
+		.setIssuedAt()
+		.setExpirationTime("15m")
+		.sign(new TextEncoder().encode(process.env.JWT_SECRET ?? "test-secret"));
 }
 
 async function buildTestApp(query: DbQuery) {
@@ -516,7 +536,7 @@ test("POST /auth/change-password returns 200 with valid current password", async
 		return { rows: [], rowCount: 0 };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "user-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",

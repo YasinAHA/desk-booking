@@ -1,7 +1,9 @@
 ﻿import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import Fastify from "fastify";
+import { SignJWT } from "jose";
 
 process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/db";
 process.env.JWT_SECRET = "test-secret";
@@ -57,14 +59,20 @@ async function buildTestApp(query: DbQuery) {
 	return app;
 }
 
-function buildToken(app: ReturnType<typeof Fastify>) {
-	return app.jwt.sign({
+async function buildToken(): Promise<string> {
+	return await new SignJWT({
 		id: "user-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",
 		lastName: "User",
 		secondLastName: null,
-	});
+		jti: randomUUID(),
+		type: "access",
+	})
+		.setProtectedHeader({ alg: "HS256", typ: "JWT" })
+		.setIssuedAt()
+		.setExpirationTime("15m")
+		.sign(new TextEncoder().encode(process.env.JWT_SECRET ?? "test-secret"));
 }
 
 test("POST /reservations returns 401 without token", async () => {
@@ -98,7 +106,7 @@ test("POST /reservations returns desk-specific conflict message", async () => {
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: futureDate,
 			deskId: "11111111-1111-1111-8111-111111111111",
@@ -126,7 +134,7 @@ test("POST /reservations returns user/day-specific conflict message", async () =
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: futureDate,
 			deskId: "11111111-1111-1111-8111-111111111111",
@@ -145,7 +153,7 @@ test("POST /reservations returns DATE_INVALID for invalid calendar date", async 
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: "2026-02-31",
 			deskId: "11111111-1111-1111-8111-111111111111",
@@ -169,7 +177,7 @@ test("DELETE /reservations/:id returns 404 when not found", async () => {
 	const res = await app.inject({
 		method: "DELETE",
 		url: "/reservations/22222222-2222-2222-8222-222222222222",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 404);
@@ -196,7 +204,7 @@ test("DELETE /reservations/:id returns 400 when date is past", async () => {
 	const res = await app.inject({
 		method: "DELETE",
 		url: "/reservations/22222222-2222-2222-8222-222222222222",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 400);
@@ -223,7 +231,7 @@ test("DELETE /reservations/:id returns 409 for checked-in reservation", async ()
 	const res = await app.inject({
 		method: "DELETE",
 		url: "/reservations/22222222-2222-2222-8222-222222222222",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 409);
@@ -253,7 +261,7 @@ test("DELETE /reservations/:id returns 409 when cancellation window is closed", 
 	const res = await app.inject({
 		method: "DELETE",
 		url: "/reservations/22222222-2222-2222-8222-222222222222",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 409);
@@ -268,7 +276,7 @@ test("POST /reservations returns NON_WORKING_DAY on weekend date", async () => {
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: "2099-02-21",
 			deskId: "11111111-1111-1111-8111-111111111111",
@@ -296,7 +304,7 @@ test("POST /reservations returns SAME_DAY_BOOKING_CLOSED", async () => {
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: nonWeekendDate,
 			deskId: "11111111-1111-1111-8111-111111111111",
@@ -336,7 +344,7 @@ test("POST /reservations/check-in/qr returns 200 when check-in succeeds", async 
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations/check-in/qr",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: "2026-02-20",
 			qrPublicId: "qr-public-id-001",
@@ -361,7 +369,7 @@ test("POST /reservations/check-in/qr returns 404 when reservation is not found",
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations/check-in/qr",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: "2026-02-20",
 			qrPublicId: "qr-public-id-001",
@@ -383,7 +391,7 @@ test("POST /reservations/check-in/qr returns 409 when reservation is not active"
 	const res = await app.inject({
 		method: "POST",
 		url: "/reservations/check-in/qr",
-		headers: { Authorization: `Bearer ${buildToken(app)}` },
+		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			date: "2026-02-20",
 			qrPublicId: "qr-public-id-001",
@@ -393,5 +401,7 @@ test("POST /reservations/check-in/qr returns 409 when reservation is not active"
 	assert.equal(res.statusCode, 409);
 	await app.close();
 });
+
+
 
 

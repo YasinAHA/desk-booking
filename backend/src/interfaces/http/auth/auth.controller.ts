@@ -86,7 +86,7 @@ export class AuthController {
 			throwHttpError(401, "INVALID_CREDENTIALS", "Credenciales invalidas.");
 		}
 
-			const session = this.authSessionLifecycleService.issueForUser(result.user);
+			const session = await this.authSessionLifecycleService.issueForUser(result.user);
 
 			req.log.info({ event: "auth.login", userId: session.user.id }, "Login ok");
 

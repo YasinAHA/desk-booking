@@ -1,7 +1,9 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import Fastify from "fastify";
+import { SignJWT } from "jose";
 
 process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/db";
 process.env.JWT_SECRET = "test-secret";
@@ -16,6 +18,24 @@ type DbQueryResult = {
 };
 
 type DbQuery = (text: string, params?: unknown[]) => Promise<DbQueryResult>;
+
+async function signAccessToken(payload: {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
+}): Promise<string> {
+	return await new SignJWT({
+		...payload,
+		jti: randomUUID(),
+		type: "access",
+	})
+		.setProtectedHeader({ alg: "HS256", typ: "JWT" })
+		.setIssuedAt()
+		.setExpirationTime("15m")
+		.sign(new TextEncoder().encode(process.env.JWT_SECRET ?? "test-secret"));
+}
 
 async function buildTestApp(query: DbQuery) {
 	const app = Fastify({ logger: false });
@@ -63,7 +83,7 @@ test("GET /desks returns desks for valid token", async () => {
 		return { rows: [] };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "user-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",
@@ -91,7 +111,7 @@ test("GET /desks/admin returns 403 for non-admin user", async () => {
 		return { rows: [] };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "user-1",
 		email: "user@camerfirma.com",
 		firstName: "User",
@@ -131,7 +151,7 @@ test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 		return { rows: [] };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "admin-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",
@@ -163,7 +183,7 @@ test("POST /desks/admin/:id/qr/regenerate rotates qr for admin", async () => {
 		return { rows: [] };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "admin-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",
@@ -195,7 +215,7 @@ test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async (
 		return { rows: [] };
 	});
 
-	const token = app.jwt.sign({
+	const token = await signAccessToken({
 		id: "admin-1",
 		email: "admin@camerfirma.com",
 		firstName: "Admin",
@@ -215,4 +235,3 @@ test("POST /desks/admin/qr/regenerate-all rotates all qr ids for admin", async (
 	assert.equal(body.updated, 12);
 	await app.close();
 });
-

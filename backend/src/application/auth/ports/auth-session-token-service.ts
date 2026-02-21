@@ -6,8 +6,8 @@ export type RefreshTokenClaims = AuthUser & {
 };
 
 export interface AuthSessionTokenService {
-	createAccessToken(user: AuthUser): string;
-	createRefreshToken(user: AuthUser): string;
+	createAccessToken(user: AuthUser): Promise<string>;
+	createRefreshToken(user: AuthUser): Promise<string>;
 	verifyAccessToken(token: string): Promise<AuthUser>;
 	verifyRefreshToken(token: string): Promise<RefreshTokenClaims>;
 	getRefreshTokenExpiresAt(payload: RefreshTokenClaims): Date;

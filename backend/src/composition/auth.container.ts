@@ -26,7 +26,7 @@ import { PgUserSessionRepository } from "@infrastructure/auth/repositories/pg-us
 import { Argon2PasswordHasher } from "@infrastructure/auth/security/argon2-password-hasher.js";
 import { Sha256TokenService } from "@infrastructure/auth/security/sha256-token-service.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
-import { FastifyJwtProvider } from "@interfaces/http/auth/adapters/fastify-jwt-provider.js";
+import { JoseJwtProvider } from "@interfaces/http/auth/adapters/jose-jwt-provider.js";
 import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 
 type AppWithDb = FastifyInstance & {
@@ -92,7 +92,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 
 export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const dbApp = app as AppWithDb;
-	const jwtProvider = new FastifyJwtProvider(app);
+	const jwtProvider = new JoseJwtProvider(env.JWT_SECRET, env.JWT_REFRESH_SECRET);
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
 	const userSessionRepository = new PgUserSessionRepository(dbApp.db.pool);
 	return new JwtTokenService(jwtProvider, tokenRevocationRepository, userSessionRepository, {
