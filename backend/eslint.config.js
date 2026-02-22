@@ -6,7 +6,7 @@ import globals from "globals";
 
 export default defineConfig(
 	{
-		ignores: ["dist/**"],
+		ignores: ["dist/**", "eslint.config.js"],
 	},
 	js.configs.recommended,
 	...tseslint.configs.recommendedTypeChecked,
