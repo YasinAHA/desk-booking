@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthSession } from "../../features/auth/model/use-auth-session";
+import { Button } from "../../shared/ui/Button";
 
 export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
@@ -11,26 +12,46 @@ export function AppLayout(): JSX.Element {
   };
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <h1>Desk Booking</h1>
-        <nav className="app-nav">
-          <NavLink to="/login">Login</NavLink>
-          {isAuthenticated ? <NavLink to="/desks">Desks</NavLink> : null}
+    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-[--radius-card] border border-border bg-surface px-4 py-4 shadow-card">
+        <h1 className="text-[28px] font-semibold text-foreground">Desk Booking</h1>
+        <nav className="flex items-center gap-3">
+          <NavLink
+            to="/login"
+            className={({ isActive }) =>
+              isActive
+                ? "text-sm font-medium text-primary underline"
+                : "text-sm font-medium text-secondary hover:text-foreground"
+            }
+          >
+            Login
+          </NavLink>
           {isAuthenticated ? (
-            <button
-              type="button"
-              className="ghost-button"
+            <NavLink
+              to="/desks"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-medium text-primary underline"
+                  : "text-sm font-medium text-secondary hover:text-foreground"
+              }
+            >
+              Desks
+            </NavLink>
+          ) : null}
+          {isAuthenticated ? (
+            <Button
+              variant="secondary"
+              className="h-9 px-3"
               onClick={() => {
                 void onLogout();
               }}
             >
               Logout
-            </button>
+            </Button>
           ) : null}
         </nav>
       </header>
-      <main>
+      <main className="flex-1">
         <Outlet />
       </main>
     </div>

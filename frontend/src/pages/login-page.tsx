@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { ApiError } from "../shared/api/api-error";
 import { useAuthSession } from "../features/auth/model/use-auth-session";
+import { Alert } from "../shared/ui/Alert";
+import { Button } from "../shared/ui/Button";
+import { Card } from "../shared/ui/Card";
+import { Input } from "../shared/ui/Input";
 
 function getLoginErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -44,16 +48,18 @@ export function LoginPage(): JSX.Element {
   };
 
   return (
-    <section className="card">
-      <h2>Login</h2>
+    <Card className="mx-auto w-full max-w-md">
+      <h2 className="text-[22px] font-semibold text-foreground">Login</h2>
       <form
-        className="form-grid"
+        className="mt-4 grid gap-3"
         onSubmit={event => {
           void onSubmit(event);
         }}
       >
-        <label htmlFor="email">Email</label>
-        <input
+        <label htmlFor="email" className="text-sm font-medium text-secondary">
+          Email
+        </label>
+        <Input
           id="email"
           type="email"
           autoComplete="email"
@@ -62,8 +68,10 @@ export function LoginPage(): JSX.Element {
           required
         />
 
-        <label htmlFor="password">Password</label>
-        <input
+        <label htmlFor="password" className="text-sm font-medium text-secondary">
+          Password
+        </label>
+        <Input
           id="password"
           type="password"
           autoComplete="current-password"
@@ -72,12 +80,12 @@ export function LoginPage(): JSX.Element {
           required
         />
 
-        {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
+        {errorMessage ? <Alert variant="error">{errorMessage}</Alert> : null}
 
-        <button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Entrando..." : "Entrar"}
-        </button>
+        </Button>
       </form>
-    </section>
+    </Card>
   );
 }

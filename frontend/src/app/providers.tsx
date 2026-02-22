@@ -15,7 +15,7 @@ type AppProvidersProps = {
   children: ReactNode;
 };
 
-export function AppProviders({ children }: AppProvidersProps): JSX.Element {
+export function AppProviders({ children }: Readonly<AppProvidersProps>): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSessionProvider>{children}</AuthSessionProvider>
