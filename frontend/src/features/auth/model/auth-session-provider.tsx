@@ -7,7 +7,7 @@ import {
   setStoredTokens
 } from "@shared/auth/session-storage";
 
-import { login, logout, type LoginRequest } from "../api/auth-api";
+import { login, logout, refreshSession, verify, type LoginRequest } from "../api/auth-api";
 
 import { AuthSessionContext } from "./auth-session-context";
 
@@ -27,12 +27,45 @@ export function AuthSessionProvider({
   });
 
   useEffect(() => {
-    const stored = getStoredTokens();
-    setState({
-      user: null,
-      isAuthenticated: Boolean(stored?.accessToken),
-      isBootstrapping: false
-    });
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const stored = getStoredTokens();
+      if (stored?.accessToken) {
+        if (!cancelled) {
+          setState({
+            user: null,
+            isAuthenticated: true,
+            isBootstrapping: false
+          });
+        }
+        return;
+      }
+
+      try {
+        const session = await refreshSession();
+        setStoredTokens({ accessToken: session.accessToken });
+        const verified = await verify(session.accessToken);
+        if (!cancelled) {
+          setState({
+            user: verified.user,
+            isAuthenticated: true,
+            isBootstrapping: false
+          });
+        }
+      } catch {
+        clearStoredTokens();
+        if (!cancelled) {
+          setState({
+            user: null,
+            isAuthenticated: false,
+            isBootstrapping: false
+          });
+        }
+      }
+    };
+
+    void bootstrap();
 
     const unsubscribe = onStoredSessionChange(() => {
       const next = getStoredTokens();
@@ -43,14 +76,16 @@ export function AuthSessionProvider({
       }));
     });
 
-    return unsubscribe;
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (payload: LoginRequest) => {
     const result = await login(payload);
     setStoredTokens({
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken
+      accessToken: result.accessToken
     });
     setState({
       user: result.user,
@@ -60,11 +95,8 @@ export function AuthSessionProvider({
   }, []);
 
   const signOut = useCallback(async () => {
-    const stored = getStoredTokens();
     try {
-      if (stored?.refreshToken) {
-        await logout(stored.refreshToken);
-      }
+      await logout();
     } finally {
       clearStoredTokens();
       setState({

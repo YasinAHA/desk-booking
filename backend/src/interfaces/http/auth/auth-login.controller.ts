@@ -33,6 +33,51 @@ const LOGIN_STATUS_HTTP_ERRORS: Record<
 	},
 };
 
+const REFRESH_COOKIE_NAME = "deskbooking_refresh_token";
+const REFRESH_COOKIE_PATH = "/auth";
+
+function parseCookieHeader(cookieHeader: string | undefined): Map<string, string> {
+	if (!cookieHeader) {
+		return new Map();
+	}
+
+	return cookieHeader
+		.split(";")
+		.map(part => part.trim())
+		.filter(Boolean)
+		.reduce((cookies, cookiePart) => {
+			const separatorIndex = cookiePart.indexOf("=");
+			if (separatorIndex <= 0) {
+				return cookies;
+			}
+			const key = cookiePart.slice(0, separatorIndex).trim();
+			const value = cookiePart.slice(separatorIndex + 1).trim();
+			if (!key || !value) {
+				return cookies;
+			}
+			cookies.set(key, decodeURIComponent(value));
+			return cookies;
+		}, new Map<string, string>());
+}
+
+function getRefreshTokenFromCookie(req: FastifyRequest): string | null {
+	return parseCookieHeader(req.headers.cookie).get(REFRESH_COOKIE_NAME) ?? null;
+}
+
+function clearRefreshTokenCookie(reply: FastifyReply): void {
+	reply.header(
+		"Set-Cookie",
+		`${REFRESH_COOKIE_NAME}=; Path=${REFRESH_COOKIE_PATH}; HttpOnly; SameSite=Lax; Max-Age=0`
+	);
+}
+
+function setRefreshTokenCookie(reply: FastifyReply, refreshToken: string): void {
+	reply.header(
+		"Set-Cookie",
+		`${REFRESH_COOKIE_NAME}=${encodeURIComponent(refreshToken)}; Path=${REFRESH_COOKIE_PATH}; HttpOnly; SameSite=Lax`
+	);
+}
+
 export class AuthLoginController {
 	constructor(
 		private readonly loginHandler: LoginHandler,
@@ -60,6 +105,7 @@ export class AuthLoginController {
 
 		const session = await this.authSessionLifecycleService.issueForUser(result.user);
 		req.log.info({ event: "auth.login", userId: session.user.id }, "Login ok");
+		setRefreshTokenCookie(reply, session.refreshToken);
 
 		return reply.send(
 			mapLoginResponse({
@@ -90,38 +136,42 @@ export class AuthLoginController {
 	}
 
 	async refresh(req: FastifyRequest, reply: FastifyReply) {
-		const parse = verifySchema.safeParse(req.body);
-		if (!parse.success) {
-			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		const refreshToken = getRefreshTokenFromCookie(req);
+		if (!refreshToken) {
+			throwHttpError(401, "UNAUTHORIZED", "Missing refresh token cookie");
 		}
 
 		try {
 			const session = await this.refreshSessionHandler.execute({
-				refreshToken: parse.data.token,
+				refreshToken,
 			});
 			req.log.info({ event: "auth.refresh", userId: session.userId }, "Token refreshed");
+			setRefreshTokenCookie(reply, session.refreshToken);
 			return reply.send({
 				accessToken: session.accessToken,
 				refreshToken: session.refreshToken,
 			});
 		} catch {
+			clearRefreshTokenCookie(reply);
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");
 		}
 	}
 
 	async logout(req: FastifyRequest, reply: FastifyReply) {
-		const parse = verifySchema.safeParse(req.body);
-		if (!parse.success) {
-			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		const refreshToken = getRefreshTokenFromCookie(req);
+		if (!refreshToken) {
+			throwHttpError(401, "UNAUTHORIZED", "Missing refresh token cookie");
 		}
 
 		try {
 			await this.logoutHandler.execute({
-				refreshToken: parse.data.token,
+				refreshToken,
 				authenticatedUserId: req.user.id,
 			});
+			clearRefreshTokenCookie(reply);
 			return reply.status(204).send();
 		} catch {
+			clearRefreshTokenCookie(reply);
 			throwHttpError(401, "UNAUTHORIZED", "Invalid refresh token");
 		}
 	}

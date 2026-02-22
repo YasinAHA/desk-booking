@@ -272,7 +272,7 @@ test("POST /auth/refresh rotates refresh token", async () => {
 	const refreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: initialRefreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(initialRefreshToken)}` },
 	});
 	assert.equal(refreshRes.statusCode, 200);
 	const refreshBody = getJsonRecord(refreshRes);
@@ -335,14 +335,14 @@ test("POST /auth/refresh rejects reused revoked refresh token", async () => {
 	const firstRefreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: initialRefreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(initialRefreshToken)}` },
 	});
 	assert.equal(firstRefreshRes.statusCode, 200);
 
 	const secondRefreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: initialRefreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(initialRefreshToken)}` },
 	});
 	assert.equal(secondRefreshRes.statusCode, 401);
 
@@ -355,7 +355,7 @@ test("POST /auth/logout returns 401 without access token", async () => {
 	const res = await app.inject({
 		method: "POST",
 		url: "/auth/logout",
-		payload: { token: "any-refresh-token" },
+		headers: { cookie: "deskbooking_refresh_token=any-refresh-token" },
 	});
 
 	assert.equal(res.statusCode, 401);
@@ -413,15 +413,17 @@ test("POST /auth/logout revokes refresh token and prevents reuse", async () => {
 	const logoutRes = await app.inject({
 		method: "POST",
 		url: "/auth/logout",
-		headers: { Authorization: `Bearer ${accessToken}` },
-		payload: { token: refreshToken },
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			cookie: `deskbooking_refresh_token=${encodeURIComponent(refreshToken)}`,
+		},
 	});
 	assert.equal(logoutRes.statusCode, 204);
 
 	const refreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: refreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(refreshToken)}` },
 	});
 	assert.equal(refreshRes.statusCode, 401);
 
@@ -768,7 +770,7 @@ test("POST /auth/reset-password invalidates previous refresh tokens", async () =
 	const refreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: initialRefreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(initialRefreshToken)}` },
 	});
 	assert.equal(refreshRes.statusCode, 401);
 
@@ -857,7 +859,7 @@ test("POST /auth/change-password invalidates previous refresh tokens", async () 
 	const refreshRes = await app.inject({
 		method: "POST",
 		url: "/auth/refresh",
-		payload: { token: initialRefreshToken },
+		headers: { cookie: `deskbooking_refresh_token=${encodeURIComponent(initialRefreshToken)}` },
 	});
 	assert.equal(refreshRes.statusCode, 401);
 

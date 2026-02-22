@@ -7,6 +7,8 @@ export type LoginResponse =
   paths["/auth/login"]["post"]["responses"][200]["content"]["application/json"];
 export type VerifyResponse =
   paths["/auth/verify"]["post"]["responses"][200]["content"]["application/json"];
+export type RefreshResponse =
+  paths["/auth/refresh"]["post"]["responses"][200]["content"]["application/json"];
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   return request<LoginResponse, LoginRequest>({
@@ -25,12 +27,19 @@ export async function verify(token: string): Promise<VerifyResponse> {
   });
 }
 
-export async function logout(refreshToken: string): Promise<void> {
-  await request<void, { token: string }>({
+export async function refreshSession(): Promise<RefreshResponse> {
+  return request<RefreshResponse>({
+    method: "POST",
+    path: "/auth/refresh",
+    retryOnUnauthorized: false
+  });
+}
+
+export async function logout(): Promise<void> {
+  await request<void>({
     method: "POST",
     path: "/auth/logout",
     auth: true,
-    body: { token: refreshToken },
     retryOnUnauthorized: false
   });
 }

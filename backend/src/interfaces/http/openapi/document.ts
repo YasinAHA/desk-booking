@@ -53,10 +53,6 @@ const verifyResponseSchema = z.object({
 	user: authUserSchema,
 });
 
-const refreshSchema = z.object({
-	token: tokenSchema,
-});
-
 const tokenQuerySchema = z.object({
 	token: tokenSchema,
 });
@@ -271,7 +267,6 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		method: "post",
 		path: "/auth/refresh",
 		tags: ["auth"],
-		request: { body: { required: true, content: json(refreshSchema) } },
 		responses: {
 			200: {
 				description: "Access and refresh tokens rotated",
@@ -282,8 +277,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 					})
 				),
 			},
-			400: err("Invalid payload"),
-			401: err("Invalid refresh token"),
+			401: err("Invalid refresh token or missing cookie"),
 			429: err("Too many requests"),
 			500: err("Internal error"),
 		},
@@ -307,11 +301,9 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		path: "/auth/logout",
 		tags: ["auth"],
 		security: [{ bearerAuth: [] }],
-		request: { body: { required: true, content: json(refreshSchema) } },
 		responses: {
 			204: { description: "Logged out" },
-			400: err("Invalid payload"),
-			401: err("Unauthorized"),
+			401: err("Invalid refresh token"),
 			500: err("Internal error"),
 		},
 	});

@@ -19,7 +19,7 @@ type ErrorEnvelope = {
 
 type RefreshResponse = {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
 };
 
 type RequestOptions<TBody> = {
@@ -70,26 +70,20 @@ function toApiError(status: number, payload: unknown): ApiError {
 }
 
 async function refreshSession(): Promise<string | null> {
-  const tokens = getStoredTokens();
-  if (!tokens) {
-    return null;
-  }
-
   const response = await fetch(`${env.apiBaseUrl}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: tokens.refreshToken })
+    credentials: "include"
   });
 
   const payload = (await response.json().catch(() => null)) as RefreshResponse | null;
-  if (!response.ok || !payload?.accessToken || !payload.refreshToken) {
+  if (!response.ok || !payload?.accessToken) {
     clearStoredTokens();
     return null;
   }
 
   setStoredTokens({
-    accessToken: payload.accessToken,
-    refreshToken: payload.refreshToken
+    accessToken: payload.accessToken
   });
   return payload.accessToken;
 }
@@ -136,6 +130,7 @@ async function executeRequest<TBody>(
     method: options.method,
     headers: buildHeaders(options.auth, options.accessToken, options.hasJsonBody),
     body: stringifyBody(options.body),
+    credentials: "include",
     signal: options.signal
   });
   const payload = (await response.json().catch(() => null)) as unknown;

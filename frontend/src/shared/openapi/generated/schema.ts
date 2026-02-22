@@ -686,13 +686,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        token: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Access and refresh tokens rotated */
                 200: {
@@ -706,21 +700,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid payload */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error: {
-                                code: string;
-                                message: string;
-                            };
-                        };
-                    };
-                };
-                /** @description Invalid refresh token */
+                /** @description Invalid refresh token or missing cookie */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -868,13 +848,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        token: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Logged out */
                 204: {
@@ -883,21 +857,7 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Invalid payload */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error: {
-                                code: string;
-                                message: string;
-                            };
-                        };
-                    };
-                };
-                /** @description Unauthorized */
+                /** @description Invalid refresh token */
                 401: {
                     headers: {
                         [name: string]: unknown;
