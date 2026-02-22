@@ -7,6 +7,8 @@ import { useCreateReservationMutation } from "../features/reservations/mutations
 import { useCancelReservationMutation } from "../features/reservations/mutations/use-cancel-reservation-mutation";
 import { mapReservationErrorToMessage } from "../features/reservations/model/reservations-error-messages";
 import type { CreateReservationRequest } from "../features/reservations/api/reservations-api";
+import { useQrCheckInMutation } from "../features/qr-checkin/mutations/use-qr-checkin-mutation";
+import { mapQrCheckInErrorToMessage } from "../features/qr-checkin/model/qr-checkin-error-messages";
 
 function getTodayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -27,12 +29,14 @@ function getDeskStatusLabel(isReserved: boolean, isMine: boolean): string {
 export function DesksPage(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
   const [date, setDate] = useState(() => getTodayDate());
+  const [qrPublicId, setQrPublicId] = useState("");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const desksQuery = useDesksQuery(date, isAuthenticated);
   const reservationsQuery = useMyReservationsQuery(isAuthenticated);
   const createReservationMutation = useCreateReservationMutation(date);
   const cancelReservationMutation = useCancelReservationMutation(date);
+  const qrCheckInMutation = useQrCheckInMutation(date);
 
   const desks = useMemo(() => desksQuery.data?.items ?? [], [desksQuery.data]);
   const reservations = useMemo(
@@ -78,8 +82,38 @@ export function DesksPage(): JSX.Element {
     }
   };
 
+  const onQrCheckIn = async () => {
+    const trimmedQrPublicId = qrPublicId.trim();
+    if (!trimmedQrPublicId) {
+      setActionError("Introduce el codigo QR publico.");
+      return;
+    }
+
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      const result = await qrCheckInMutation.mutateAsync({
+        date,
+        qrPublicId: trimmedQrPublicId
+      });
+      setQrPublicId("");
+      if (result.status === "already_checked_in") {
+        setActionMessage("Ya estabas en estado check-in para esta reserva.");
+      } else {
+        setActionMessage("Check-in confirmado.");
+      }
+    } catch (error) {
+      setActionError(
+        mapQrCheckInErrorToMessage(error, "No se pudo completar el check-in.")
+      );
+    }
+  };
+
   const isMutating =
-    createReservationMutation.isPending || cancelReservationMutation.isPending;
+    createReservationMutation.isPending ||
+    cancelReservationMutation.isPending ||
+    qrCheckInMutation.isPending;
 
   const desksErrorMessage =
     desksQuery.error instanceof ApiError
@@ -195,6 +229,32 @@ export function DesksPage(): JSX.Element {
             })}
           </ul>
         ) : null}
+      </section>
+
+      <section className="card">
+        <h2>Check-in QR</h2>
+        <p className="muted-text">
+          Introduce el codigo QR publico del escritorio para hacer check-in.
+        </p>
+        <div className="toolbar">
+          <label htmlFor="qr-public-id">QR publico</label>
+          <input
+            id="qr-public-id"
+            type="text"
+            value={qrPublicId}
+            onChange={event => setQrPublicId(event.target.value)}
+            placeholder="qr_public_id"
+          />
+          <button
+            type="button"
+            disabled={qrCheckInMutation.isPending}
+            onClick={() => {
+              void onQrCheckIn();
+            }}
+          >
+            {qrCheckInMutation.isPending ? "Procesando..." : "Confirmar check-in"}
+          </button>
+        </div>
       </section>
     </div>
   );

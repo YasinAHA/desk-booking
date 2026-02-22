@@ -57,7 +57,11 @@ function renderDesksPage() {
   );
 }
 
-function setupFetchServer(options?: { conflictOnCreate?: boolean; withReservation?: boolean }) {
+function setupFetchServer(options?: {
+  conflictOnCreate?: boolean;
+  withReservation?: boolean;
+  qrCheckInNotFound?: boolean;
+}) {
   const today = getTodayDate();
   const desks: Desk[] = [
     {
@@ -170,6 +174,38 @@ function setupFetchServer(options?: { conflictOnCreate?: boolean; withReservatio
         );
       }
 
+      if (method === "POST" && url.pathname === "/reservations/check-in/qr") {
+        if (options?.qrCheckInNotFound) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                error: {
+                  code: "RESERVATION_NOT_FOUND",
+                  message: "Not found"
+                }
+              }),
+              {
+                status: 404,
+                headers: { "Content-Type": "application/json" }
+              }
+            )
+          );
+        }
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              ok: true,
+              status: "checked_in"
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
+      }
+
       if (method === "DELETE" && url.pathname.startsWith("/reservations/")) {
         const reservationId = url.pathname.split("/").at(-1);
         const reservationIndex = reservations.findIndex(
@@ -260,5 +296,23 @@ describe("desks reservations integration", () => {
     expect(server.calls.some(call => call.startsWith("DELETE /reservations/"))).toBe(
       true
     );
+  });
+
+  it("runs qr check-in and shows success message", async () => {
+    const server = setupFetchServer();
+    renderDesksPage();
+    const user = userEvent.setup();
+
+    await screen.findByRole("button", { name: "Confirmar check-in" });
+    await user.type(
+      screen.getByLabelText("QR publico"),
+      "qr_public_id_123"
+    );
+    await user.click(screen.getByRole("button", { name: "Confirmar check-in" }));
+
+    await screen.findByText("Check-in confirmado.");
+    expect(
+      server.calls.some(call => call === "POST /reservations/check-in/qr")
+    ).toBe(true);
   });
 });
