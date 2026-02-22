@@ -128,16 +128,16 @@ Las configuraciones por defecto son seguras, no inseguras.
 | Argon2 password hashing | Resistant to GPU attacks, slow-by-design | CPU-intensive on registration |
 | 12-char password minimum | Brute-force resistant | UX: harder for users to remember |
 | Helmet CSP `unsafe-inline` for styles | Pragmatic for vanilla CSS | Slightly weaker CSP |
-| No refresh token in cookie yet | Vanilla JS frontend (v0.5.0) | XSS vulnerability (localStorage) |
+| Refresh token in HttpOnly cookie (dual migration) | Reduce XSS surface and align with production web best practice | Requires CORS/cookie policy and session bootstrap changes |
 | Soft deletes | Audit trail preservation | Queries must filter `deleted_at IS NULL` |
-| Tokens in localStorage | Required for vanilla JS frontend | XSS attack surface in v0.5.0 |
+| Access token in memory + silent refresh | Avoid long-lived token persistence in browser storage | Requires bootstrap refresh on SPA start |
 
 ---
 
 ## Known Gaps & Future Work (v0.7.0+)
 
 - [ ] Refresh token rotation estricta (revocar refresh usado + emitir refresh nuevo)
-- [ ] Refresh token en cookie httpOnly (removes XSS + CSRF surface)
+- [x] Refresh token in HttpOnly cookie defined in ADR-0008 (dual migration in progress).
 - [ ] CSRF tokens for state-changing operations (POST/DELETE)
 - [ ] Admin UI with role enforcement
 - [ ] 2FA (TOTP/SMS)

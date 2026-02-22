@@ -14,3 +14,4 @@ Registro breve de decisiones técnicas frontend.
 | 2026-02-21 | Backend como única autoridad de autorización | Frontend usa guards para UX, no para seguridad real. |
 | 2026-02-21 | Husky en raíz de monorepo | Quality gates unificados backend/frontend. |
 | 2026-02-21 | Sentry opcional por entorno | Observabilidad sin bloquear fase inicial. |
+| 2026-02-22 | Refresh token en cookie HttpOnly + access en memoria | Reducir exposicion por XSS y alinear flujo SPA con practica de produccion (ADR-0008). |

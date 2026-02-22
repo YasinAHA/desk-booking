@@ -26,5 +26,6 @@ Architecture Decision Records (ADR) del proyecto.
 - [ADR-0005: Docs Structure for Monorepo](ADR-0005-docs-structure-monorepo.md)
 - [ADR-0006: OpenAPI from Zod](ADR-0006-openapi-from-zod.md)
 - [ADR-0007: HTTP Naming Convention](ADR-0007-http-naming-convention.md)
+- [ADR-0008: Refresh Token in HttpOnly Cookie (Dual Migration)](ADR-0008-refresh-token-http-only-cookie.md)
 
 

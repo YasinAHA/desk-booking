@@ -28,6 +28,16 @@ Histórico de tareas cerradas: consultar los tags/release notes en Git y `CHANGE
   - `npm -w backend run lint:types`
   - `npm -w backend run build`
   - `npm -w backend run test`
+- [ ] Migración auth refresh a cookie HttpOnly (fase dual, ADR-0008):
+  - [ ] `POST /auth/login`: emitir refresh token también en cookie HttpOnly.
+  - [ ] `POST /auth/refresh`: leer refresh desde cookie y mantener fallback temporal por body.
+  - [ ] `POST /auth/logout`: leer refresh desde cookie y mantener fallback temporal por body.
+  - [ ] `POST /auth/logout`: limpiar cookie refresh (`Set-Cookie` expirado).
+  - [ ] Configurar política cookie por entorno (`secure`, `sameSite`, `path`, `maxAge`).
+  - [ ] Revisar CORS con `credentials: true` y `origin` explícito.
+  - [ ] Actualizar OpenAPI para reflejar modo dual temporal y plan de cierre.
+  - [ ] Añadir/ajustar tests de auth para flujo cookie (`login -> refresh -> logout`).
+  - [ ] Definir criterio de retirada del modo legacy (`body.token`) tras validación.
 
 ## Prioridad P1 (si hay margen antes de entrega)
 - [ ] Mejorar UX de errores funcionales críticos detectados en demo.
