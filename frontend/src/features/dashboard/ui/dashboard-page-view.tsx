@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
+import { Skeleton } from "@shared/ui/Skeleton";
 
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import { useDesksQuery } from "@features/desks/queries/use-desks-query";
@@ -242,6 +243,45 @@ function getDeskFillOpacity(isSelected: boolean, isHovered: boolean): number {
   return 0.15;
 }
 
+function DashboardSkeleton(): JSX.Element {
+  return (
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-4 w-96" />
+      </header>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-36 rounded-xl" />
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border border-border bg-surface p-6 lg:col-span-2">
+          <div className="mb-4 space-y-2">
+            <Skeleton className="h-6 w-44" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <Skeleton className="h-[420px] w-full rounded-lg" />
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <div className="mt-4 space-y-3">
+            <Skeleton className="h-20 w-full rounded-lg" />
+            <Skeleton className="h-20 w-full rounded-lg" />
+            <Skeleton className="h-20 w-full rounded-lg" />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function toMapDesks(desks: ReadonlyArray<MapDeskSource>): MapDeskRenderable[] {
   const byZone = desks.reduce((acc, desk) => {
     const zoneName = desk.zone ?? "General";
@@ -320,6 +360,9 @@ export function DashboardPageView(): JSX.Element {
 
   return (
     <div className="space-y-6">
+      {isLoading ? <DashboardSkeleton /> : null}
+      {isLoading ? null : (
+        <>
       <header>
         <h1 className="font-heading text-2xl font-bold text-foreground">
           Buenos días, {user?.firstName ?? "Usuario"} 👋
@@ -329,7 +372,6 @@ export function DashboardPageView(): JSX.Element {
         </p>
       </header>
 
-      {isLoading ? <Alert variant="default">Cargando dashboard...</Alert> : null}
       {hasError ? (
         <Alert variant="error">
           No se pudo cargar el dashboard. Reintenta en unos segundos.
@@ -604,6 +646,8 @@ export function DashboardPageView(): JSX.Element {
           </section>
         </>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

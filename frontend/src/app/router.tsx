@@ -11,6 +11,7 @@ import { DesksPage } from "@pages/desks-page";
 import { ForgotPasswordPage } from "@pages/forgot-password-page";
 import { LoginPage } from "@pages/login-page";
 import { NotFoundPage } from "@pages/not-found-page";
+import { ProfilePage } from "@pages/profile-page";
 import { RegisterPage } from "@pages/register-page";
 import { ReservationsPage } from "@pages/reservations-page";
 
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "desks", element: <DesksPage /> },
       { path: "reservations", element: <ReservationsPage /> },
+      { path: "profile", element: <ProfilePage /> },
       { path: "check-in", element: <CheckInPage /> },
       {
         path: "admin/desks",

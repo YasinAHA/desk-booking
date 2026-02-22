@@ -5,7 +5,7 @@
   --font-sans: "Inter", system-ui, sans-serif;
   --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
 
-  --color-background: hsl(220 16% 96%);
+  --color-background: hsl(220 17% 95%);
   --color-foreground: hsl(220 30% 12%);
   --color-surface: #ffffff;
   --color-surface-muted: hsl(220 15% 93%);
@@ -13,8 +13,8 @@
   --color-primary-hover: hsl(220 60% 30%);
   --color-primary-active: hsl(220 60% 21%);
   --color-primary-foreground: #ffffff;
-  --color-secondary: hsl(220 10% 50%);
-  --color-accent: hsl(168 60% 42%);
+  --color-secondary: hsl(218 15% 47%);
+  --color-accent: hsl(169 75% 44%);
   --color-accent-foreground: #ffffff;
   --color-muted: hsl(220 10% 50%);
   --color-subtle: hsl(220 10% 58%);
