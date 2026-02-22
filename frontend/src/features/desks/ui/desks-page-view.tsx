@@ -146,6 +146,16 @@ function getDeskHoverLabel(desk: {
   return "Available";
 }
 
+function getReserveLabel(isMine: boolean, isReserved: boolean): string {
+  if (isMine) {
+    return "Reservado por ti";
+  }
+  if (isReserved) {
+    return "No disponible";
+  }
+  return "Reservar";
+}
+
 function getDeskFillOpacity(isHovered: boolean): number {
   return isHovered ? 0.28 : 0.16;
 }
@@ -176,6 +186,30 @@ function toMapDesks(desks: ReadonlyArray<MapDeskSource>): MapDeskRenderable[] {
   return mapped;
 }
 
+function useIsDesktopDatePicker(): boolean {
+  const [isDesktopDatePicker, setIsDesktopDatePicker] = useState(false);
+
+  useEffect(() => {
+    if (typeof globalThis.matchMedia !== "function") {
+      setIsDesktopDatePicker(false);
+      return;
+    }
+
+    const query = globalThis.matchMedia("(min-width: 1024px)");
+    const update = () => {
+      setIsDesktopDatePicker(query.matches);
+    };
+
+    update();
+    query.addEventListener?.("change", update);
+    return () => {
+      query.removeEventListener?.("change", update);
+    };
+  }, []);
+
+  return isDesktopDatePicker;
+}
+
 type FloorMapCanvasProps = {
   date: string;
   desks: ReadonlyArray<MapDeskRenderable>;
@@ -185,6 +219,112 @@ type FloorMapCanvasProps = {
   isMutating: boolean;
   onReserve: (payload: CreateReservationRequest) => Promise<void>;
 };
+
+type DateSelectorProps = {
+  date: string;
+  isDesktopDatePicker: boolean;
+  isDatePickerOpen: boolean;
+  selectedDateObject: Date;
+  onTogglePicker: () => void;
+  onDateChange: (value: string) => void;
+  onDesktopSelect: (value: Date) => void;
+};
+
+function DateSelector({
+  date,
+  isDesktopDatePicker,
+  isDatePickerOpen,
+  selectedDateObject,
+  onTogglePicker,
+  onDateChange,
+  onDesktopSelect
+}: Readonly<DateSelectorProps>): JSX.Element {
+  if (isDesktopDatePicker) {
+    return (
+      <div className="relative">
+        <Button variant="secondary" className="h-10 min-w-52 justify-between" onClick={onTogglePicker}>
+          <span className="inline-flex items-center gap-2.5">
+            <CalendarDays className="h-4 w-4" />
+            {formatIsoDate(date)}
+          </span>
+          <ChevronDown
+            className={`ml-2 h-4 w-4 shrink-0 transition-transform ${isDatePickerOpen ? "rotate-180" : ""}`}
+          />
+        </Button>
+
+        {isDatePickerOpen ? (
+          <div className="absolute right-0 top-12 z-20 rounded-xl border border-border bg-surface p-3 shadow-card">
+            <DayPicker
+              mode="single"
+              selected={selectedDateObject}
+              onSelect={selected => {
+                if (!selected) return;
+                onDesktopSelect(selected);
+              }}
+              showOutsideDays
+            />
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-1.5">
+      <label htmlFor="desk-date" className="text-sm font-medium text-secondary">
+        Date
+      </label>
+      <Input
+        id="desk-date"
+        type="date"
+        value={date}
+        onChange={event => {
+          onDateChange(event.target.value);
+        }}
+        className="h-10 w-48"
+      />
+    </div>
+  );
+}
+
+type QuickReserveActionProps = {
+  date: string;
+  primaryDesk: DeskItem | null;
+  isMutating: boolean;
+  onReserve: (payload: CreateReservationRequest) => Promise<void>;
+};
+
+function QuickReserveAction({
+  date,
+  primaryDesk,
+  isMutating,
+  onReserve
+}: Readonly<QuickReserveActionProps>): JSX.Element | null {
+  if (!primaryDesk) {
+    return null;
+  }
+
+  const isEnabled = primaryDesk.status === "active" && !primaryDesk.isReserved && !isMutating;
+
+  return (
+    <div className="flex justify-end">
+      <Button
+        variant={isEnabled ? "primary" : "secondary"}
+        disabled={!isEnabled}
+        onClick={() => {
+          void onReserve({
+            date,
+            deskId: primaryDesk.id,
+            officeId: primaryDesk.officeId,
+            source: "user"
+          });
+        }}
+      >
+        {getReserveLabel(primaryDesk.isMine, primaryDesk.isReserved)}
+      </Button>
+    </div>
+  );
+}
 
 const FloorMapCanvas = memo(function FloorMapCanvas({
   date,
@@ -307,21 +447,8 @@ export function DesksPageView(): JSX.Element {
   const { pushToast } = useToast();
   const [date, setDate] = useState(() => getTodayDate());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isDesktopDatePicker, setIsDesktopDatePicker] = useState(false);
+  const isDesktopDatePicker = useIsDesktopDatePicker();
   const [hoveredDeskId, setHoveredDeskId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const query = globalThis.matchMedia("(min-width: 1024px)");
-    const update = () => {
-      setIsDesktopDatePicker(query.matches);
-    };
-
-    update();
-    query.addEventListener("change", update);
-    return () => {
-      query.removeEventListener("change", update);
-    };
-  }, []);
 
   const desksQuery = useDesksQuery(date, isAuthenticated);
   const createReservationMutation = useCreateReservationMutation(date);
@@ -359,17 +486,23 @@ export function DesksPageView(): JSX.Element {
   }, [desks]);
 
   const selectedDateObject = useMemo(() => parseIsoDate(date), [date]);
+  const primaryDesk = useMemo(
+    () => desks.find(desk => desk.status === "active") ?? null,
+    [desks]
+  );
 
   const desksErrorMessage =
     desksQuery.error instanceof ApiError ? desksQuery.error.message : "Could not load desks.";
+  const showEmptyState = !desksQuery.isPending && !desksQuery.isError && mapDesks.length === 0;
+  const showMap = !desksQuery.isPending && !desksQuery.isError && mapDesks.length > 0;
 
   const onCreateReservation = async (payload: CreateReservationRequest): Promise<void> => {
     try {
       await createReservationMutation.mutateAsync(payload);
-      pushToast(`Reservation created for ${payload.date}.`, "success");
+      pushToast("Reserva creada correctamente.", "success");
     } catch (error) {
       pushToast(
-        mapCreateReservationErrorToMessage(error, "Reservation could not be created."),
+        mapCreateReservationErrorToMessage(error, "No se pudo crear la reserva."),
         "error"
       );
     }
@@ -383,66 +516,40 @@ export function DesksPageView(): JSX.Element {
           <p className="text-sm text-muted">Select a date and book an available desk.</p>
         </div>
 
-        {isDesktopDatePicker ? (
-          <div className="relative">
-            <Button
-              variant="secondary"
-              className="h-10 min-w-52 justify-between"
-              onClick={() => {
-                setIsDatePickerOpen(current => !current);
-              }}
-            >
-              <span className="inline-flex items-center gap-2.5">
-                <CalendarDays className="h-4 w-4" />
-                {formatIsoDate(date)}
-              </span>
-              <ChevronDown
-                className={`ml-2 h-4 w-4 shrink-0 transition-transform ${isDatePickerOpen ? "rotate-180" : ""}`}
-              />
-            </Button>
-
-            {isDatePickerOpen ? (
-              <div className="absolute right-0 top-12 z-20 rounded-xl border border-border bg-surface p-3 shadow-card">
-                <DayPicker
-                  mode="single"
-                  selected={selectedDateObject}
-                  onSelect={selected => {
-                    if (!selected) return;
-                    setDate(toIsoDate(selected));
-                    setIsDatePickerOpen(false);
-                  }}
-                  showOutsideDays
-                />
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div className="grid gap-1.5">
-            <label htmlFor="desk-date" className="text-sm font-medium text-secondary">
-              Date
-            </label>
-            <Input
-              id="desk-date"
-              type="date"
-              value={date}
-              onChange={event => {
-                setDate(event.target.value);
-              }}
-              className="h-10 w-48"
-            />
-          </div>
-        )}
+        <DateSelector
+          date={date}
+          isDesktopDatePicker={isDesktopDatePicker}
+          isDatePickerOpen={isDatePickerOpen}
+          selectedDateObject={selectedDateObject}
+          onTogglePicker={() => {
+            setIsDatePickerOpen(current => !current);
+          }}
+          onDateChange={value => {
+            setDate(value);
+          }}
+          onDesktopSelect={value => {
+            setDate(toIsoDate(value));
+            setIsDatePickerOpen(false);
+          }}
+        />
       </div>
+
+      <QuickReserveAction
+        date={date}
+        primaryDesk={primaryDesk}
+        isMutating={createReservationMutation.isPending}
+        onReserve={onCreateReservation}
+      />
 
       {desksQuery.isFetching ? <Badge variant="info">Refreshing...</Badge> : null}
       {desksQuery.isPending ? <Alert variant="default">Loading floor map...</Alert> : null}
       {desksQuery.isError ? <Alert variant="error">{desksErrorMessage}</Alert> : null}
 
-      {!desksQuery.isPending && !desksQuery.isError && mapDesks.length === 0 ? (
+      {showEmptyState ? (
         <Alert variant="default">No desks available for selected date.</Alert>
       ) : null}
 
-      {!desksQuery.isPending && !desksQuery.isError && mapDesks.length > 0 ? (
+      {showMap ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-end gap-4">
             {(["available", "occupied", "reserved", "yours"] as MapDeskStatus[]).map(status => (
