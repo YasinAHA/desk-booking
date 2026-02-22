@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -5,7 +7,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthSessionContext } from "@features/auth/model/auth-session-context";
 
+import { AdminDesksPage } from "@pages/admin-desks-page";
+import { CheckInPage } from "@pages/check-in-page";
 import { DesksPage } from "@pages/desks-page";
+import { ReservationsPage } from "@pages/reservations-page";
 
 type Desk = {
   id: string;
@@ -33,7 +38,7 @@ function getTodayDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function renderDesksPage() {
+function renderPage(page: ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -53,7 +58,7 @@ function renderDesksPage() {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <DesksPage />
+        {page}
       </QueryClientProvider>
     </AuthSessionContext.Provider>
   );
@@ -308,7 +313,7 @@ afterEach(() => {
 describe("desks reservations integration", () => {
   it("creates reservation and refreshes desks/reservations", async () => {
     const server = setupFetchServer();
-    renderDesksPage();
+    renderPage(<DesksPage />);
     const user = userEvent.setup();
 
     await screen.findByRole("button", { name: "Reservar" });
@@ -318,14 +323,14 @@ describe("desks reservations integration", () => {
     await screen.findByRole("button", { name: "Reservado por ti" });
 
     expect(
-      server.calls.filter(call => call === `GET /reservations/me`).length
+      server.calls.filter(call => call === `GET /desks?date=${getTodayDate()}`).length
     ).toBeGreaterThan(1);
     expect(server.calls.some(call => call === "POST /reservations")).toBe(true);
   });
 
   it("shows mapped backend business error on reservation conflict", async () => {
     setupFetchServer({ conflictOnCreate: true });
-    renderDesksPage();
+    renderPage(<DesksPage />);
     const user = userEvent.setup();
 
     await screen.findByRole("button", { name: "Reservar" });
@@ -338,7 +343,7 @@ describe("desks reservations integration", () => {
     const server = setupFetchServer({ withReservation: true });
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    renderDesksPage();
+    renderPage(<ReservationsPage />);
     const user = userEvent.setup();
 
     await screen.findByRole("button", { name: "Cancelar" });
@@ -350,7 +355,7 @@ describe("desks reservations integration", () => {
     );
 
     expect(
-      server.calls.filter(call => call === `GET /desks?date=${getTodayDate()}`).length
+      server.calls.filter(call => call === `GET /reservations/me`).length
     ).toBeGreaterThan(1);
     expect(server.calls.some(call => call.startsWith("DELETE /reservations/"))).toBe(
       true
@@ -359,7 +364,7 @@ describe("desks reservations integration", () => {
 
   it("runs qr check-in and shows success message", async () => {
     const server = setupFetchServer();
-    renderDesksPage();
+    renderPage(<CheckInPage />);
     const user = userEvent.setup();
 
     await screen.findByRole("button", { name: "Confirmar check-in" });
@@ -377,7 +382,7 @@ describe("desks reservations integration", () => {
 
   it("loads admin qr and regenerates all qr", async () => {
     const server = setupFetchServer();
-    renderDesksPage();
+    renderPage(<AdminDesksPage />);
     const user = userEvent.setup();
 
     await screen.findByText("Admin QR");

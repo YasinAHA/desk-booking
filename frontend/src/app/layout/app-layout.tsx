@@ -41,6 +41,42 @@ export function AppLayout(): JSX.Element {
             </NavLink>
           ) : null}
           {isAuthenticated ? (
+            <NavLink
+              to="/reservations"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-medium text-primary underline"
+                  : "text-sm font-medium text-secondary hover:text-foreground"
+              }
+            >
+              Reservas
+            </NavLink>
+          ) : null}
+          {isAuthenticated ? (
+            <NavLink
+              to="/check-in"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-medium text-primary underline"
+                  : "text-sm font-medium text-secondary hover:text-foreground"
+              }
+            >
+              Check-in
+            </NavLink>
+          ) : null}
+          {isAuthenticated ? (
+            <NavLink
+              to="/admin/desks"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-medium text-primary underline"
+                  : "text-sm font-medium text-secondary hover:text-foreground"
+              }
+            >
+              Admin
+            </NavLink>
+          ) : null}
+          {isAuthenticated ? (
             <Button
               variant="secondary"
               className="h-9 px-3"

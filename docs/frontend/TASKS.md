@@ -37,6 +37,28 @@
 - [x] Check-in por QR (flujo web).
 - [x] Pantalla admin de QR (listar, regenerar uno, regenerar todos).
 
+## v0.8.x - Cierre frontend entrega (prioridad alta)
+- [x] Separar la UI actual por rutas dedicadas (evitar "todo en una sola página"):
+  - [x] `/desks` (reserva y listado de puestos).
+  - [x] `/reservations` (mis reservas y cancelación).
+  - [x] `/check-in` (flujo QR principal; entrada manual solo fallback discreto).
+- [x] Crear vista dedicada de administración:
+  - [x] `/admin/desks` para QR y gestión operativa de desks.
+  - [x] Mantener bloqueo por rol/permiso con UX clara de acceso denegado.
+- [ ] Completar flujos auth faltantes:
+  - [ ] `/register` (registro).
+  - [ ] `/forgot-password` (sin sesión).
+  - [ ] `/reset-password` (desde enlace/token).
+  - [ ] `/change-password` (con sesión iniciada).
+- [ ] Añadir página `/profile`:
+  - [ ] Datos de cuenta visibles.
+  - [ ] Punto de entrada a cambio de contraseña autenticado.
+- [ ] Criterios de aceptación del bloque:
+  - [ ] `npm -w frontend run lint` OK
+  - [ ] `npm -w frontend run typecheck` OK
+  - [ ] `npm -w frontend run test` OK
+  - [ ] Sin regresión en login/refresh/logout.
+
 ## v0.8.x - Auth cookie migration (ADR-0008)
 - [x] Migrar frontend a refresh token por cookie HttpOnly (sin persistir refresh en storage).
 - [x] Cliente HTTP auth con `credentials: "include"` para login/refresh/logout.
