@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -8,7 +8,7 @@ import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
 
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 
 function getLoginErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -92,3 +92,4 @@ export function LoginPage(): JSX.Element {
     </Card>
   );
 }
+

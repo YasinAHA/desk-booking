@@ -1,8 +1,8 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { Button } from "@shared/ui/Button";
 
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 
 export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
@@ -95,3 +95,4 @@ export function AppLayout(): JSX.Element {
     </div>
   );
 }
+

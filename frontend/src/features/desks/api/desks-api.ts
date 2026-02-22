@@ -1,5 +1,5 @@
-import { request } from "@shared/api/http-client";
-import type { paths } from "@shared/openapi/generated/schema";
+﻿import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi";
 
 export type DesksResponse =
   paths["/desks"]["get"]["responses"][200]["content"]["application/json"];
@@ -12,3 +12,4 @@ export async function getDesksByDate(date: string): Promise<DesksResponse> {
     query: { date }
   });
 }
+

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 
 import { ApiError } from "@shared/api/api-error";
 import { Alert } from "@shared/ui/Alert";
@@ -7,7 +7,7 @@ import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
 
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import type { DesksResponse } from "@features/desks/api/desks-api";
 import { useDesksQuery } from "@features/desks/queries/use-desks-query";
 import type { CreateReservationRequest } from "@features/reservations/api/reservations-api";
@@ -213,3 +213,4 @@ export function DesksPageView(): JSX.Element {
     </div>
   );
 }
+

@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { AuthSessionProvider } from "@features/auth/model/auth-session-provider";
+import { AuthSessionProvider } from "@features/auth/model/session/auth-session-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,3 +24,4 @@ export function AppProviders({ children }: Readonly<AppProvidersProps>): JSX.Ele
     </QueryClientProvider>
   );
 }
+

@@ -1,5 +1,5 @@
-import { request } from "@shared/api/http-client";
-import type { paths } from "@shared/openapi/generated/schema";
+﻿import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi";
 
 export type AdminDesksResponse =
   paths["/desks/admin"]["get"]["responses"][200]["content"]["application/json"];
@@ -34,3 +34,4 @@ export async function regenerateAllDeskQr(): Promise<RegenerateAllDeskQrResponse
     auth: true
   });
 }
+

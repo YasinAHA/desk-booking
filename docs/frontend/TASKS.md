@@ -54,9 +54,9 @@
   - [ ] Datos de cuenta visibles.
   - [ ] Punto de entrada a cambio de contraseña autenticado.
 - [ ] Criterios de aceptación del bloque:
-  - [ ] `npm -w frontend run lint` OK
-  - [ ] `npm -w frontend run typecheck` OK
-  - [ ] `npm -w frontend run test` OK
+  - [x] `npm -w frontend run lint` OK
+  - [x] `npm -w frontend run typecheck` OK
+  - [x] `npm -w frontend run test` OK
   - [ ] Sin regresión en login/refresh/logout.
 
 ## v0.8.x - Auth cookie migration (ADR-0008)
@@ -83,3 +83,24 @@
 - [ ] Front observability minima (logger con niveles).
 - [ ] Virtualizacion de listas si volumen real lo requiere.
 - [ ] Internacionalizacion (si aplica al alcance final).
+
+## v0.8.x - Organizacion tecnica (ajustes de estructura)
+- [x] Mover guards de autenticacion/autorizacion a `app/router/guards` (fuera de `features/*/ui`).
+- [x] Unificar nombre de hoja global de estilos (`global.css` o `globals.css`) y aplicar una sola convencion.
+- [x] Reorganizar `features/auth/model` en submodulo `session/*` para escalabilidad.
+- [x] Blindar fronteras por alias en ESLint:
+  - [x] `@shared/**` no importa de `@app/**`, `@pages/**`, `@features/**`.
+  - [x] `@features/**` no importa de `@app/**` ni `@pages/**`.
+  - [x] `@pages/**` solo importa de `@features/**` y `@shared/**`.
+  - [x] `@app/**` actua como capa de composicion (puede importar del resto).
+- [x] Prohibir imports directos de `@shared/openapi/generated/**` fuera de un wrapper estable.
+- [ ] Criterios de aceptacion del bloque:
+  - [x] `npm -w frontend run lint` OK
+  - [x] `npm -w frontend run typecheck` OK
+  - [x] `npm -w frontend run test` OK
+
+
+
+
+
+

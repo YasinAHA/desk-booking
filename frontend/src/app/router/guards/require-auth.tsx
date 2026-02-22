@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 import { Navigate } from "react-router-dom";
 
-import { useAuthSession } from "../model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 
 type RequireAuthProps = {
   children: ReactNode;
@@ -21,3 +21,5 @@ export function RequireAuth({ children }: Readonly<RequireAuthProps>): JSX.Eleme
 
   return <>{children}</>;
 }
+
+

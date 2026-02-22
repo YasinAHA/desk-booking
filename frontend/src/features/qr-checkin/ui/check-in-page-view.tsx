@@ -1,11 +1,11 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
 
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import { mapQrCheckInErrorToMessage } from "@features/qr-checkin/model/qr-checkin-error-messages";
 import { useQrCheckInMutation } from "@features/qr-checkin/mutations/use-qr-checkin-mutation";
 
@@ -67,7 +67,7 @@ export function CheckInPageView(): JSX.Element {
   };
 
   if (!isAuthenticated) {
-    return <Alert variant="error">Debes iniciar sesión para realizar check-in.</Alert>;
+    return <Alert variant="error">Debes iniciar sesiÃ³n para realizar check-in.</Alert>;
   }
 
   return (
@@ -123,3 +123,4 @@ export function CheckInPageView(): JSX.Element {
     </div>
   );
 }
+

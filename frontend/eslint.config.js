@@ -200,6 +200,25 @@ export default defineConfig(
     }
   },
 
+  // pages deben ser wrappers finos: solo dependen de features/shared
+  {
+    files: ["src/pages/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@app/**", "@pages/**"],
+              message:
+                "pages/** debe ser wrapper fino y no depender de app/pages."
+            }
+          ]
+        }
+      ]
+    }
+  },
+
   // -----------------------------
   // 6) Tests: relajar cosas típicas
   // -----------------------------

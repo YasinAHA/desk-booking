@@ -1,4 +1,4 @@
-import type { LoginRequest } from "../api/auth-api";
+﻿import type { LoginRequest } from "../../api/auth-api";
 
 export type User = {
   id: string;
@@ -18,3 +18,4 @@ export type AuthSessionContextValue = AuthSessionState & {
   signIn: (payload: LoginRequest) => Promise<void>;
   signOut: () => Promise<void>;
 };
+

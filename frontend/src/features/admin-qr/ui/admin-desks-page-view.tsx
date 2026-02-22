@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 
-import { ApiError } from "@shared/api/api-error";
 import { Alert } from "@shared/ui/Alert";
 import { Badge } from "@shared/ui/Badge";
 import { Button } from "@shared/ui/Button";
@@ -11,7 +10,7 @@ import { buildDeskQrImageUrl } from "@features/admin-qr/model/admin-qr-utils";
 import { useRegenerateAllDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-all-desk-qr-mutation";
 import { useRegenerateDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-desk-qr-mutation";
 import { useAdminDesksQuery } from "@features/admin-qr/queries/use-admin-desks-query";
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import { mapReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
 
 function getDeskStatusBadgeVariant(status: "active" | "maintenance" | "disabled") {
@@ -120,24 +119,7 @@ export function AdminDesksPageView(): JSX.Element {
     [adminDesksQuery.data]
   );
 
-  const isForbidden =
-    adminDesksQuery.error instanceof ApiError &&
-    adminDesksQuery.error.code === "FORBIDDEN";
-
-  if (isForbidden) {
-    return (
-      <Card>
-        <Alert variant="error">
-          No tienes permisos para acceder al panel de administración.
-        </Alert>
-      </Card>
-    );
-  }
-
-  const adminDesksErrorMessage =
-    adminDesksQuery.error instanceof ApiError
-      ? adminDesksQuery.error.message
-      : "Error cargando desks de administracion.";
+  const adminDesksErrorMessage = "Error cargando desks de administracion.";
 
   const onRegenerateDeskQr = async (deskId: string, deskCode: string) => {
     setFeedback({ message: null, error: null });
@@ -195,3 +177,4 @@ export function AdminDesksPageView(): JSX.Element {
     </div>
   );
 }
+

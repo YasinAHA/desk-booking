@@ -1,5 +1,5 @@
-import { request } from "@shared/api/http-client";
-import type { paths } from "@shared/openapi/generated/schema";
+﻿import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi";
 
 export type CreateReservationRequest =
   paths["/reservations"]["post"]["requestBody"]["content"]["application/json"];
@@ -35,3 +35,4 @@ export async function cancelReservation(reservationId: string): Promise<void> {
     auth: true
   });
 }
+

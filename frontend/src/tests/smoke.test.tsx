@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+﻿import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { AppLayout } from "@app/layout/app-layout";
 
-import { AuthSessionContext } from "@features/auth/model/auth-session-context";
+import { AuthSessionContext } from "@features/auth/model/session/auth-session-context";
 
 describe("AppLayout", () => {
   it("renders app header", () => {
@@ -26,3 +26,4 @@ describe("AppLayout", () => {
     expect(screen.getByRole("heading", { name: "Desk Booking" })).toBeVisible();
   });
 });
+

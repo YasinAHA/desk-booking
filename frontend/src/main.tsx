@@ -1,9 +1,9 @@
-import { StrictMode } from "react";
+﻿import { StrictMode } from "react";
 
 import { createRoot } from "react-dom/client";
 
 import { App } from "@app/app";
-import "./shared/styles/global.css";
+import "./shared/styles/globals.css";
 
 const container = document.getElementById("root");
 
@@ -16,3 +16,4 @@ createRoot(container).render(
     <App />
   </StrictMode>
 );
+

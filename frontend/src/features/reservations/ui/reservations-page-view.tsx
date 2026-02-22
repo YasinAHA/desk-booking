@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 
 import { ApiError } from "@shared/api/api-error";
 import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 
-import { useAuthSession } from "@features/auth/model/use-auth-session";
+import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import type { ReservationItem } from "@features/reservations/api/reservations-api";
 import { mapReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
 import { useCancelReservationMutation } from "@features/reservations/mutations/use-cancel-reservation-mutation";
@@ -138,3 +138,4 @@ export function ReservationsPageView(): JSX.Element {
     </div>
   );
 }
+
