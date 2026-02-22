@@ -1,5 +1,5 @@
-import { request } from "../../../shared/api/http-client";
-import type { paths } from "../../../shared/openapi/generated/schema";
+import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi/generated/schema";
 
 export type LoginRequest =
   paths["/auth/login"]["post"]["requestBody"]["content"]["application/json"];

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { AuthSessionProvider } from "../features/auth/model/auth-session-provider";
+import { AuthSessionProvider } from "@features/auth/model/auth-session-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {

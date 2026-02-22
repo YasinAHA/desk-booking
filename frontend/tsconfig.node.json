@@ -4,6 +4,13 @@
     "lib": ["ES2023", "WebWorker"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@pages/*": ["src/pages/*"],
+      "@features/*": ["src/features/*"],
+      "@shared/*": ["src/shared/*"]
+    },
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
     "noEmit": true,

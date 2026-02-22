@@ -1,5 +1,5 @@
-import { request } from "../../../shared/api/http-client";
-import type { paths } from "../../../shared/openapi/generated/schema";
+import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi/generated/schema";
 
 export type CheckInByQrRequest =
   paths["/reservations/check-in/qr"]["post"]["requestBody"]["content"]["application/json"];

@@ -1,4 +1,4 @@
-import { ApiError } from "../../../shared/api/api-error";
+import { ApiError } from "@shared/api/api-error";
 
 const qrCheckInMessages: Record<string, string> = {
   RESERVATION_NOT_FOUND:

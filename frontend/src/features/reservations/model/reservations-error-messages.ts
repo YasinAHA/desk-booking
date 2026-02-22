@@ -1,4 +1,4 @@
-import { ApiError } from "../../../shared/api/api-error";
+import { ApiError } from "@shared/api/api-error";
 
 const reservationErrorMessages: Record<string, string> = {
   DESK_ALREADY_RESERVED: "Ese escritorio ya esta reservado.",

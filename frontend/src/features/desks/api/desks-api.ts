@@ -1,5 +1,5 @@
-import { request } from "../../../shared/api/http-client";
-import type { paths } from "../../../shared/openapi/generated/schema";
+import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi/generated/schema";
 
 export type DesksResponse =
   paths["/desks"]["get"]["responses"][200]["content"]["application/json"];

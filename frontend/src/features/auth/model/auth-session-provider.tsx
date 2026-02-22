@@ -5,7 +5,7 @@ import {
   getStoredTokens,
   onStoredSessionChange,
   setStoredTokens
-} from "../../../shared/auth/session-storage";
+} from "@shared/auth/session-storage";
 import { AuthSessionContext } from "./auth-session-context";
 import type { AuthSessionState } from "./auth-session-types";
 
