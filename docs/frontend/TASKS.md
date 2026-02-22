@@ -1,5 +1,9 @@
 ﻿# Frontend Tasks
 
+## Plan activo
+- [x] Plan de rediseño documentado en docs/frontend/REDESIGN-PLAN.md.
+- [ ] Ejecutar fases F1 -> F5 del rediseño visual sin regresión funcional.
+
 ## v0.8.x - Bootstrap frontend serio
 - [x] Inicializar app React + TypeScript + Vite.
 - [x] Configurar Router y layout base.
@@ -121,4 +125,34 @@
   - [x] `npm -w frontend run lint` OK
   - [x] `npm -w frontend run typecheck` OK
   - [x] `npm -w frontend run test` OK
+
+## v0.8.x - Modern enterprise light (estilo centralizado)
+- [x] Definir direccion visual unica y tokens globales:
+  - [x] Tipografia principal moderna y legible para producto interno.
+  - [x] Paleta light profesional (sin sesgo morado).
+  - [x] Radios, sombras y espaciado normalizados.
+- [x] Centralizar estilo en primitives (`Button`, `Card`, `Input`, `Badge`, `Alert`, `Toast`, `Dialog`).
+- [ ] Reducir duplicacion visual en features (usar primitives/patrones).
+- [ ] Criterios de aceptacion:
+  - [ ] Cambios visuales globales sin editar cada feature.
+  - [x] `npm -w frontend run lint` OK
+  - [x] `npm -w frontend run typecheck` OK
+  - [x] `npm -w frontend run test` OK
+## v0.8.x - Merge por fases al frontend principal (puente -> frontend)
+- [ ] Fase 1 (router/layout/auth):
+  - [ ] Migrar shell de navegacion y layout base sin tocar logica de negocio.
+  - [ ] Consolidar guards en `app/router/guards` y flujo de sesion actual.
+  - [ ] Mantener rutas actuales funcionales (`/login`, `/desks`, `/reservations`, `/check-in`, `/admin/desks`).
+- [ ] Fase 2 (design system y primitives):
+  - [ ] Integrar tokens visuales y componentes base reutilizables.
+  - [ ] Sustituir estilos locales duplicados por primitives comunes.
+- [ ] Fase 3 (features funcionales):
+  - [ ] Migrar vistas de dashboard/desks/reservations sobre APIs reales.
+  - [ ] Marcar como "Proximamente" cualquier bloque no soportado por backend.
+- [ ] Fase 4 (admin/qr):
+  - [ ] Integrar panel admin QR completo con estados de carga/error/toast.
+  - [ ] Validar regeneracion individual/masiva e impresion.
+- [ ] Fase 5 (hardening):
+  - [ ] Cerrar deuda visual y tecnica de rutas, accesibilidad y feedback UX.
+  - [ ] Ejecutar quality gates finales (lint/typecheck/test/build).
 

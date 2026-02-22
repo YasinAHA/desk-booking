@@ -1,4 +1,4 @@
-import type { OutputHTMLAttributes } from "react";
+﻿import type { OutputHTMLAttributes } from "react";
 
 import { cn } from "../lib/cn";
 
@@ -10,10 +10,10 @@ type AlertProps = OutputHTMLAttributes<HTMLOutputElement> & {
 
 const variantClassName: Record<AlertVariant, string> = {
   default: "border-border bg-surface-muted text-foreground",
-  error: "border-destructive/30 bg-destructive/10 text-destructive",
-  success: "border-success/30 bg-success/10 text-success",
-  warning: "border-warning/30 bg-warning/10 text-warning",
-  info: "border-info/30 bg-info/10 text-info"
+  error: "border-danger-border bg-danger-soft text-destructive",
+  success: "border-success-border bg-success-soft text-success",
+  warning: "border-warning-border bg-warning-soft text-warning",
+  info: "border-info-border bg-info-soft text-info"
 };
 
 export function Alert({
@@ -25,7 +25,7 @@ export function Alert({
     <output
       aria-live="polite"
       className={cn(
-        "rounded-[--radius-button] border px-3 py-2 text-sm",
+        "rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-soft",
         variantClassName[variant],
         className
       )}
@@ -33,3 +33,4 @@ export function Alert({
     />
   );
 }
+

@@ -34,6 +34,6 @@ describe("AppLayout", () => {
       </AuthSessionContext.Provider>
     );
 
-    expect(screen.getByRole("heading", { name: "Desk Booking" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "DeskFlow" })).toBeVisible();
   });
 });

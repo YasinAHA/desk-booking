@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+﻿import type { HTMLAttributes } from "react";
 
 import { cn } from "../lib/cn";
 
@@ -9,11 +9,11 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 };
 
 const variantClassName: Record<BadgeVariant, string> = {
-  default: "bg-surface-muted text-secondary",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  destructive: "bg-destructive/10 text-destructive",
-  info: "bg-info/10 text-info"
+  default: "bg-surface-muted text-secondary border border-border",
+  success: "border border-success-border bg-success-soft text-success",
+  warning: "border border-warning-border bg-warning-soft text-warning",
+  destructive: "border border-danger-border bg-danger-soft text-destructive",
+  info: "border border-info-border bg-info-soft text-info"
 };
 
 export function Badge({
@@ -24,7 +24,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[--radius-button] px-2 py-1 text-xs font-medium",
+        "inline-flex items-center rounded-[var(--radius-button)] px-2.5 py-1 text-xs font-semibold tracking-[0.01em]",
         variantClassName[variant],
         className
       )}
@@ -32,3 +32,4 @@ export function Badge({
     />
   );
 }
+

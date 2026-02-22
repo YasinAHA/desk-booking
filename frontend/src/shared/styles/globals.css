@@ -1,31 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
 
-  --color-background: #f8fafb;
-  --color-foreground: #1f2937;
+  --color-background: hsl(220 16% 96%);
+  --color-foreground: hsl(220 30% 12%);
   --color-surface: #ffffff;
-  --color-surface-muted: #f1f5f7;
-  --color-primary: #17647e;
-  --color-primary-hover: #195c73;
+  --color-surface-muted: hsl(220 15% 93%);
+  --color-primary: hsl(220 60% 25%);
+  --color-primary-hover: hsl(220 60% 30%);
+  --color-primary-active: hsl(220 60% 21%);
   --color-primary-foreground: #ffffff;
-  --color-secondary: #475569;
-  --color-muted: #64748b;
-  --color-border: #e2e8ec;
-  --color-destructive: #b91c1c;
+  --color-secondary: hsl(220 10% 50%);
+  --color-accent: hsl(168 60% 42%);
+  --color-accent-foreground: #ffffff;
+  --color-muted: hsl(220 10% 50%);
+  --color-subtle: hsl(220 10% 58%);
+  --color-border: hsl(220 14% 88%);
+  --color-destructive: hsl(0 72% 55%);
   --color-destructive-foreground: #ffffff;
-  --color-success: #15803d;
-  --color-warning: #b45309;
-  --color-info: #2563eb;
-  --color-ring: #17647e;
+  --color-success: hsl(142 67% 40%);
+  --color-warning: hsl(25 90% 55%);
+  --color-info: hsl(220 60% 55%);
+  --color-ring: hsl(220 60% 25%);
+  --color-sidebar: hsl(220 30% 12%);
+  --color-sidebar-border: hsl(220 25% 20%);
+
+  --color-success-soft: hsl(142 67% 40% / 0.12);
+  --color-success-border: hsl(142 67% 40% / 0.3);
+  --color-warning-soft: hsl(25 90% 55% / 0.12);
+  --color-warning-border: hsl(25 90% 55% / 0.3);
+  --color-info-soft: hsl(220 60% 55% / 0.12);
+  --color-info-border: hsl(220 60% 55% / 0.3);
+  --color-danger-soft: hsl(0 72% 55% / 0.12);
+  --color-danger-border: hsl(0 72% 55% / 0.3);
 
   --radius-button: 0.5rem;
-  --radius-card: 0.75rem;
+  --radius-card: 1rem;
+  --radius-overlay: 1rem;
+  --radius-pill: 999px;
 
   --shadow-card:
-    0 1px 2px 0 rgb(17 24 39 / 0.08),
-    0 1px 1px -1px rgb(17 24 39 / 0.06);
+    0 1px 2px 0 rgb(15 23 42 / 0.06),
+    0 12px 24px -18px rgb(15 23 42 / 0.2);
+  --shadow-soft:
+    0 1px 2px 0 rgb(15 23 42 / 0.08),
+    0 8px 16px -14px rgb(15 23 42 / 0.18);
 }
 
 *,
@@ -38,10 +60,91 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
-  background-color: var(--color-background);
+  background: var(--color-background);
   color: var(--color-foreground);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 #root {
   min-height: 100vh;
+}
+
+.ds-section-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  letter-spacing: 0.01em;
+}
+
+.ds-section-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.ds-field-label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+.ds-list-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-muted);
+  box-shadow: var(--shadow-soft);
+}
+
+.ds-item-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.ds-item-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-secondary);
+}
+
+.ds-item-muted {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.ds-code-inline {
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+}
+
+.ds-nav-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+  text-decoration: none;
+  transition: color 140ms ease-out;
+}
+
+.ds-nav-link:hover {
+  color: var(--color-foreground);
+}
+
+.ds-nav-link-active {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }

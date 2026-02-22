@@ -1,4 +1,4 @@
-import {
+﻿import {
   useCallback,
   useMemo,
   useState,
@@ -16,12 +16,12 @@ let toastSequence = 0;
 
 function getToastStyles(variant: ToastItem["variant"]): string {
   if (variant === "success") {
-    return "border-emerald-300 bg-emerald-50 text-emerald-800";
+    return "border-success-border bg-success-soft text-success";
   }
   if (variant === "error") {
-    return "border-red-300 bg-red-50 text-red-800";
+    return "border-danger-border bg-danger-soft text-destructive";
   }
-  return "border-blue-300 bg-blue-50 text-blue-800";
+  return "border-info-border bg-info-soft text-info";
 }
 
 type ToastProviderProps = {
@@ -57,7 +57,7 @@ export function ToastProvider({ children }: Readonly<ToastProviderProps>): JSX.E
           <output
             key={item.id}
             aria-live="polite"
-            className={`pointer-events-auto rounded-md border px-3 py-2 text-sm shadow-card ${getToastStyles(item.variant)}`}
+            className={`m-0 pointer-events-auto block rounded-[var(--radius-button)] border px-3 py-2 text-sm font-medium shadow-soft ${getToastStyles(item.variant)}`}
           >
             {item.message}
           </output>
@@ -66,3 +66,4 @@ export function ToastProvider({ children }: Readonly<ToastProviderProps>): JSX.E
     </ToastContext.Provider>
   );
 }
+
