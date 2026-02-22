@@ -11,7 +11,7 @@ import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import type { DesksResponse } from "@features/desks/api/desks-api";
 import { useDesksQuery } from "@features/desks/queries/use-desks-query";
 import type { CreateReservationRequest } from "@features/reservations/api/reservations-api";
-import { mapReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
+import { mapCreateReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
 import { useCreateReservationMutation } from "@features/reservations/mutations/use-create-reservation-mutation";
 
 type DeskItem = DesksResponse["items"][number];
@@ -186,7 +186,7 @@ export function DesksPageView(): JSX.Element {
     } catch (error) {
       setFeedback({
         message: null,
-        error: mapReservationErrorToMessage(error, "No se pudo crear la reserva.")
+        error: mapCreateReservationErrorToMessage(error, "No se pudo crear la reserva.")
       });
     }
   };

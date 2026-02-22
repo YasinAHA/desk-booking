@@ -104,3 +104,21 @@
 
 
 
+## v0.8.x - UX feedback y confirmaciones (criterio fijo)
+- [ ] Definir y documentar criterio UX de feedback:
+  - [ ] `Dialog` para confirmaciones destructivas.
+  - [ ] `Toast` para resultado de acciones (ok/error).
+  - [ ] `Alert` inline solo para estado de pantalla (load/error/empty/forbidden).
+  - [ ] No usar `alert()` / `confirm()` nativos.
+- [x] Integrar infraestructura UI minima para feedback reutilizable (Dialog + Toast).
+- [ ] Migrar cancelacion de reserva:
+  - [x] Sustituir `confirm()` por modal de confirmacion.
+  - [x] Mostrar resultado por toast.
+- [ ] Ajustar navegacion auth:
+  - [x] Redirigir `/login` -> `/desks` cuando ya hay sesion iniciada.
+- [x] Limpiar feedback transaccional inline donde ya se use toast.
+- [ ] Criterios de aceptacion:
+  - [x] `npm -w frontend run lint` OK
+  - [x] `npm -w frontend run typecheck` OK
+  - [x] `npm -w frontend run test` OK
+

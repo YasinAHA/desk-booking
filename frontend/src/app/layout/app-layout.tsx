@@ -1,12 +1,21 @@
 ﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { ApiError } from "@shared/api/api-error";
 import { Button } from "@shared/ui/Button";
 
+import { useAdminDesksQuery } from "@features/admin-qr/queries/use-admin-desks-query";
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 
 export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
   const { isAuthenticated, signOut } = useAuthSession();
+  const isGuest = !isAuthenticated;
+  const adminAccessQuery = useAdminDesksQuery(isAuthenticated);
+  const isAdminForbidden =
+    adminAccessQuery.error instanceof ApiError &&
+    adminAccessQuery.error.code === "FORBIDDEN";
+  const showAdminLink =
+    isAuthenticated && !isAdminForbidden && Boolean(adminAccessQuery.data);
 
   const onLogout = async () => {
     await signOut();
@@ -18,16 +27,18 @@ export function AppLayout(): JSX.Element {
       <header className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-[--radius-card] border border-border bg-surface px-4 py-4 shadow-card">
         <h1 className="text-[28px] font-semibold text-foreground">Desk Booking</h1>
         <nav className="flex items-center gap-3">
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              isActive
-                ? "text-sm font-medium text-primary underline"
-                : "text-sm font-medium text-secondary hover:text-foreground"
-            }
-          >
-            Login
-          </NavLink>
+          {isGuest ? (
+            <NavLink
+              to="/login"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-medium text-primary underline"
+                  : "text-sm font-medium text-secondary hover:text-foreground"
+              }
+            >
+              Login
+            </NavLink>
+          ) : null}
           {isAuthenticated ? (
             <NavLink
               to="/desks"
@@ -52,19 +63,7 @@ export function AppLayout(): JSX.Element {
               Reservas
             </NavLink>
           ) : null}
-          {isAuthenticated ? (
-            <NavLink
-              to="/check-in"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-sm font-medium text-primary underline"
-                  : "text-sm font-medium text-secondary hover:text-foreground"
-              }
-            >
-              Check-in
-            </NavLink>
-          ) : null}
-          {isAuthenticated ? (
+          {showAdminLink ? (
             <NavLink
               to="/admin/desks"
               className={({ isActive }) =>
@@ -95,4 +94,3 @@ export function AppLayout(): JSX.Element {
     </div>
   );
 }
-

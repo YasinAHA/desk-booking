@@ -3,7 +3,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { ToastProvider } from "@shared/ui/Toast";
 
 import { AuthSessionContext } from "@features/auth/model/session/auth-session-context";
 
@@ -38,7 +41,7 @@ function getTodayDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function renderPage(page: ReactNode) {
+function renderPage(page: ReactNode, options?: { route?: string }) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -46,6 +49,8 @@ function renderPage(page: ReactNode) {
       }
     }
   });
+
+  const route = options?.route ?? "/";
 
   render(
     <AuthSessionContext.Provider
@@ -58,7 +63,9 @@ function renderPage(page: ReactNode) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        {page}
+        <ToastProvider>
+          <MemoryRouter initialEntries={[route]}>{page}</MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>
     </AuthSessionContext.Provider>
   );
@@ -341,15 +348,15 @@ describe("desks reservations integration", () => {
 
   it("cancels reservation from my reservations list and refreshes queries", async () => {
     const server = setupFetchServer({ withReservation: true });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
 
     renderPage(<ReservationsPage />);
     const user = userEvent.setup();
 
     await screen.findByRole("button", { name: "Cancelar" });
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await screen.findByRole("button", { name: "Si, cancelar" });
+    await user.click(screen.getByRole("button", { name: "Si, cancelar" }));
 
-    await screen.findByText("Reserva cancelada correctamente.");
     await waitFor(() =>
       expect(screen.getByText("No tienes reservas activas.")).toBeVisible()
     );
@@ -364,15 +371,7 @@ describe("desks reservations integration", () => {
 
   it("runs qr check-in and shows success message", async () => {
     const server = setupFetchServer();
-    renderPage(<CheckInPage />);
-    const user = userEvent.setup();
-
-    await screen.findByRole("button", { name: "Confirmar check-in" });
-    await user.type(
-      screen.getByLabelText("QR publico"),
-      "qr_public_id_123"
-    );
-    await user.click(screen.getByRole("button", { name: "Confirmar check-in" }));
+    renderPage(<CheckInPage />, { route: "/check-in?qrPublicId=qr_public_id_123" });
 
     await screen.findByText("Check-in confirmado.");
     expect(

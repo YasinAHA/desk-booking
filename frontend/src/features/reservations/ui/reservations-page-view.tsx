@@ -4,10 +4,12 @@ import { ApiError } from "@shared/api/api-error";
 import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
+import { ConfirmDialog } from "@shared/ui/ConfirmDialog";
+import { useToast } from "@shared/ui/use-toast";
 
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import type { ReservationItem } from "@features/reservations/api/reservations-api";
-import { mapReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
+import { mapCancelReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
 import { useCancelReservationMutation } from "@features/reservations/mutations/use-cancel-reservation-mutation";
 import { useMyReservationsQuery } from "@features/reservations/queries/use-my-reservations-query";
 
@@ -75,13 +77,8 @@ function ReservationsSection({
 
 export function ReservationsPageView(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
-  const [feedback, setFeedback] = useState<{
-    message: string | null;
-    error: string | null;
-  }>({
-    message: null,
-    error: null
-  });
+  const { pushToast } = useToast();
+  const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
 
   const reservationsQuery = useMyReservationsQuery(isAuthenticated);
   const cancelReservationMutation = useCancelReservationMutation(getTodayDate());
@@ -95,45 +92,50 @@ export function ReservationsPageView(): JSX.Element {
       ? reservationsQuery.error.message
       : "Error cargando reservas.";
 
+  const onOpenCancelDialog = (reservationId: string) => {
+    setReservationToCancel(reservationId);
+  };
+
   const onCancelReservation = async (reservationId: string) => {
-    if (!globalThis.confirm("Quieres cancelar esta reserva?")) {
-      return;
-    }
-
-    setFeedback({
-      message: null,
-      error: null
-    });
-
     try {
       await cancelReservationMutation.mutateAsync(reservationId);
-      setFeedback({
-        message: "Reserva cancelada correctamente.",
-        error: null
-      });
+      pushToast("Reserva cancelada correctamente.", "success");
     } catch (error) {
-      setFeedback({
-        message: null,
-        error: mapReservationErrorToMessage(
-          error,
-          "No se pudo cancelar la reserva."
-        )
-      });
+      pushToast(
+        mapCancelReservationErrorToMessage(error, "No se pudo cancelar la reserva."),
+        "error"
+      );
+    } finally {
+      setReservationToCancel(null);
     }
   };
 
   return (
     <div className="grid gap-4">
-      {feedback.error ? <Alert variant="error">{feedback.error}</Alert> : null}
-      {feedback.message ? <Alert variant="success">{feedback.message}</Alert> : null}
-
       <ReservationsSection
         isPending={reservationsQuery.isPending}
         isError={reservationsQuery.isError}
         errorMessage={reservationsErrorMessage}
         isMutating={cancelReservationMutation.isPending}
         reservations={reservations}
-        onCancel={onCancelReservation}
+        onCancel={reservationId => {
+          onOpenCancelDialog(reservationId);
+          return Promise.resolve();
+        }}
+      />
+      <ConfirmDialog
+        open={reservationToCancel !== null}
+        title="Cancelar reserva"
+        description="Esta accion cancelara la reserva seleccionada. Deseas continuar?"
+        confirmLabel="Si, cancelar"
+        isConfirming={cancelReservationMutation.isPending}
+        onCancel={() => setReservationToCancel(null)}
+        onConfirm={() => {
+          if (!reservationToCancel) {
+            return;
+          }
+          void onCancelReservation(reservationToCancel);
+        }}
       />
     </div>
   );
