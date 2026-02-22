@@ -36,7 +36,7 @@ export function LoginPage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (isAuthenticated) {
-    return <Navigate to="/desks" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -47,7 +47,7 @@ export function LoginPage(): JSX.Element {
     try {
       await signIn({ email, password });
       pushToast("Sesión iniciada correctamente.", "success");
-      await navigate("/desks");
+      await navigate("/dashboard");
     } catch (error) {
       setErrorMessage(getLoginErrorMessage(error));
     } finally {

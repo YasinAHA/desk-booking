@@ -148,3 +148,18 @@ h6 {
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+
+@keyframes ds-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ds-slide-in-right {
+  animation: ds-slide-in-right 180ms ease-out;
+}

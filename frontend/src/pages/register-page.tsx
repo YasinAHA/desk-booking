@@ -15,7 +15,7 @@ export function RegisterPage(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/desks" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

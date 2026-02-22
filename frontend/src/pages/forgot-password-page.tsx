@@ -12,7 +12,7 @@ export function ForgotPasswordPage(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
 
   if (isAuthenticated) {
-    return <Navigate to="/desks" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

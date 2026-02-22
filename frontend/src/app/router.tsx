@@ -6,6 +6,7 @@ import { RequireAuth } from "@app/router/guards/require-auth";
 
 import { AdminDesksPage } from "@pages/admin-desks-page";
 import { CheckInPage } from "@pages/check-in-page";
+import { DashboardPage } from "@pages/dashboard-page";
 import { DesksPage } from "@pages/desks-page";
 import { ForgotPasswordPage } from "@pages/forgot-password-page";
 import { LoginPage } from "@pages/login-page";
@@ -32,9 +33,10 @@ const router = createBrowserRouter([
       <RequireAuth>
         <AppLayout />
       </RequireAuth>
-    ),
+    ), 
     children: [
-      { index: true, element: <Navigate to="/desks" replace /> },
+      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { path: "dashboard", element: <DashboardPage /> },
       { path: "desks", element: <DesksPage /> },
       { path: "reservations", element: <ReservationsPage /> },
       { path: "check-in", element: <CheckInPage /> },
