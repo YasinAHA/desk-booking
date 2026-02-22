@@ -8,6 +8,7 @@ import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
+import { useToast } from "@shared/ui/use-toast";
 
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 
@@ -26,6 +27,7 @@ function getLoginErrorMessage(error: unknown): string {
 
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
+  const { pushToast } = useToast();
   const { isAuthenticated, signIn } = useAuthSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +46,7 @@ export function LoginPage(): JSX.Element {
 
     try {
       await signIn({ email, password });
+      pushToast("Sesión iniciada correctamente.", "success");
       await navigate("/desks");
     } catch (error) {
       setErrorMessage(getLoginErrorMessage(error));

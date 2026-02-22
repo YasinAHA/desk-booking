@@ -4,6 +4,7 @@ import { Alert } from "@shared/ui/Alert";
 import { Badge } from "@shared/ui/Badge";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
+import { useToast } from "@shared/ui/use-toast";
 
 import type { AdminDeskItem } from "@features/admin-qr/api/admin-qr-api";
 import {
@@ -126,13 +127,7 @@ function AdminQrSection({
 
 export function AdminDesksPageView(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
-  const [feedback, setFeedback] = useState<{
-    message: string | null;
-    error: string | null;
-  }>({
-    message: null,
-    error: null
-  });
+  const { pushToast } = useToast();
   const [regeneratingDeskId, setRegeneratingDeskId] = useState<string | null>(null);
 
   const adminDesksQuery = useAdminDesksQuery(isAuthenticated);
@@ -146,59 +141,40 @@ export function AdminDesksPageView(): JSX.Element {
   const adminDesksErrorMessage = "Error cargando desks de administracion.";
 
   const onRegenerateDeskQr = async (deskId: string, deskCode: string) => {
-    setFeedback({ message: null, error: null });
     setRegeneratingDeskId(deskId);
     try {
       await regenerateDeskQrMutation.mutateAsync(deskId);
-      setFeedback({
-        message: `QR regenerado para ${deskCode}.`,
-        error: null
-      });
+      pushToast(`QR regenerado para ${deskCode}.`, "success");
     } catch (error) {
-      setFeedback({
-        message: null,
-        error: mapReservationErrorToMessage(
-          error,
-          "No se pudo regenerar el QR del desk."
-        )
-      });
+      pushToast(
+        mapReservationErrorToMessage(error, "No se pudo regenerar el QR del desk."),
+        "error"
+      );
     } finally {
       setRegeneratingDeskId(null);
     }
   };
 
   const onRegenerateAllDeskQr = async () => {
-    setFeedback({ message: null, error: null });
     setRegeneratingDeskId(null);
     try {
       const result = await regenerateAllDeskQrMutation.mutateAsync();
-      setFeedback({
-        message: `QR regenerados: ${result.updated}.`,
-        error: null
-      });
+      pushToast(`QR regenerados: ${result.updated}.`, "success");
     } catch (error) {
-      setFeedback({
-        message: null,
-        error: mapReservationErrorToMessage(
-          error,
-          "No se pudieron regenerar todos los QR."
-        )
-      });
+      pushToast(
+        mapReservationErrorToMessage(error, "No se pudieron regenerar todos los QR."),
+        "error"
+      );
     }
   };
 
   const onPrintDeskQr = (item: AdminDeskItem) => {
-    setFeedback({ message: null, error: null });
     printDeskQrs(`QR ${item.code}`, [item]);
   };
 
   const onPrintAllDeskQr = () => {
-    setFeedback({ message: null, error: null });
     if (adminDesks.length === 0) {
-      setFeedback({
-        message: null,
-        error: "No hay escritorios para imprimir."
-      });
+      pushToast("No hay escritorios para imprimir.", "error");
       return;
     }
     printDeskQrs("QR de todos los escritorios", adminDesks);
@@ -206,9 +182,6 @@ export function AdminDesksPageView(): JSX.Element {
 
   return (
     <div className="grid gap-4">
-      {feedback.error ? <Alert variant="error">{feedback.error}</Alert> : null}
-      {feedback.message ? <Alert variant="success">{feedback.message}</Alert> : null}
-
       <AdminQrSection
         isPending={adminDesksQuery.isPending}
         isError={adminDesksQuery.isError}

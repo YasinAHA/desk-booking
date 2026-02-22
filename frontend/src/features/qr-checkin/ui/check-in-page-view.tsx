@@ -1,9 +1,10 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
 import { Alert } from "@shared/ui/Alert";
 import { Card } from "@shared/ui/Card";
+import { useToast } from "@shared/ui/use-toast";
 
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import { mapQrCheckInErrorToMessage } from "@features/qr-checkin/model/qr-checkin-error-messages";
@@ -15,14 +16,8 @@ function getTodayDate(): string {
 
 export function CheckInPageView(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
+  const { pushToast } = useToast();
   const [searchParams] = useSearchParams();
-  const [feedback, setFeedback] = useState<{
-    message: string | null;
-    error: string | null;
-  }>({
-    message: null,
-    error: null
-  });
 
   const date = getTodayDate();
   const qrPublicId = (searchParams.get("qrPublicId") ?? "").trim();
@@ -39,7 +34,6 @@ export function CheckInPageView(): JSX.Element {
     }
 
     processedQrPublicId.current = qrPublicId;
-    setFeedback({ message: null, error: null });
 
     void (async () => {
       try {
@@ -49,25 +43,22 @@ export function CheckInPageView(): JSX.Element {
         });
 
         if (result.status === "already_checked_in") {
-          setFeedback({
-            message: "Ya estabas en estado check-in para esta reserva.",
-            error: null
-          });
+          const message = "Ya estabas en estado check-in para esta reserva.";
+          pushToast(message, "info");
           return;
         }
 
-        setFeedback({
-          message: "Check-in confirmado.",
-          error: null
-        });
+        const message = "Check-in confirmado.";
+        pushToast(message, "success");
       } catch (error) {
-        setFeedback({
-          message: null,
-          error: mapQrCheckInErrorToMessage(error, "No se pudo completar el check-in.")
-        });
+        const errorMessage = mapQrCheckInErrorToMessage(
+          error,
+          "No se pudo completar el check-in."
+        );
+        pushToast(errorMessage, "error");
       }
     })();
-  }, [checkInMutation, date, isAuthenticated, qrPublicId]);
+  }, [checkInMutation, date, isAuthenticated, pushToast, qrPublicId]);
 
   if (!isAuthenticated) {
     return <Alert variant="error">Debes iniciar sesión para realizar check-in.</Alert>;
@@ -85,11 +76,7 @@ export function CheckInPageView(): JSX.Element {
 
   return (
     <div className="grid gap-4">
-      {checkInMutation.isPending ? (
-        <Alert variant="default">Procesando check-in...</Alert>
-      ) : null}
-      {feedback.error ? <Alert variant="error">{feedback.error}</Alert> : null}
-      {feedback.message ? <Alert variant="success">{feedback.message}</Alert> : null}
+      {checkInMutation.isPending ? <Alert variant="default">Procesando check-in...</Alert> : null}
 
       <Card className="space-y-2">
         <h2 className="text-[22px] font-semibold text-foreground">Check-in QR</h2>
@@ -99,3 +86,4 @@ export function CheckInPageView(): JSX.Element {
     </div>
   );
 }
+

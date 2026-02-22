@@ -6,6 +6,7 @@ import { Badge } from "@shared/ui/Badge";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
+import { useToast } from "@shared/ui/use-toast";
 
 import { useAuthSession } from "@features/auth/model/session/use-auth-session";
 import type { DesksResponse } from "@features/desks/api/desks-api";
@@ -153,14 +154,8 @@ function DesksSection({
 
 export function DesksPageView(): JSX.Element {
   const { isAuthenticated } = useAuthSession();
+  const { pushToast } = useToast();
   const [date, setDate] = useState(() => getTodayDate());
-  const [feedback, setFeedback] = useState<{
-    message: string | null;
-    error: string | null;
-  }>({
-    message: null,
-    error: null
-  });
 
   const desksQuery = useDesksQuery(date, isAuthenticated);
   const createReservationMutation = useCreateReservationMutation(date);
@@ -172,30 +167,19 @@ export function DesksPageView(): JSX.Element {
       : "Error cargando escritorios.";
 
   const onCreateReservation = async (payload: CreateReservationRequest) => {
-    setFeedback({
-      message: null,
-      error: null
-    });
-
     try {
       await createReservationMutation.mutateAsync(payload);
-      setFeedback({
-        message: "Reserva creada correctamente.",
-        error: null
-      });
+      pushToast("Reserva creada correctamente.", "success");
     } catch (error) {
-      setFeedback({
-        message: null,
-        error: mapCreateReservationErrorToMessage(error, "No se pudo crear la reserva.")
-      });
+      pushToast(
+        mapCreateReservationErrorToMessage(error, "No se pudo crear la reserva."),
+        "error"
+      );
     }
   };
 
   return (
     <div className="grid gap-4">
-      {feedback.error ? <Alert variant="error">{feedback.error}</Alert> : null}
-      {feedback.message ? <Alert variant="success">{feedback.message}</Alert> : null}
-
       <DesksSection
         date={date}
         isFetching={desksQuery.isFetching}
@@ -206,7 +190,6 @@ export function DesksPageView(): JSX.Element {
         isMutating={createReservationMutation.isPending}
         onDateChange={value => {
           setDate(value);
-          setFeedback({ message: null, error: null });
         }}
         onReserve={onCreateReservation}
       />
