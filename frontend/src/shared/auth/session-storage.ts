@@ -1,5 +1,6 @@
-const ACCESS_TOKEN_KEY = "deskbooking_access_token";
 const SESSION_CHANGED_EVENT = "auth:session-changed";
+
+let memoryAccessToken: string | null = null;
 
 export type StoredSessionTokens = {
   accessToken: string;
@@ -7,21 +8,20 @@ export type StoredSessionTokens = {
 };
 
 export function getStoredTokens(): StoredSessionTokens | null {
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-  if (!accessToken) {
+  if (!memoryAccessToken) {
     return null;
   }
 
-  return { accessToken };
+  return { accessToken: memoryAccessToken };
 }
 
 export function setStoredTokens(tokens: StoredSessionTokens): void {
-  localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+  memoryAccessToken = tokens.accessToken;
   globalThis.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 
 export function clearStoredTokens(): void {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  memoryAccessToken = null;
   globalThis.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 

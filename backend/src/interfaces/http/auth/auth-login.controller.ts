@@ -5,6 +5,7 @@ import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import type { LoginResult } from "@application/auth/types.js";
 import type { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
+import { env } from "@config/env.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
@@ -35,6 +36,25 @@ const LOGIN_STATUS_HTTP_ERRORS: Record<
 
 const REFRESH_COOKIE_NAME = "deskbooking_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
+const TRUSTED_ORIGINS = new Set(
+	[env.FRONTEND_BASE_URL, ...env.CORS_ORIGINS]
+		.map(rawValue => {
+			try {
+				return new URL(rawValue).origin;
+			} catch {
+				return null;
+			}
+		})
+		.filter((value): value is string => value !== null)
+);
+
+function normalizeOrigin(value: string): string | null {
+	try {
+		return new URL(value).origin;
+	} catch {
+		return null;
+	}
+}
 
 function parseCookieHeader(cookieHeader: string | undefined): Map<string, string> {
 	if (!cookieHeader) {
@@ -64,18 +84,62 @@ function getRefreshTokenFromCookie(req: FastifyRequest): string | null {
 	return parseCookieHeader(req.headers.cookie).get(REFRESH_COOKIE_NAME) ?? null;
 }
 
+function toSameSiteValue(): "Lax" | "Strict" | "None" {
+	if (env.AUTH_REFRESH_COOKIE_SAME_SITE === "strict") {
+		return "Strict";
+	}
+	if (env.AUTH_REFRESH_COOKIE_SAME_SITE === "none") {
+		return "None";
+	}
+	return "Lax";
+}
+
+function buildRefreshCookie(token: string, maxAgeSeconds?: number): string {
+	const attributes = [
+		`${REFRESH_COOKIE_NAME}=${encodeURIComponent(token)}`,
+		`Path=${REFRESH_COOKIE_PATH}`,
+		"HttpOnly",
+		`SameSite=${toSameSiteValue()}`,
+	];
+
+	if (env.AUTH_REFRESH_COOKIE_SECURE) {
+		attributes.push("Secure");
+	}
+	if (env.AUTH_REFRESH_COOKIE_DOMAIN) {
+		attributes.push(`Domain=${env.AUTH_REFRESH_COOKIE_DOMAIN}`);
+	}
+	if (typeof maxAgeSeconds === "number") {
+		attributes.push(`Max-Age=${maxAgeSeconds}`);
+	}
+
+	return attributes.join("; ");
+}
+
+function ensureTrustedOriginForCookieAuth(req: FastifyRequest): void {
+	const originHeader = req.headers.origin;
+	if (typeof originHeader === "string" && originHeader.length > 0) {
+		const requestOrigin = normalizeOrigin(originHeader);
+		if (!requestOrigin || !TRUSTED_ORIGINS.has(requestOrigin)) {
+			throwHttpError(403, "FORBIDDEN", "Invalid request origin");
+		}
+		return;
+	}
+
+	const refererHeader = req.headers.referer;
+	if (typeof refererHeader === "string" && refererHeader.length > 0) {
+		const refererOrigin = normalizeOrigin(refererHeader);
+		if (!refererOrigin || !TRUSTED_ORIGINS.has(refererOrigin)) {
+			throwHttpError(403, "FORBIDDEN", "Invalid request origin");
+		}
+	}
+}
+
 function clearRefreshTokenCookie(reply: FastifyReply): void {
-	reply.header(
-		"Set-Cookie",
-		`${REFRESH_COOKIE_NAME}=; Path=${REFRESH_COOKIE_PATH}; HttpOnly; SameSite=Lax; Max-Age=0`
-	);
+	reply.header("Set-Cookie", buildRefreshCookie("", 0));
 }
 
 function setRefreshTokenCookie(reply: FastifyReply, refreshToken: string): void {
-	reply.header(
-		"Set-Cookie",
-		`${REFRESH_COOKIE_NAME}=${encodeURIComponent(refreshToken)}; Path=${REFRESH_COOKIE_PATH}; HttpOnly; SameSite=Lax`
-	);
+	reply.header("Set-Cookie", buildRefreshCookie(refreshToken));
 }
 
 export class AuthLoginController {
@@ -136,6 +200,8 @@ export class AuthLoginController {
 	}
 
 	async refresh(req: FastifyRequest, reply: FastifyReply) {
+		ensureTrustedOriginForCookieAuth(req);
+
 		const refreshToken = getRefreshTokenFromCookie(req);
 		if (!refreshToken) {
 			throwHttpError(401, "UNAUTHORIZED", "Missing refresh token cookie");
@@ -158,6 +224,8 @@ export class AuthLoginController {
 	}
 
 	async logout(req: FastifyRequest, reply: FastifyReply) {
+		ensureTrustedOriginForCookieAuth(req);
+
 		const refreshToken = getRefreshTokenFromCookie(req);
 		if (!refreshToken) {
 			throwHttpError(401, "UNAUTHORIZED", "Missing refresh token cookie");

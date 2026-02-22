@@ -15,6 +15,25 @@ const envSchema = z.object({
             ? z.string().min(32) // Production: strong enforcement
             : z.string().default("dev-refresh-secret-change-in-production"), // Dev/test: safe default
     JWT_REFRESH_EXPIRATION: z.string().default("7d"),
+    AUTH_REFRESH_COOKIE_SECURE: z.preprocess(
+        value => {
+            if (value === undefined || value === "") {
+                return nodeEnv === "production";
+            }
+            if (value === "true") {
+                return true;
+            }
+            if (value === "false") {
+                return false;
+            }
+            return value;
+        },
+        z.boolean()
+    ),
+    AUTH_REFRESH_COOKIE_SAME_SITE: z
+        .enum(["lax", "strict", "none"])
+        .default("lax"),
+    AUTH_REFRESH_COOKIE_DOMAIN: z.string().default(""),
     JWT_ISSUER: z.string().default("desk-booking"),
     JWT_AUDIENCE: z.string().default("desk-booking-api"),
     ALLOWED_EMAIL_DOMAINS: z.string().default("camerfirma.com"),

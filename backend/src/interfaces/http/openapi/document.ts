@@ -277,6 +277,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 					})
 				),
 			},
+			403: err("Invalid request origin"),
 			401: err("Invalid refresh token or missing cookie"),
 			429: err("Too many requests"),
 			500: err("Internal error"),
@@ -303,6 +304,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		security: [{ bearerAuth: [] }],
 		responses: {
 			204: { description: "Logged out" },
+			403: err("Invalid request origin"),
 			401: err("Invalid refresh token"),
 			500: err("Internal error"),
 		},

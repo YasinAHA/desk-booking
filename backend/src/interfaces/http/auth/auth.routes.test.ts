@@ -10,6 +10,7 @@ process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/db";
 process.env.JWT_SECRET = "test-secret";
 process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
 process.env.ALLOWED_EMAIL_DOMAINS = "camerfirma.com";
+process.env.CORS_ORIGINS = "http://localhost:5500";
 
 const { authRoutes } = await import("./auth.routes.js");
 const { registerAuthPlugin } = await import("@interfaces/http/plugins/auth.js");
@@ -349,6 +350,53 @@ test("POST /auth/refresh rejects reused revoked refresh token", async () => {
 	await app.close();
 });
 
+test("POST /auth/refresh returns 403 for non-trusted origin", async () => {
+	const hash = await argon2.hash("123456");
+	const app = await buildTestApp(async (_text, params) => {
+		const first = params?.[0];
+		if (isEmail(first)) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: hash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+		if (isUserId(first)) {
+			return { rows: [{ token_valid_after: null }], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const loginRes = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { email: "admin@camerfirma.com", password: "123456" },
+	});
+	assert.equal(loginRes.statusCode, 200);
+	const loginBody = getJsonRecord(loginRes);
+	const refreshToken = getRequiredString(loginBody, "refreshToken");
+
+	const refreshRes = await app.inject({
+		method: "POST",
+		url: "/auth/refresh",
+		headers: {
+			origin: "https://evil.example",
+			cookie: `deskbooking_refresh_token=${encodeURIComponent(refreshToken)}`,
+		},
+	});
+
+	assert.equal(refreshRes.statusCode, 403);
+	await app.close();
+});
+
 test("POST /auth/logout returns 401 without access token", async () => {
 	const app = await buildTestApp(async () => ({ rows: [] }));
 
@@ -427,6 +475,55 @@ test("POST /auth/logout revokes refresh token and prevents reuse", async () => {
 	});
 	assert.equal(refreshRes.statusCode, 401);
 
+	await app.close();
+});
+
+test("POST /auth/logout returns 403 for non-trusted origin", async () => {
+	const hash = await argon2.hash("123456");
+	const app = await buildTestApp(async (_text, params) => {
+		const first = params?.[0];
+		if (isEmail(first)) {
+			return {
+				rows: [
+					{
+						id: "user-1",
+						email: "admin@camerfirma.com",
+						password_hash: hash,
+						first_name: "Admin",
+						last_name: "User",
+						second_last_name: null,
+						confirmed_at: new Date().toISOString(),
+					},
+				],
+			};
+		}
+		if (isUserId(first)) {
+			return { rows: [{ token_valid_after: null }], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const loginRes = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { email: "admin@camerfirma.com", password: "123456" },
+	});
+	assert.equal(loginRes.statusCode, 200);
+	const loginBody = getJsonRecord(loginRes);
+	const accessToken = getRequiredString(loginBody, "accessToken");
+	const refreshToken = getRequiredString(loginBody, "refreshToken");
+
+	const logoutRes = await app.inject({
+		method: "POST",
+		url: "/auth/logout",
+		headers: {
+			origin: "https://evil.example",
+			Authorization: `Bearer ${accessToken}`,
+			cookie: `deskbooking_refresh_token=${encodeURIComponent(refreshToken)}`,
+		},
+	});
+
+	assert.equal(logoutRes.statusCode, 403);
 	await app.close();
 });
 

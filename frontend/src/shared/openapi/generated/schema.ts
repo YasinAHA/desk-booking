@@ -714,6 +714,20 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Invalid request origin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                code: string;
+                                message: string;
+                            };
+                        };
+                    };
+                };
                 /** @description Too many requests */
                 429: {
                     headers: {
@@ -859,6 +873,20 @@ export interface paths {
                 };
                 /** @description Invalid refresh token */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                code: string;
+                                message: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid request origin */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
