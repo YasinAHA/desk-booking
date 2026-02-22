@@ -12,8 +12,8 @@
 - [x] Login / logout.
 - [x] Vista de desks por fecha.
 - [x] Crear y cancelar reserva.
-- [ ] Check-in por QR (flujo web).
-- [ ] Pantalla admin de QR (listar, regenerar uno, regenerar todos).
+- [x] Check-in por QR (flujo web).
+- [x] Pantalla admin de QR (listar, regenerar uno, regenerar todos).
 
 ## Calidad
 - [x] ESLint + Prettier + scripts quality.

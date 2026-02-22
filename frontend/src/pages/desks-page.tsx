@@ -9,6 +9,10 @@ import { mapReservationErrorToMessage } from "../features/reservations/model/res
 import type { CreateReservationRequest } from "../features/reservations/api/reservations-api";
 import { useQrCheckInMutation } from "../features/qr-checkin/mutations/use-qr-checkin-mutation";
 import { mapQrCheckInErrorToMessage } from "../features/qr-checkin/model/qr-checkin-error-messages";
+import { useAdminDesksQuery } from "../features/admin-qr/queries/use-admin-desks-query";
+import { useRegenerateDeskQrMutation } from "../features/admin-qr/mutations/use-regenerate-desk-qr-mutation";
+import { useRegenerateAllDeskQrMutation } from "../features/admin-qr/mutations/use-regenerate-all-desk-qr-mutation";
+import { buildDeskQrImageUrl } from "../features/admin-qr/model/admin-qr-utils";
 
 function getTodayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -37,11 +41,18 @@ export function DesksPage(): JSX.Element {
   const createReservationMutation = useCreateReservationMutation(date);
   const cancelReservationMutation = useCancelReservationMutation(date);
   const qrCheckInMutation = useQrCheckInMutation(date);
+  const adminDesksQuery = useAdminDesksQuery(isAuthenticated);
+  const regenerateDeskQrMutation = useRegenerateDeskQrMutation();
+  const regenerateAllDeskQrMutation = useRegenerateAllDeskQrMutation();
 
   const desks = useMemo(() => desksQuery.data?.items ?? [], [desksQuery.data]);
   const reservations = useMemo(
     () => reservationsQuery.data?.items ?? [],
     [reservationsQuery.data]
+  );
+  const adminDesks = useMemo(
+    () => adminDesksQuery.data?.items ?? [],
+    [adminDesksQuery.data]
   );
 
   const onDateChange = (nextDate: string) => {
@@ -110,10 +121,40 @@ export function DesksPage(): JSX.Element {
     }
   };
 
+  const onRegenerateDeskQr = async (deskId: string, deskCode: string) => {
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      await regenerateDeskQrMutation.mutateAsync(deskId);
+      setActionMessage(`QR regenerado para ${deskCode}.`);
+    } catch (error) {
+      setActionError(
+        mapReservationErrorToMessage(error, "No se pudo regenerar el QR del desk.")
+      );
+    }
+  };
+
+  const onRegenerateAllDeskQr = async () => {
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      const result = await regenerateAllDeskQrMutation.mutateAsync();
+      setActionMessage(`QR regenerados: ${result.updated}.`);
+    } catch (error) {
+      setActionError(
+        mapReservationErrorToMessage(error, "No se pudieron regenerar todos los QR.")
+      );
+    }
+  };
+
   const isMutating =
     createReservationMutation.isPending ||
     cancelReservationMutation.isPending ||
-    qrCheckInMutation.isPending;
+    qrCheckInMutation.isPending ||
+    regenerateDeskQrMutation.isPending ||
+    regenerateAllDeskQrMutation.isPending;
 
   const desksErrorMessage =
     desksQuery.error instanceof ApiError
@@ -124,6 +165,13 @@ export function DesksPage(): JSX.Element {
     reservationsQuery.error instanceof ApiError
       ? reservationsQuery.error.message
       : "Error cargando reservas.";
+  const isAdminForbidden =
+    adminDesksQuery.error instanceof ApiError &&
+    adminDesksQuery.error.code === "FORBIDDEN";
+  const adminDesksErrorMessage =
+    adminDesksQuery.error instanceof ApiError
+      ? adminDesksQuery.error.message
+      : "Error cargando desks de administracion.";
 
   return (
     <div className="desks-page">
@@ -256,6 +304,69 @@ export function DesksPage(): JSX.Element {
           </button>
         </div>
       </section>
+
+      {!isAdminForbidden ? (
+        <section className="card">
+          <h2>Admin QR</h2>
+          <p className="muted-text">
+            Gestion basica de QR por escritorio (listar y regenerar).
+          </p>
+          <div className="toolbar">
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={regenerateAllDeskQrMutation.isPending}
+              onClick={() => {
+                void onRegenerateAllDeskQr();
+              }}
+            >
+              {regenerateAllDeskQrMutation.isPending
+                ? "Regenerando..."
+                : "Regenerar QR de todos"}
+            </button>
+          </div>
+          {adminDesksQuery.isPending ? <p>Cargando desks admin...</p> : null}
+          {adminDesksQuery.isError ? (
+            <p className="error-text">{adminDesksErrorMessage}</p>
+          ) : null}
+          {!adminDesksQuery.isPending &&
+          !adminDesksQuery.isError &&
+          adminDesks.length === 0 ? (
+            <p>No hay desks para administrar.</p>
+          ) : null}
+          {!adminDesksQuery.isPending &&
+          !adminDesksQuery.isError &&
+          adminDesks.length > 0 ? (
+            <ul className="admin-qr-grid">
+              {adminDesks.map(item => (
+                <li key={item.id} className="admin-qr-card">
+                  <p className="reservation-main">{item.code}</p>
+                  <p className="muted-text">{item.name ?? "Sin nombre"}</p>
+                  <p className="muted-text">Estado: {item.status}</p>
+                  <img
+                    className="admin-qr-image"
+                    src={buildDeskQrImageUrl(item.qrPublicId)}
+                    alt={`QR ${item.code}`}
+                  />
+                  <code className="admin-qr-token">{item.qrPublicId}</code>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    disabled={regenerateDeskQrMutation.isPending}
+                    onClick={() => {
+                      void onRegenerateDeskQr(item.id, item.code);
+                    }}
+                  >
+                    {regenerateDeskQrMutation.isPending
+                      ? "Regenerando..."
+                      : "Regenerar QR"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

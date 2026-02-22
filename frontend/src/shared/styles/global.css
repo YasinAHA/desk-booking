@@ -174,3 +174,31 @@ button:disabled {
   margin: 0;
   font-weight: 600;
 }
+
+.admin-qr-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.7rem;
+}
+
+.admin-qr-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-qr-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+
+.admin-qr-token {
+  font-size: 12px;
+  word-break: break-all;
+}

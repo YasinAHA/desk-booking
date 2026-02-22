@@ -124,6 +124,29 @@ function setupFetchServer(options?: {
         );
       }
 
+      if (method === "GET" && url.pathname === "/desks/admin") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              items: [
+                {
+                  id: "desk-1",
+                  officeId: "office-1",
+                  code: "D-01",
+                  name: "Ventana",
+                  status: "active",
+                  qrPublicId: "qr-public-id-1"
+                }
+              ]
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
+      }
+
       if (method === "POST" && url.pathname === "/reservations") {
         if (options?.conflictOnCreate) {
           return Promise.resolve(
@@ -206,6 +229,40 @@ function setupFetchServer(options?: {
         );
       }
 
+      if (
+        method === "POST" &&
+        url.pathname === "/desks/admin/desk-1/qr/regenerate"
+      ) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              ok: true,
+              deskId: "desk-1",
+              qrPublicId: "qr-public-id-new"
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
+      }
+
+      if (method === "POST" && url.pathname === "/desks/admin/qr/regenerate-all") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              ok: true,
+              updated: 1
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
+      }
+
       if (method === "DELETE" && url.pathname.startsWith("/reservations/")) {
         const reservationId = url.pathname.split("/").at(-1);
         const reservationIndex = reservations.findIndex(
@@ -252,7 +309,7 @@ describe("desks reservations integration", () => {
     renderDesksPage();
     const user = userEvent.setup();
 
-    await screen.findByText("D-01");
+    await screen.findByRole("button", { name: "Reservar" });
     await user.click(screen.getByRole("button", { name: "Reservar" }));
 
     await screen.findByText("Reserva creada correctamente.");
@@ -269,7 +326,7 @@ describe("desks reservations integration", () => {
     renderDesksPage();
     const user = userEvent.setup();
 
-    await screen.findByText("D-01");
+    await screen.findByRole("button", { name: "Reservar" });
     await user.click(screen.getByRole("button", { name: "Reservar" }));
 
     await screen.findByText("Ese escritorio ya esta reservado.");
@@ -313,6 +370,20 @@ describe("desks reservations integration", () => {
     await screen.findByText("Check-in confirmado.");
     expect(
       server.calls.some(call => call === "POST /reservations/check-in/qr")
+    ).toBe(true);
+  });
+
+  it("loads admin qr and regenerates all qr", async () => {
+    const server = setupFetchServer();
+    renderDesksPage();
+    const user = userEvent.setup();
+
+    await screen.findByText("Admin QR");
+    await user.click(screen.getByRole("button", { name: "Regenerar QR de todos" }));
+
+    await screen.findByText("QR regenerados: 1.");
+    expect(
+      server.calls.some(call => call === "POST /desks/admin/qr/regenerate-all")
     ).toBe(true);
   });
 });
