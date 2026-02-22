@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { getDesksByDate } from "../api/desks-api";
 
 export function useDesksQuery(date: string, enabled: boolean) {

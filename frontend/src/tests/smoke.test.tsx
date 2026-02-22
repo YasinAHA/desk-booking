@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+
 import { AppLayout } from "@app/layout/app-layout";
+
 import { AuthSessionContext } from "@features/auth/model/auth-session-context";
 
 describe("AppLayout", () => {

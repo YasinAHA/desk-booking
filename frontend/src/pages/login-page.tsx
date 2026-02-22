@@ -1,11 +1,14 @@
 import { useState } from "react";
+
 import { Navigate, useNavigate } from "react-router-dom";
+
 import { ApiError } from "@shared/api/api-error";
-import { useAuthSession } from "@features/auth/model/use-auth-session";
 import { Alert } from "@shared/ui/Alert";
 import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 import { Input } from "@shared/ui/Input";
+
+import { useAuthSession } from "@features/auth/model/use-auth-session";
 
 function getLoginErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {

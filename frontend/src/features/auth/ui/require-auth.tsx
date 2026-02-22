@@ -1,12 +1,14 @@
-import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
+
+import { Navigate } from "react-router-dom";
+
 import { useAuthSession } from "../model/use-auth-session";
 
 type RequireAuthProps = {
   children: ReactNode;
 };
 
-export function RequireAuth({ children }: RequireAuthProps): JSX.Element {
+export function RequireAuth({ children }: Readonly<RequireAuthProps>): JSX.Element {
   const { isAuthenticated, isBootstrapping } = useAuthSession();
 
   if (isBootstrapping) {

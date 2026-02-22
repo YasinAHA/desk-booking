@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { login, logout, type LoginRequest } from "../api/auth-api";
+
 import {
   clearStoredTokens,
   getStoredTokens,
   onStoredSessionChange,
   setStoredTokens
 } from "@shared/auth/session-storage";
+
+import { login, logout, type LoginRequest } from "../api/auth-api";
+
 import { AuthSessionContext } from "./auth-session-context";
+
 import type { AuthSessionState } from "./auth-session-types";
 
 type AuthSessionProviderProps = {

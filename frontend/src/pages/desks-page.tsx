@@ -1,12 +1,20 @@
 import { useMemo, useState } from "react";
-import { useAuthSession } from "@features/auth/model/use-auth-session";
-import { useAdminDesksQuery } from "@features/admin-qr/queries/use-admin-desks-query";
+
+import { ApiError } from "@shared/api/api-error";
+import { Alert } from "@shared/ui/Alert";
+import { Badge } from "@shared/ui/Badge";
+import { Button } from "@shared/ui/Button";
+import { Card } from "@shared/ui/Card";
+import { Input } from "@shared/ui/Input";
+
 import type { AdminDeskItem } from "@features/admin-qr/api/admin-qr-api";
+import { buildDeskQrImageUrl } from "@features/admin-qr/model/admin-qr-utils";
 import { useRegenerateAllDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-all-desk-qr-mutation";
 import { useRegenerateDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-desk-qr-mutation";
-import { buildDeskQrImageUrl } from "@features/admin-qr/model/admin-qr-utils";
-import { useDesksQuery } from "@features/desks/queries/use-desks-query";
+import { useAdminDesksQuery } from "@features/admin-qr/queries/use-admin-desks-query";
+import { useAuthSession } from "@features/auth/model/use-auth-session";
 import type { DesksResponse } from "@features/desks/api/desks-api";
+import { useDesksQuery } from "@features/desks/queries/use-desks-query";
 import { mapQrCheckInErrorToMessage } from "@features/qr-checkin/model/qr-checkin-error-messages";
 import { useQrCheckInMutation } from "@features/qr-checkin/mutations/use-qr-checkin-mutation";
 import type {
@@ -14,15 +22,9 @@ import type {
   ReservationItem
 } from "@features/reservations/api/reservations-api";
 import { mapReservationErrorToMessage } from "@features/reservations/model/reservations-error-messages";
-import { useCreateReservationMutation } from "@features/reservations/mutations/use-create-reservation-mutation";
 import { useCancelReservationMutation } from "@features/reservations/mutations/use-cancel-reservation-mutation";
+import { useCreateReservationMutation } from "@features/reservations/mutations/use-create-reservation-mutation";
 import { useMyReservationsQuery } from "@features/reservations/queries/use-my-reservations-query";
-import { ApiError } from "@shared/api/api-error";
-import { Alert } from "@shared/ui/Alert";
-import { Badge } from "@shared/ui/Badge";
-import { Button } from "@shared/ui/Button";
-import { Card } from "@shared/ui/Card";
-import { Input } from "@shared/ui/Input";
 
 type PageFeedback = {
   message: string | null;

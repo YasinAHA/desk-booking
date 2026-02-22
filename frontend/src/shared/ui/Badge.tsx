@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+
 import { cn } from "../lib/cn";
 
 type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info";
@@ -23,7 +24,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[var(--radius-button)] px-2 py-1 text-xs font-medium",
+        "inline-flex items-center rounded-[--radius-button] px-2 py-1 text-xs font-medium",
         variantClassName[variant],
         className
       )}

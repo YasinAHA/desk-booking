@@ -1,9 +1,10 @@
-import type { HTMLAttributes } from "react";
+import type { OutputHTMLAttributes } from "react";
+
 import { cn } from "../lib/cn";
 
 type AlertVariant = "default" | "error" | "success" | "warning" | "info";
 
-type AlertProps = HTMLAttributes<HTMLDivElement> & {
+type AlertProps = OutputHTMLAttributes<HTMLOutputElement> & {
   variant?: AlertVariant;
 };
 
@@ -21,10 +22,10 @@ export function Alert({
   ...props
 }: Readonly<AlertProps>): JSX.Element {
   return (
-    <div
-      role="status"
+    <output
+      aria-live="polite"
       className={cn(
-        "rounded-[var(--radius-button)] border px-3 py-2 text-sm",
+        "rounded-[--radius-button] border px-3 py-2 text-sm",
         variantClassName[variant],
         className
       )}

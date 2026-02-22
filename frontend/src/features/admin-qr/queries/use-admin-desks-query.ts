@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { listAdminDesks } from "../api/admin-qr-api";
 import { adminQrQueryKeys } from "../model/admin-qr-query-keys";
 

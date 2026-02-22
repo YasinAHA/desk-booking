@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { regenerateDeskQr } from "../api/admin-qr-api";
 import { adminQrQueryKeys } from "../model/admin-qr-query-keys";
 

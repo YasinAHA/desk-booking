@@ -1,9 +1,10 @@
-import { env } from "../config/env";
 import {
   clearStoredTokens,
   getStoredTokens,
   setStoredTokens
 } from "../auth/session-storage";
+import { env } from "../config/env";
+
 import { ApiError } from "./api-error";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

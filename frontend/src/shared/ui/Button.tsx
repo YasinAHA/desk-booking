@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from "react";
+
 import { cn } from "../lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "destructive" | "ghost";
@@ -25,7 +26,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-[var(--radius-button)] px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-10 items-center justify-center rounded-[--radius-button] px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
         variantClassName[variant],
         className
       )}
