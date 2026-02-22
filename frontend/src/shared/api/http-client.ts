@@ -111,59 +111,101 @@ function buildRequestUrl(
   return url.toString();
 }
 
+type RawHttpResponse = {
+  response: Response;
+  payload: unknown;
+};
+
+function stringifyBody<TBody>(body: TBody | undefined): string | undefined {
+  return body === undefined ? undefined : JSON.stringify(body);
+}
+
+async function executeRequest<TBody>(
+  url: string,
+  options: {
+    method: HttpMethod;
+    auth: boolean;
+    accessToken: string | null;
+    hasJsonBody: boolean;
+    body: TBody | undefined;
+    signal?: AbortSignal;
+  }
+): Promise<RawHttpResponse> {
+  const response = await fetch(url, {
+    method: options.method,
+    headers: buildHeaders(options.auth, options.accessToken, options.hasJsonBody),
+    body: stringifyBody(options.body),
+    signal: options.signal
+  });
+  const payload = (await response.json().catch(() => null)) as unknown;
+  return { response, payload };
+}
+
+function canRetryUnauthorized(
+  response: Response,
+  options: {
+    auth: boolean;
+    retryOnUnauthorized: boolean;
+    path: string;
+  }
+): boolean {
+  return (
+    options.auth &&
+    options.retryOnUnauthorized &&
+    response.status === 401 &&
+    !NO_REFRESH_PATHS.has(options.path)
+  );
+}
+
 export async function request<TResponse, TBody = undefined>(
   options: RequestOptions<TBody>
 ): Promise<TResponse> {
   const auth = options.auth ?? false;
   const retryOnUnauthorized = options.retryOnUnauthorized ?? true;
-  const storedAccessToken = getStoredTokens()?.accessToken ?? null;
   const requestUrl = buildRequestUrl(options.path, options.query);
-
   const hasJsonBody = options.body !== undefined;
-  const response = await fetch(requestUrl, {
+  const firstCall = await executeRequest(requestUrl, {
     method: options.method,
-    headers: buildHeaders(auth, storedAccessToken, hasJsonBody),
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    auth,
+    accessToken: getStoredTokens()?.accessToken ?? null,
+    hasJsonBody,
+    body: options.body,
     signal: options.signal
   });
 
-  if (response.status === 204) {
+  if (firstCall.response.status === 204) {
     return undefined as TResponse;
   }
 
-  const payload = (await response.json().catch(() => null)) as unknown;
-
-  if (response.ok) {
-    return payload as TResponse;
+  if (firstCall.response.ok) {
+    return firstCall.payload as TResponse;
   }
 
-  if (
-    auth &&
-    retryOnUnauthorized &&
-    response.status === 401 &&
-    !NO_REFRESH_PATHS.has(options.path)
-  ) {
-      const refreshedAccessToken = await refreshSession();
-    if (refreshedAccessToken) {
-      const retried = await fetch(requestUrl, {
-        method: options.method,
-        headers: buildHeaders(true, refreshedAccessToken, hasJsonBody),
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
-        signal: options.signal
-      });
-
-      if (retried.status === 204) {
-        return undefined as TResponse;
-      }
-
-      const retriedPayload = (await retried.json().catch(() => null)) as unknown;
-      if (retried.ok) {
-        return retriedPayload as TResponse;
-      }
-
-      throw toApiError(retried.status, retriedPayload);
-    }
+  if (!canRetryUnauthorized(firstCall.response, { auth, retryOnUnauthorized, path: options.path })) {
+    throw toApiError(firstCall.response.status, firstCall.payload);
   }
 
-  throw toApiError(response.status, payload);
+  const refreshedAccessToken = await refreshSession();
+  if (!refreshedAccessToken) {
+    throw toApiError(firstCall.response.status, firstCall.payload);
+  }
+
+  const retriedCall = await executeRequest(requestUrl, {
+    method: options.method,
+    auth: true,
+    accessToken: refreshedAccessToken,
+    hasJsonBody,
+    body: options.body,
+    signal: options.signal
+  });
+
+  if (retriedCall.response.status === 204) {
+    return undefined as TResponse;
+  }
+
+  if (retriedCall.response.ok) {
+    return retriedCall.payload as TResponse;
+  }
+
+  throw toApiError(retriedCall.response.status, retriedCall.payload);
 }

@@ -56,8 +56,11 @@ export function AuthSessionProvider({
   }, []);
 
   const signOut = useCallback(async () => {
+    const stored = getStoredTokens();
     try {
-      await logout();
+      if (stored?.refreshToken) {
+        await logout(stored.refreshToken);
+      }
     } finally {
       clearStoredTokens();
       setState({

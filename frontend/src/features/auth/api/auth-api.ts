@@ -25,10 +25,12 @@ export async function verify(token: string): Promise<VerifyResponse> {
   });
 }
 
-export async function logout(): Promise<void> {
-  await request<void>({
+export async function logout(refreshToken: string): Promise<void> {
+  await request<void, { token: string }>({
     method: "POST",
     path: "/auth/logout",
-    auth: true
+    auth: true,
+    body: { token: refreshToken },
+    retryOnUnauthorized: false
   });
 }
