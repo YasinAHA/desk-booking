@@ -1,4 +1,4 @@
-# Frontend Tasks
+﻿# Frontend Tasks
 
 ## v0.8.x - Bootstrap frontend serio
 - [x] Inicializar app React + TypeScript + Vite.
@@ -38,21 +38,22 @@
 - [x] Pantalla admin de QR (listar, regenerar uno, regenerar todos).
 
 ## v0.8.x - Auth cookie migration (ADR-0008)
-- [ ] Migrar frontend a refresh token por cookie HttpOnly (sin persistir refresh en storage).
-- [ ] Cliente HTTP auth con `credentials: "include"` para login/refresh/logout.
-- [ ] Bootstrap de sesión con silent refresh al arrancar app.
-- [ ] Logout alineado con backend dual (`cookie || body`) durante transición.
-- [ ] Eliminar dependencia de refresh token en storage cuando se valide el flujo cookie.
-- [ ] Validar UX de sesión al recargar (sesión vigente y sesión expirada).
-- [ ] Criterios de aceptación:
-  - [ ] `npm -w frontend run lint` OK
-  - [ ] `npm -w frontend run typecheck` OK
-  - [ ] `npm -w frontend run test` OK
-  - [ ] Sin regresión en login/refresh/logout.
+- [x] Migrar frontend a refresh token por cookie HttpOnly (sin persistir refresh en storage).
+- [x] Cliente HTTP auth con `credentials: "include"` para login/refresh/logout.
+- [x] Bootstrap de sesión con silent refresh al arrancar app.
+- [x] Logout alineado con backend cookie-only.
+- [x] Eliminar dependencia de refresh token en storage.
+- [x] Migrar access token a memoria (sin `localStorage`).
+- [x] Validar UX de sesión al recargar (sesión vigente y sesión expirada).
+- [x] Criterios de aceptación:
+  - [x] `npm -w frontend run lint` OK
+  - [x] `npm -w frontend run typecheck` OK
+  - [x] `npm -w frontend run test` OK
+  - [x] Sin regresión en login/refresh/logout.
 
 ## Calidad
 - [x] ESLint + Prettier + scripts quality.
-- [ ] Husky + lint-staged.
+- [x] Husky + lint-staged.
 - [x] Vitest + Testing Library para flujos clave.
 - [ ] Playwright e2e smoke de rutas criticas.
 

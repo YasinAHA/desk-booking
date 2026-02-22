@@ -11,7 +11,7 @@ Histórico de tareas cerradas: consultar tags/release notes en Git y `CHANGELOG.
 ## Prioridad P1 (tras cerrar backend funcional de Admin UI + QR)
 - [x] Definir un frontend "en condiciones" (arquitectura mínima, flujo de navegación, estado y estándares de UI).
 - [x] Convertir esa definición en roadmap por hitos para la siguiente versión.
-- [ ] Implementar bootstrap técnico del frontend según docs (`React + TS + Vite`, Query, Router, OpenAPI types).
+- [x] Implementar bootstrap técnico del frontend según docs (`React + TS + Vite`, Query, Router, OpenAPI types).
 
 ## Prioridad P1 (cross-cutting)
 - [x] Activar quality gates globales en monorepo con Husky (`pre-commit`, `pre-push`).
