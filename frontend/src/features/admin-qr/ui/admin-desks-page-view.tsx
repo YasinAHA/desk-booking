@@ -6,7 +6,10 @@ import { Button } from "@shared/ui/Button";
 import { Card } from "@shared/ui/Card";
 
 import type { AdminDeskItem } from "@features/admin-qr/api/admin-qr-api";
-import { buildDeskQrImageUrl } from "@features/admin-qr/model/admin-qr-utils";
+import {
+  buildDeskQrImageUrl,
+  printDeskQrs
+} from "@features/admin-qr/model/admin-qr-utils";
 import { useRegenerateAllDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-all-desk-qr-mutation";
 import { useRegenerateDeskQrMutation } from "@features/admin-qr/mutations/use-regenerate-desk-qr-mutation";
 import { useAdminDesksQuery } from "@features/admin-qr/queries/use-admin-desks-query";
@@ -28,10 +31,12 @@ type AdminQrSectionProps = {
   isError: boolean;
   errorMessage: string;
   isRegeneratingAll: boolean;
-  isRegeneratingOne: boolean;
+  regeneratingDeskId: string | null;
   items: AdminDeskItem[];
   onRegenerateAll: () => Promise<void>;
   onRegenerateOne: (deskId: string, deskCode: string) => Promise<void>;
+  onPrintAll: () => void;
+  onPrintOne: (item: AdminDeskItem) => void;
 };
 
 function AdminQrSection({
@@ -39,10 +44,12 @@ function AdminQrSection({
   isError,
   errorMessage,
   isRegeneratingAll,
-  isRegeneratingOne,
+  regeneratingDeskId,
   items,
   onRegenerateAll,
-  onRegenerateOne
+  onRegenerateOne,
+  onPrintAll,
+  onPrintOne
 }: Readonly<AdminQrSectionProps>): JSX.Element {
   return (
     <Card className="space-y-4">
@@ -52,7 +59,7 @@ function AdminQrSection({
           Gestion basica de QR por escritorio (listar y regenerar).
         </p>
       </div>
-      <div>
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="secondary"
           disabled={isRegeneratingAll}
@@ -61,6 +68,13 @@ function AdminQrSection({
           }}
         >
           {isRegeneratingAll ? "Regenerando..." : "Regenerar QR de todos"}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={items.length === 0}
+          onClick={onPrintAll}
+        >
+          Imprimir todos
         </Button>
       </div>
       {isPending ? <Alert variant="default">Cargando desks admin...</Alert> : null}
@@ -86,12 +100,21 @@ function AdminQrSection({
               <code className="break-all text-xs text-secondary">{item.qrPublicId}</code>
               <Button
                 variant="secondary"
-                disabled={isRegeneratingOne}
+                disabled={isRegeneratingAll || regeneratingDeskId === item.id}
                 onClick={() => {
                   void onRegenerateOne(item.id, item.code);
                 }}
               >
-                {isRegeneratingOne ? "Regenerando..." : "Regenerar QR"}
+                {regeneratingDeskId === item.id ? "Regenerando..." : "Regenerar QR"}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={isRegeneratingAll}
+                onClick={() => {
+                  onPrintOne(item);
+                }}
+              >
+                Imprimir QR
               </Button>
             </li>
           ))}
@@ -110,6 +133,7 @@ export function AdminDesksPageView(): JSX.Element {
     message: null,
     error: null
   });
+  const [regeneratingDeskId, setRegeneratingDeskId] = useState<string | null>(null);
 
   const adminDesksQuery = useAdminDesksQuery(isAuthenticated);
   const regenerateDeskQrMutation = useRegenerateDeskQrMutation();
@@ -123,6 +147,7 @@ export function AdminDesksPageView(): JSX.Element {
 
   const onRegenerateDeskQr = async (deskId: string, deskCode: string) => {
     setFeedback({ message: null, error: null });
+    setRegeneratingDeskId(deskId);
     try {
       await regenerateDeskQrMutation.mutateAsync(deskId);
       setFeedback({
@@ -137,11 +162,14 @@ export function AdminDesksPageView(): JSX.Element {
           "No se pudo regenerar el QR del desk."
         )
       });
+    } finally {
+      setRegeneratingDeskId(null);
     }
   };
 
   const onRegenerateAllDeskQr = async () => {
     setFeedback({ message: null, error: null });
+    setRegeneratingDeskId(null);
     try {
       const result = await regenerateAllDeskQrMutation.mutateAsync();
       setFeedback({
@@ -159,6 +187,23 @@ export function AdminDesksPageView(): JSX.Element {
     }
   };
 
+  const onPrintDeskQr = (item: AdminDeskItem) => {
+    setFeedback({ message: null, error: null });
+    printDeskQrs(`QR ${item.code}`, [item]);
+  };
+
+  const onPrintAllDeskQr = () => {
+    setFeedback({ message: null, error: null });
+    if (adminDesks.length === 0) {
+      setFeedback({
+        message: null,
+        error: "No hay escritorios para imprimir."
+      });
+      return;
+    }
+    printDeskQrs("QR de todos los escritorios", adminDesks);
+  };
+
   return (
     <div className="grid gap-4">
       {feedback.error ? <Alert variant="error">{feedback.error}</Alert> : null}
@@ -169,10 +214,12 @@ export function AdminDesksPageView(): JSX.Element {
         isError={adminDesksQuery.isError}
         errorMessage={adminDesksErrorMessage}
         isRegeneratingAll={regenerateAllDeskQrMutation.isPending}
-        isRegeneratingOne={regenerateDeskQrMutation.isPending}
+        regeneratingDeskId={regeneratingDeskId}
         items={adminDesks}
         onRegenerateAll={onRegenerateAllDeskQr}
         onRegenerateOne={onRegenerateDeskQr}
+        onPrintAll={onPrintAllDeskQr}
+        onPrintOne={onPrintDeskQr}
       />
     </div>
   );
