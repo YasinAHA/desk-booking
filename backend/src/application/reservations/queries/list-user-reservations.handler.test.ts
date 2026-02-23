@@ -33,6 +33,7 @@ test("ListUserReservationsHandler.execute returns rows", async () => {
 			officeId: createOfficeId("office-1"),
 			deskName: "Puesto 01",
 			reservationDate: "2026-02-20",
+			status: "reserved",
 			source: "user",
 			cancelledAt: null,
 		},
