@@ -9,11 +9,23 @@ export type VerifyResponse =
   paths["/auth/verify"]["post"]["responses"][200]["content"]["application/json"];
 export type RefreshResponse =
   paths["/auth/refresh"]["post"]["responses"][200]["content"]["application/json"];
+export type RegisterRequest =
+  paths["/auth/register"]["post"]["requestBody"]["content"]["application/json"];
+export type RegisterResponse =
+  paths["/auth/register"]["post"]["responses"][200]["content"]["application/json"];
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   return request<LoginResponse, LoginRequest>({
     method: "POST",
     path: "/auth/login",
+    body: payload
+  });
+}
+
+export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
+  return request<RegisterResponse, RegisterRequest>({
+    method: "POST",
+    path: "/auth/register",
     body: payload
   });
 }

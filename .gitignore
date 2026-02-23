@@ -42,4 +42,5 @@ deploy/.env
 deploy/.env.backend
 deploy/.env.frontend
 deploy/env/*.env
+deploy/LOCAL-CMDS.md
 

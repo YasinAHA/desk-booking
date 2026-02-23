@@ -10,6 +10,8 @@ This folder contains the reproducible production deployment setup for the monore
 - `env/backend.env.example`: backend environment template.
 - `env/frontend.env.example`: frontend environment template.
 - `scripts/init-db.sh`: applies all migrations and optional seed.
+- `scripts/smoke-check.sh`: quick post-deploy checks (`health`, `register`, `login`).
+- `LOCAL-CMDS.example.md`: local command reference template for ops.
 
 ## Target domain
 
@@ -70,3 +72,9 @@ If you run `evaluator_users` seed:
 
 - `admin@camerfirma.com` / `Admin#2026Segura` (role `admin`)
 - `demo@camerfirma.com` / `Demo#2026Segura` (role `user`)
+
+## Quick smoke checks
+
+After deploy and DB init:
+
+- `sh deploy/scripts/smoke-check.sh https://deskbooking-yasin.duckdns.org`
