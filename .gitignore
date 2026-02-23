@@ -37,3 +37,9 @@ docker/.env
 temp/
 docs/architecture-audit/
 
+# Deploy env secrets
+deploy/.env
+deploy/.env.backend
+deploy/.env.frontend
+deploy/env/*.env
+

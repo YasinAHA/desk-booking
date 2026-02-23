@@ -8,7 +8,7 @@
         "lint:architecture": "eslint \"src/{domain,application,infrastructure,interfaces,composition}/**/*.ts\" --ignore-pattern \"**/*.test.ts\" --max-warnings 0",
         "lint:types": "tsc -p tsconfig.json --noEmit",
         "audit:prod": "npm audit --omit=dev --audit-level=high",
-        "build": "tsc -p tsconfig.json",
+        "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
         "start": "node dist/server.js",
         "test": "tsx --test src/**/*.test.ts",
         "test:e2e:temporal": "tsx --test src/e2e/temporal-invariants.e2e.ts",
@@ -40,6 +40,7 @@
         "eslint": "^10.0.1",
         "eslint-plugin-sonarjs": "^4.0.0",
         "globals": "^17.3.0",
+        "tsc-alias": "^1.8.16",
         "tsx": "^4.19.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0"

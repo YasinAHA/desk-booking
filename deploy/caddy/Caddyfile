@@ -1,0 +1,16 @@
+{$APP_DOMAIN} {
+  log {
+    output stdout
+  }
+
+  encode gzip
+
+  @api path /auth* /desks* /reservations* /metrics* /health /docs* /openapi.json
+  handle @api {
+    reverse_proxy backend:3001
+  }
+
+  handle {
+    reverse_proxy frontend:80
+  }
+}
