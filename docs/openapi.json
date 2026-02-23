@@ -1657,6 +1657,12 @@
                               "null"
                             ]
                           },
+                          "zone": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "status": {
                             "type": "string",
                             "enum": [
@@ -1690,6 +1696,7 @@
                           "officeId",
                           "code",
                           "name",
+                          "zone",
                           "status",
                           "isReserved",
                           "isMine",
@@ -1843,6 +1850,12 @@
                               "null"
                             ]
                           },
+                          "zone": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "status": {
                             "type": "string",
                             "enum": [
@@ -1861,6 +1874,7 @@
                           "officeId",
                           "code",
                           "name",
+                          "zone",
                           "status",
                           "qrPublicId"
                         ]

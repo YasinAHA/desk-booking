@@ -17,6 +17,7 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 						office_id: "office-1",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						is_reserved: false,
 						is_mine: false,
@@ -35,6 +36,7 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 			officeId: createOfficeId("office-1"),
 			code: "D01",
 			name: "Puesto 01",
+			zone: "Zona A",
 			status: "active",
 			isReserved: false,
 			isMine: false,
@@ -54,6 +56,7 @@ test("PgDeskRepository.listForAdmin maps rows with qr_public_id", async () => {
 						office_id: "office-1",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						qr_public_id: "qr-abc",
 					},
@@ -67,6 +70,7 @@ test("PgDeskRepository.listForAdmin maps rows with qr_public_id", async () => {
 	const first = result[0];
 	assert.ok(first);
 	assert.equal(first.qrPublicId, "qr-abc");
+	assert.equal(first.zone, "Zona A");
 });
 
 test("PgDeskRepository.regenerateQrPublicId returns new qr id", async () => {

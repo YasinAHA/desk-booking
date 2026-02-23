@@ -9,6 +9,7 @@ export type DeskAvailability = {
 	officeId: OfficeId;
 	code: string;
 	name: string | null;
+	zone: string | null;
 	status: DeskStatus;
 	isReserved: boolean;
 	isMine: boolean;
@@ -21,6 +22,7 @@ export type AdminDeskRecord = {
 	officeId: OfficeId;
 	code: string;
 	name: string | null;
+	zone: string | null;
 	status: DeskStatus;
 	qrPublicId: string;
 };

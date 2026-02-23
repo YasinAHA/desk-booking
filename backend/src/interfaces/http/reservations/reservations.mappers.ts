@@ -26,6 +26,7 @@ export function mapListUserReservationsResponse(items: ListUserReservationsItems
 			officeId: item.officeId,
 			deskName: item.deskName,
 			reservationDate: item.reservationDate,
+			status: item.status,
 			source: item.source,
 			cancelledAt: item.cancelledAt,
 		})),

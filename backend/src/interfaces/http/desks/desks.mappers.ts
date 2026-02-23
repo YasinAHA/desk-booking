@@ -18,6 +18,7 @@ export function mapAdminDesksResponse(items: ListAdminDesksItems) {
 			officeId: item.officeId,
 			code: item.code,
 			name: item.name,
+			zone: item.zone,
 			status: item.status,
 			qrPublicId: item.qrPublicId,
 		})),

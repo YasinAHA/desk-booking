@@ -59,6 +59,7 @@ type ReservationRecordRow = {
 	office_id: string;
 	desk_name: string;
 	reservation_date: string;
+	status: "reserved" | "checked_in" | "cancelled" | "no_show";
 	source: ReservationRecord["source"];
 	cancelled_at: string | null;
 };
@@ -139,6 +140,10 @@ function isReservationRecordRow(value: unknown): value is ReservationRecordRow {
 		typeof row.office_id === "string" &&
 		typeof row.desk_name === "string" &&
 		typeof row.reservation_date === "string" &&
+		(row.status === "reserved" ||
+			row.status === "checked_in" ||
+			row.status === "cancelled" ||
+			row.status === "no_show") &&
 		(row.source === "user" ||
 			row.source === "admin" ||
 			row.source === "walk_in" ||
@@ -238,7 +243,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 	async listForUser(userId: UserId): Promise<ReservationRecord[]> {
 		const result = await this.db.query(
 			"select r.id, r.desk_id, r.office_id, d.name as desk_name, " +
-				"r.reservation_date::text as reservation_date, r.source, r.cancelled_at " +
+				"r.reservation_date::text as reservation_date, r.status, r.source, r.cancelled_at::text as cancelled_at " +
 				"from reservations r " +
 				"join desks d on d.id = r.desk_id " +
 				"where r.user_id = $1 " +
@@ -252,6 +257,7 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			officeId: createOfficeId(row.office_id),
 			deskName: row.desk_name,
 			reservationDate: row.reservation_date,
+			status: row.status,
 			source: row.source,
 			cancelledAt: row.cancelled_at,
 		}));

@@ -955,6 +955,7 @@ export interface paths {
                                 officeId: string;
                                 code: string;
                                 name: string | null;
+                                zone: string | null;
                                 /** @enum {string} */
                                 status: "active" | "maintenance" | "disabled";
                                 isReserved: boolean;
@@ -1048,6 +1049,7 @@ export interface paths {
                                 officeId: string;
                                 code: string;
                                 name: string | null;
+                                zone: string | null;
                                 /** @enum {string} */
                                 status: "active" | "maintenance" | "disabled";
                                 qrPublicId: string;

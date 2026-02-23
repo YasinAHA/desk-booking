@@ -13,6 +13,7 @@ export type ReservationRecord = {
 	officeId: OfficeId;
 	deskName: string;
 	reservationDate: string;
+	status: Reservation["status"];
 	source: ReservationSource;
 	cancelledAt: string | null;
 };

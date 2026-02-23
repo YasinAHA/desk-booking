@@ -83,6 +83,7 @@ test("GET /desks returns desks for valid token", async () => {
 						office_id: "22222222-2222-2222-8222-222222222222",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						is_reserved: false,
 						is_mine: false,
@@ -182,6 +183,7 @@ test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 						office_id: "22222222-2222-2222-8222-222222222222",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						qr_public_id: "qr-111",
 					},
@@ -209,6 +211,7 @@ test("GET /desks/admin returns desks with qrPublicId for admin", async () => {
 	const body = res.json();
 	assert.equal(body.items.length, 1);
 	assert.equal(body.items[0].qrPublicId, "qr-111");
+	assert.equal(body.items[0].zone, "Zona A");
 	await app.close();
 });
 
@@ -292,6 +295,7 @@ test("GET /desks/admin returns 403 when application handler denies admin access"
 						office_id: "22222222-2222-2222-8222-222222222222",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						qr_public_id: "qr-111",
 					},

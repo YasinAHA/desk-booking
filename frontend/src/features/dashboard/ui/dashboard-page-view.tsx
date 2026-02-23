@@ -23,7 +23,11 @@ import type { ReservationItem } from "@features/reservations/api/reservations-ap
 import { useMyReservationsQuery } from "@features/reservations/queries/use-my-reservations-query";
 
 function getTodayDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getDateLabel(value: string): string {
@@ -130,8 +134,8 @@ const mapIconStyle: Record<MapDeskStatus, string> = {
 };
 
 const bookingStatusStyles: Record<ReservationStatus, string> = {
-  active: "bg-accent/10 text-accent border-accent/20",
-  upcoming: "bg-info/10 text-info border-info/20"
+  active: "bg-desk-available/10 text-desk-available border-desk-available/20",
+  upcoming: "bg-desk-reserved/10 text-desk-reserved border-desk-reserved/20"
 };
 
 const bookingStatusLabels: Record<ReservationStatus, string> = {

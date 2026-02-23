@@ -65,6 +65,7 @@ const listDesksResponseSchema = z.object({
 			officeId: uuidSchema,
 			code: z.string(),
 			name: z.string().nullable(),
+			zone: z.string().nullable(),
 			status: z.enum(["active", "maintenance", "disabled"]),
 			isReserved: z.boolean(),
 			isMine: z.boolean(),
@@ -81,6 +82,7 @@ const adminDesksResponseSchema = z.object({
 			officeId: uuidSchema,
 			code: z.string(),
 			name: z.string().nullable(),
+			zone: z.string().nullable(),
 			status: z.enum(["active", "maintenance", "disabled"]),
 			qrPublicId: z.string().min(10),
 		})
@@ -116,6 +118,7 @@ const listReservationsResponseSchema = z.object({
 			officeId: uuidSchema,
 			deskName: z.string(),
 			reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+			status: z.enum(["reserved", "checked_in", "cancelled", "no_show"]),
 			source: z.enum(["user", "admin", "walk_in", "system"]),
 			cancelledAt: z.string().nullable(),
 		})

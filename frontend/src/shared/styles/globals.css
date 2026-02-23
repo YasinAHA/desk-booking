@@ -24,6 +24,10 @@
   --color-success: hsl(142 67% 40%);
   --color-warning: hsl(25 90% 55%);
   --color-info: hsl(220 60% 55%);
+  --color-desk-available: hsl(168 60% 42%);
+  --color-desk-occupied: hsl(25 90% 55%);
+  --color-desk-reserved: hsl(220 60% 55%);
+  --color-desk-yours: hsl(260 55% 55%);
   --color-ring: hsl(220 60% 25%);
   --color-sidebar: hsl(220 30% 12%);
   --color-sidebar-border: hsl(220 25% 20%);

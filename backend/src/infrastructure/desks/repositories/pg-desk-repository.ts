@@ -24,6 +24,7 @@ type DeskRow = {
 	office_id: string;
 	code: string;
 	name: string | null;
+	zone_name: string | null;
 	status: DeskAvailability["status"];
 	is_reserved: boolean;
 	is_mine: boolean;
@@ -36,6 +37,7 @@ type AdminDeskRow = {
 	office_id: string;
 	code: string;
 	name: string | null;
+	zone_name: string | null;
 	status: AdminDeskRecord["status"];
 	qr_public_id: string;
 };
@@ -51,6 +53,7 @@ function isDeskRow(value: unknown): value is DeskRow {
 		typeof row.office_id === "string" &&
 		typeof row.code === "string" &&
 		(typeof row.name === "string" || row.name === null) &&
+		(typeof row.zone_name === "string" || row.zone_name === null) &&
 		(row.status === "active" || row.status === "maintenance" || row.status === "disabled") &&
 		typeof row.is_reserved === "boolean" &&
 		typeof row.is_mine === "boolean" &&
@@ -77,6 +80,7 @@ function isAdminDeskRow(value: unknown): value is AdminDeskRow {
 		typeof row.office_id === "string" &&
 		typeof row.code === "string" &&
 		(typeof row.name === "string" || row.name === null) &&
+		(typeof row.zone_name === "string" || row.zone_name === null) &&
 		(row.status === "active" || row.status === "maintenance" || row.status === "disabled") &&
 		typeof row.qr_public_id === "string"
 	);
@@ -94,12 +98,13 @@ export class PgDeskRepository implements DeskRepository {
 
 	async listForDate(date: string, userId: UserId): Promise<DeskAvailability[]> {
 		const result = await this.db.query(
-			"select d.id, d.office_id, d.code, d.name, d.status, " +
+			"select d.id, d.office_id, d.code, d.name, z.name as zone_name, d.status, " +
 				"(r.id is not null) as is_reserved, " +
 				"coalesce((r.user_id = $2), false) as is_mine, " +
 				"r.id as reservation_id, " +
 				"case when r.user_id is null then null else concat_ws(' ', u.first_name, u.last_name, u.second_last_name) end as occupant_name " +
 				"from desks d " +
+				"left join zones z on z.id = d.zone_id " +
 				"left join reservations r " +
 				"on r.desk_id = d.id " +
 				"and r.reservation_date = $1 " +
@@ -116,6 +121,7 @@ export class PgDeskRepository implements DeskRepository {
 				officeId: createOfficeId(row.office_id),
 				code: row.code,
 				name: row.name,
+				zone: row.zone_name,
 				status: row.status,
 				isReserved: row.is_reserved,
 				isMine: row.is_mine,
@@ -127,8 +133,10 @@ export class PgDeskRepository implements DeskRepository {
 
 	async listForAdmin(): Promise<AdminDeskRecord[]> {
 		const result = await this.db.query(
-			"select d.id, d.office_id, d.code, d.name, d.status, d.qr_public_id " +
-				"from desks d order by d.code asc"
+			"select d.id, d.office_id, d.code, d.name, z.name as zone_name, d.status, d.qr_public_id " +
+				"from desks d " +
+				"left join zones z on z.id = d.zone_id " +
+				"order by d.code asc"
 		);
 
 		return result.rows.map(raw => {
@@ -138,6 +146,7 @@ export class PgDeskRepository implements DeskRepository {
 				officeId: createOfficeId(row.office_id),
 				code: row.code,
 				name: row.name,
+				zone: row.zone_name,
 				status: row.status,
 				qrPublicId: row.qr_public_id,
 			};
