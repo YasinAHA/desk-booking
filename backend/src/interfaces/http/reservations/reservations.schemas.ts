@@ -1,13 +1,20 @@
-﻿import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
+import {
+	createUuidParamSchema,
+	uuidSchema,
+} from "@interfaces/http/schemas/common-schemas.js";
+import { dateSchema } from "@interfaces/http/schemas/date-schemas.js";
 import { z } from "zod";
 
 export const createReservationSchema = z.object({
 	date: dateSchema,
-	desk_id: z.string().uuid(),
-	office_id: z.string().uuid().optional(),
+	deskId: uuidSchema,
+	officeId: uuidSchema.optional(),
 	source: z.enum(["user", "admin", "walk_in", "system"]).optional(),
 });
 
-export const reservationIdParamSchema = z.object({
-	id: z.string().uuid(),
+export const reservationIdParamSchema = createUuidParamSchema("id");
+
+export const checkInByQrSchema = z.object({
+	date: dateSchema,
+	qrPublicId: z.string().min(10),
 });

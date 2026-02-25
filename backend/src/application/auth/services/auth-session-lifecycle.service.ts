@@ -2,6 +2,7 @@ import type {
 	AuthSessionTokenService,
 	RefreshTokenClaims,
 } from "@application/auth/ports/auth-session-token-service.js";
+import { InvalidTokenError } from "@application/auth/errors/token-errors.js";
 import type { AuthUser } from "@application/auth/types.js";
 
 export type IssuedSessionTokens = {
@@ -19,10 +20,10 @@ export type RotatedSessionTokens = {
 export class AuthSessionLifecycleService {
 	constructor(private readonly tokenService: AuthSessionTokenService) {}
 
-	issueForUser(user: AuthUser): IssuedSessionTokens {
+	async issueForUser(user: AuthUser): Promise<IssuedSessionTokens> {
 		return {
-			accessToken: this.tokenService.createAccessToken(user),
-			refreshToken: this.tokenService.createRefreshToken(user),
+			accessToken: await this.tokenService.createAccessToken(user),
+			refreshToken: await this.tokenService.createRefreshToken(user),
 			user,
 		};
 	}
@@ -44,10 +45,18 @@ export class AuthSessionLifecycleService {
 		};
 
 		return {
-			accessToken: this.tokenService.createAccessToken(user),
-			refreshToken: this.tokenService.createRefreshToken(user),
+			accessToken: await this.tokenService.createAccessToken(user),
+			refreshToken: await this.tokenService.createRefreshToken(user),
 			userId: user.id,
 		};
+	}
+
+	async logout(refreshToken: string, authenticatedUserId: string): Promise<void> {
+		const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+		if (payload.id !== authenticatedUserId) {
+			throw new InvalidTokenError("Refresh token user mismatch");
+		}
+		await this.revokeUsedRefreshToken(payload);
 	}
 
 	private async revokeUsedRefreshToken(payload: RefreshTokenClaims): Promise<void> {

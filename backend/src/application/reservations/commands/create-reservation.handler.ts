@@ -3,15 +3,22 @@ import type {
 	TransactionManager,
 	TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
+import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import {
 	DeskAlreadyReservedError,
 	ReservationDateInvalidError,
 	ReservationDateInPastError,
+	ReservationOnNonWorkingDayError,
+	ReservationSameDayBookingClosedError,
 	UserAlreadyHasReservationError,
 	type ReservationSource,
 } from "@domain/reservations/entities/reservation.js";
+import {
+	isSameDayBookingClosed,
+	isWorkingDayReservationDate,
+} from "@domain/reservations/policies/reservation-policy.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
@@ -27,6 +34,8 @@ type CreateReservationDependencies = {
 	txManager: TransactionManager;
 	commandRepoFactory: (tx: TransactionalContext) => ReservationCommandRepository;
 	queryRepoFactory: (tx: TransactionalContext) => ReservationQueryRepository;
+	noShowPolicyServiceFactory: (tx: TransactionalContext) => NoShowPolicyService;
+	nowProvider?: () => Date;
 };
 
 export class CreateReservationHandler {
@@ -53,10 +62,31 @@ export class CreateReservationHandler {
 		}
 
 		const reservationDateString = reservationDateToString(reservationDate);
+		if (!isWorkingDayReservationDate(reservationDateString)) {
+			throw new ReservationOnNonWorkingDayError();
+		}
 
 		return this.deps.txManager.runInTransaction(async tx => {
 			const queryRepo = this.deps.queryRepoFactory(tx);
 			const commandRepo = this.deps.commandRepoFactory(tx);
+			const noShowPolicyService = this.deps.noShowPolicyServiceFactory(tx);
+
+			await noShowPolicyService.markNoShowExpiredForDate(reservationDateString);
+
+			const bookingPolicyContext =
+				await queryRepo.getDeskBookingPolicyContext(deskIdVO);
+			const now = this.deps.nowProvider?.();
+			if (
+				bookingPolicyContext &&
+				isSameDayBookingClosed({
+					reservationDate: reservationDateString,
+					timezone: bookingPolicyContext.timezone,
+					checkinAllowedFrom: bookingPolicyContext.checkinAllowedFrom,
+					...(now ? { now } : {}),
+				})
+			) {
+				throw new ReservationSameDayBookingClosedError();
+			}
 
 			// Deterministic UX: check desk conflict first, then user/day conflict.
 			const deskAlreadyReserved = await queryRepo.hasActiveReservationForDeskOnDate(

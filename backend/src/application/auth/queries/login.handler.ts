@@ -1,5 +1,6 @@
 ﻿import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import type { AuthDependencies, LoginResult } from "@application/auth/types.js";
+import { InvalidEmailError } from "@domain/auth/errors/auth-domain-errors.js";
 import { createEmail, emailToString } from "@domain/auth/value-objects/email.js";
 import { userIdToString } from "@domain/auth/value-objects/user-id.js";
 
@@ -19,7 +20,10 @@ export class LoginHandler {
 		let emailVO;
 		try {
 			emailVO = createEmail(query.email);
-		} catch {
+		} catch (error) {
+			if (!(error instanceof InvalidEmailError)) {
+				throw error;
+			}
 			return { status: "INVALID_CREDENTIALS" };
 		}
 
@@ -50,5 +54,3 @@ export class LoginHandler {
 		};
 	}
 }
-
-

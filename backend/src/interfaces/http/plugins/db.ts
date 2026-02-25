@@ -1,8 +1,9 @@
-import type { FastifyInstance, FastifyPluginAsync } from "fastify";
+﻿import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import { Pool } from "pg";
 
 import { env } from "@config/env.js";
+import { buildPgRuntimeConfig, createPgPool } from "@config/pg-runtime.js";
 
 type DbQueryResult = {
 	rows: unknown[];
@@ -16,23 +17,15 @@ type DbDecorated = {
     pool: Pool;
 };
 
-function getDbConfig() {
-    return {
-        connectionString: env.DATABASE_URL,
-        ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
-        max: env.DB_POOL_MAX,
-    };
-}
-
 const dbPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
-    const cfg = getDbConfig();
-    const pool = new Pool({
-        connectionString: cfg.connectionString,
-        ssl: cfg.ssl,
-        max: cfg.max,
+    const cfg = buildPgRuntimeConfig({
+        DATABASE_URL: env.DATABASE_URL,
+        DB_SSL: env.DB_SSL,
+        DB_POOL_MAX: env.DB_POOL_MAX,
     });
+    const pool = createPgPool(cfg);
 
-    // Test inicial rápido (falla pronto si hay config mala)
+    // Initial quick check (fail fast if config is invalid)
     await pool.query("select 1 as ok");
 
     const db: DbDecorated = {
@@ -61,3 +54,4 @@ const dbPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 export const registerDbPlugin = fp(dbPlugin, {
     name: "db",
 });
+

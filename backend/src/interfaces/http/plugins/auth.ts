@@ -1,75 +1,77 @@
-import jwt from "@fastify/jwt";
 import type {
-    FastifyInstance,
-    FastifyPluginAsync,
-    FastifyReply,
-    FastifyRequest,
-    HookHandlerDoneFunction,
+	FastifyPluginAsync,
+	FastifyInstance,
+	FastifyReply,
+	FastifyRequest,
+	HookHandlerDoneFunction,
 } from "fastify";
 import fp from "fastify-plugin";
 
-import { env } from "@config/env.js";
+import type { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import { InvalidTokenError, RevokedTokenError } from "@application/auth/errors/token-errors.js";
 import { sendError } from "@interfaces/http/http-errors.js";
 
-const authPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
-    await app.register(jwt, {
-        secret: env.JWT_SECRET,
-    });
+function extractBearerToken(req: FastifyRequest): string | null {
+    const header = req.headers.authorization;
+    if (!header) {
+        return null;
+    }
 
-    app.decorate(
-        "requireAuth",
-        (
-            req: FastifyRequest,
-            reply: FastifyReply,
-            done: HookHandlerDoneFunction
-        ) => {
-            void (async () => {
-                try {
-                    await req.jwtVerify();
+    const [scheme, token] = header.split(" ");
+    if (scheme?.toLowerCase() !== "bearer" || !token) {
+        return null;
+    }
 
-                    const payload = req.user as {
-                        id?: string;
-                        jti?: string;
-                        iat?: number;
-                    };
+    return token;
+}
 
-                    if (typeof payload.jti === "string") {
-                        const revoked = await app.db.query(
-                            "select 1 from token_revocation where jti = $1 limit 1",
-                            [payload.jti]
-                        );
-                        if ((revoked.rowCount ?? 0) > 0) {
-                            throw new Error("revoked");
-                        }
-                    }
-
-                    if (typeof payload.id === "string" && typeof payload.iat === "number") {
-                        const userResult = await app.db.query(
-                            "select token_valid_after from users where id = $1 limit 1",
-                            [payload.id]
-                        );
-                        const row = userResult.rows[0] as { token_valid_after?: Date | string | null } | undefined;
-                        if (row?.token_valid_after) {
-                            const tokenValidAfter = new Date(row.token_valid_after);
-                            if (!Number.isNaN(tokenValidAfter.getTime())) {
-                                const issuedAtMs = payload.iat * 1000;
-                                if (issuedAtMs < tokenValidAfter.getTime()) {
-                                    throw new Error("token_invalidated");
-                                }
-                            }
-                        }
-                    }
-
-                    done();
-                } catch {
-                    sendError(reply, 401, "UNAUTHORIZED", "Unauthorized");
-                    done();
-                }
-            })();
-        }
-    );
+type AuthPluginOptions = {
+	authSessionLifecycleService: AuthSessionLifecycleService;
 };
 
-export const registerAuthPlugin = fp(authPlugin, {
+const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (
+	app: FastifyInstance,
+	options
+) => {
+	app.decorate(
+		"requireAuth",
+		(
+			req: FastifyRequest,
+			reply: FastifyReply,
+			done: HookHandlerDoneFunction
+		) => {
+			void (async () => {
+				try {
+					const token = extractBearerToken(req);
+					if (!token) {
+						sendError(reply, 401, "UNAUTHORIZED", "Unauthorized");
+						done();
+						return;
+					}
+
+					const payload = await options.authSessionLifecycleService.verifyAccessToken(token);
+					req.user = {
+						id: payload.id,
+						email: payload.email,
+						firstName: payload.firstName,
+						lastName: payload.lastName,
+						secondLastName: payload.secondLastName,
+					};
+					done();
+				} catch (err) {
+					if (err instanceof InvalidTokenError || err instanceof RevokedTokenError) {
+						sendError(reply, 401, "UNAUTHORIZED", "Unauthorized");
+					} else {
+						req.log.error({ err, event: "auth.require_auth_failed" }, "Auth guard failed");
+						sendError(reply, 500, "INTERNAL_ERROR", "Unexpected error");
+					}
+					done();
+				}
+			})();
+		}
+	);
+};
+
+export const registerAuthPlugin = fp<AuthPluginOptions>(authPlugin, {
     name: "auth",
 });

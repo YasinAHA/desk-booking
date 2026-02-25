@@ -24,6 +24,9 @@ Guía operativa para cambios de backend.
 
 ## Reglas de implementación
 - Naming de archivos y carpetas: `kebab-case`.
+- Naming de contrato HTTP (request/response): `camelCase`.
+- Naming DB/SQL: `snake_case`.
+- Naming en `domain`/`application`: `camelCase`.
 - Commands y queries separados cuando aporta claridad.
 - Validación de entrada en HTTP (`schemas`), no en repositorios.
 - Errores de negocio tipados; evitar `Error("CODE")` ad hoc.

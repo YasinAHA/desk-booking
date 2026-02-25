@@ -1,48 +1,60 @@
-﻿# Deployment
+# Deployment
 
-Este documento define el enfoque de despliegue para la corrección del TFM y el futuro uso interno.
+Este documento resume el despliegue de correccion del TFM y referencia el flujo operativo actual.
 
-## Objetivo
-- Correccion TFM: despliegue temporal y de bajo coste.
-- Uso interno: se definira despues (entorno estable con controles de acceso y roles).
+## Entorno de correccion (actual)
 
-## Entornos
-- `local`: desarrollo en maquina local con Docker.
-- `correction`: despliegue temporal para la evaluacion del TFM.
-- `internal`: uso interno en la empresa (pendiente de definir).
+- URL publica: `https://deskbooking-yasin.duckdns.org`
+- Topologia: `caddy` (TLS + reverse proxy) + `frontend` + `backend` + `postgres` via Docker Compose.
+- Origen de verdad para despliegue: `deploy/README.md`.
 
-La seleccion de entorno se define por `NODE_ENV` y las variables en `backend/.env`.
+## Acceso para evaluacion
+
+- Las credenciales de usuario demo y administrador se facilitan por correo al tutor.
+- Si existe una incidencia puntual de login, el flujo de registro permanece habilitado en la UI.
 
 ## Variables clave
-- `NODE_ENV`: `development`, `test`, `production`
-- `HOST`
-- `DATABASE_URL`
-- `DB_SSL`
-- `DB_POOL_MAX`
-- `JWT_SECRET`
-- `ALLOWED_EMAIL_DOMAINS`
+
+- Compose: `deploy/.env`
+- Backend: `deploy/.env.backend`
+- Frontend build-time: `deploy/.env.frontend` y `VITE_API_BASE_URL` en `deploy/.env`
+
+Campos criticos:
+
+- `APP_DOMAIN`
 - `APP_BASE_URL`
+- `FRONTEND_BASE_URL`
 - `CORS_ORIGINS`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `POSTGRES_PASSWORD`
 
-## Migraciones y seeds
-- Ejecutar `npm run db:migrate` en cada despliegue.
-- Ejecutar `npm run db:seed:correction` solo para la corrección TFM.
+## Base de datos
 
-## Despliegue gratuito (correction)
-Opciones previstas (por definir la elegida):
-- Hosting API: Render, Railway, Fly.io
-- Base de datos: proveedor Postgres con plan gratuito
-- SMTP: proveedor con plan gratuito (o SMTP corporativo si aplica)
+- Migraciones: `db/migrations/001..006`
+- Seeds recomendados para evaluacion:
+  - `correction`
+  - `evaluator_users`
 
-Notas:
-- El entorno de corrección no debe reutilizar credenciales internas.
-- No se habilita acceso de administracion ni roles avanzados en esta fase.
+Comandos:
 
-## SMTP
-- Local: Mailpit (docker-compose).
-- Correction: SMTP gratuito o corporativo (pendiente de seleccionar proveedor).
+```bash
+sh deploy/scripts/init-db.sh correction
+cat db/seeds/evaluator_users.sql | docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env exec -T postgres psql -U deskbooking -d deskbooking -v ON_ERROR_STOP=1 -f -
+```
 
-## CI
-- GitHub Actions ejecuta test + build en `main` y `next`.
+## Validacion post-deploy
 
+```bash
+sh deploy/scripts/smoke-check.sh https://deskbooking-yasin.duckdns.org
+```
+
+Checks minimos:
+
+- `GET /health` -> `200`
+- `POST /auth/register` -> `{"ok":true}`
+- `POST /auth/login` con usuario confirmado (demo/admin) -> `200`
+
+## Nota operativa
+
+`/docs` (Swagger UI) no esta habilitado en `NODE_ENV=production` por configuracion del backend.

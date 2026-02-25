@@ -13,6 +13,12 @@ Validación backend actual: `lint`, `lint:types`, `build` y `test` en verde (`96
 - Confirmación de email y recuperación de contraseña con patrón outbox.
 - Base de seguridad y observabilidad para evolución `v0.8.0+`.
 
+## Acceso a la plataforma (evaluacion)
+
+- URL publica: `https://deskbooking-yasin.duckdns.org`
+- Las credenciales de acceso (usuario demo y administrador) se entregan por correo al tutor para revision funcional.
+- Si hay incidencia puntual con el inicio de sesion, el registro de nuevos usuarios permanece habilitado desde la propia aplicacion.
+
 ## Estructura
 
 ```text
@@ -29,8 +35,8 @@ desk-booking/
 ## Stack
 
 - Backend: Node.js, Fastify, TypeScript, PostgreSQL, Zod, Argon2, JWT.
-- Infra local: Docker Compose (Postgres, pgAdmin, Mailpit, backend y outbox-worker).
-- Frontend: HTML/CSS/JS vanilla.
+- Infra local: Docker Compose (Postgres, pgAdmin, Mailpit, backend, outbox-worker y frontend).
+- Frontend: React 18, TypeScript, Vite, React Router, TanStack Query.
 
 ## Requisitos
 
@@ -94,11 +100,23 @@ npm run dev:api
 En raíz:
 
 - `npm run dev:db`
+- `npm run dev:api:prod:docker`
+- `npm run dev:api:prod:docker:logs`
+- `npm run dev:api:prod:docker:down`
+- `npm run dev:front:docker`
+- `npm run dev:front:docker:logs`
+- `npm run dev:front:docker:down`
+- `npm run dev:front:prod:docker`
+- `npm run dev:front:prod:docker:down`
 - `npm run dev:api`
 - `npm run db:migrate`
 - `npm run db:seed:dev`
 - `npm run db:seed:test`
 - `npm run db:seed:correction`
+- `npm run audit:prod`
+- `npm run audit:full`
+- `npm run qa:precommit`
+- `npm run qa:prepush`
 
 En backend:
 
@@ -107,6 +125,37 @@ En backend:
 - `npm -w backend run build`
 - `npm -w backend run start`
 - `npm -w backend run worker:outbox`
+- `npm -w backend run audit:prod`
+
+En frontend:
+
+- `npm -w frontend run dev`
+- `npm -w frontend run lint`
+- `npm -w frontend run typecheck`
+- `npm -w frontend run test`
+- `npm -w frontend run build`
+- `npm -w frontend run generate:openapi-types`
+
+Security note: CI blocks releases only on runtime dependency vulnerabilities (`npm run audit:prod`). `npm run audit:full` is informational and may include dev-only vulnerabilities from lint/doc toolchains.
+
+## Calidad global (monorepo)
+
+- Hooks en raíz de repo (`husky`) para backend y frontend.
+- `pre-commit`: `lint` + `typecheck`.
+- `pre-push`: `test`.
+- Objetivo: quality gates unificados y evitar drift entre áreas.
+- Regla operativa: no merge a `main`/`next` con CI en rojo.
+
+## Observabilidad global (Sentry)
+
+- Estrategia global habilitable por entorno para backend y frontend.
+- Variables previstas:
+  - `SENTRY_DSN_BACKEND`
+  - `SENTRY_DSN_FRONTEND`
+  - `SENTRY_ENV`
+  - `APP_VERSION`
+- Regla de seguridad: nunca enviar tokens, emails ni datos sensibles.
+- Estado actual: base global preparada (variables y logging de activación), integración de envío a Sentry planificada por fases.
 
 ## API (resumen)
 
@@ -139,6 +188,10 @@ Además de las típicas (`DATABASE_URL`, `JWT_SECRET`), el backend usa:
 - `APP_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`, `ALLOWED_EMAIL_DOMAINS`
 
 Referencia completa: `backend/.env.example`
+
+Variables frontend clave:
+
+- `VITE_API_BASE_URL` (default local: `http://localhost:3001`)
 
 ## Documentación principal
 

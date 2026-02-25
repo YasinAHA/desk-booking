@@ -1,10 +1,22 @@
-﻿import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
+﻿import type { RegenerateAllDesksQrCommand } from "@application/desks/commands/regenerate-all-desks-qr.command.js";
+import type { RegenerateAllDesksQrHandler } from "@application/desks/commands/regenerate-all-desks-qr.handler.js";
+import type { RegenerateDeskQrCommand } from "@application/desks/commands/regenerate-desk-qr.command.js";
+import type { RegenerateDeskQrHandler } from "@application/desks/commands/regenerate-desk-qr.handler.js";
+import { AdminAuthorizationError } from "@application/desks/errors/admin-authorization-error.js";
+import type { ListAdminDesksHandler } from "@application/desks/queries/list-admin-desks.handler.js";
+import type { ListAdminDesksQuery } from "@application/desks/queries/list-admin-desks.query.js";
+import type { ListDesksHandler } from "@application/desks/queries/list-desks.handler.js";
 import type { ListDesksQuery } from "@application/desks/queries/list-desks.query.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
-import { mapListDesksResponse } from "./desks.mappers.js";
-import { listDesksSchema } from "./desks.schemas.js";
+import {
+	mapAdminDesksResponse,
+	mapListDesksResponse,
+	mapRegenerateAllDesksQrResponse,
+	mapRegenerateDeskQrResponse,
+} from "./desks.mappers.js";
+import { deskIdParamSchema, listDesksSchema } from "./desks.schemas.js";
 
 /**
  * DeskController: Handles HTTP layer concerns for desk operations
@@ -13,7 +25,12 @@ import { listDesksSchema } from "./desks.schemas.js";
  * - Error handling
  */
 export class DeskController {
-	constructor(private readonly listDesksHandler: ListDesksHandler) {}
+	constructor(
+		private readonly listDesksHandler: ListDesksHandler,
+		private readonly listAdminDesksHandler: ListAdminDesksHandler,
+		private readonly regenerateDeskQrHandler: RegenerateDeskQrHandler,
+		private readonly regenerateAllDesksQrHandler: RegenerateAllDesksQrHandler
+	) {}
 
 	async listForDate(req: FastifyRequest, reply: FastifyReply) {
 		const parse = listDesksSchema.safeParse(req.query);
@@ -26,5 +43,54 @@ export class DeskController {
 		const desks = await this.listDesksHandler.execute(query);
 
 		return reply.send(mapListDesksResponse(parse.data.date, desks));
+	}
+
+	async listAdmin(req: FastifyRequest, reply: FastifyReply) {
+		const query: ListAdminDesksQuery = { requestedByUserId: req.user.id };
+		const items = await this.executeAdminAction(() =>
+			this.listAdminDesksHandler.execute(query)
+		);
+		return reply.send(mapAdminDesksResponse(items));
+	}
+
+	async regenerateQr(req: FastifyRequest, reply: FastifyReply) {
+		const parse = deskIdParamSchema.safeParse(req.params);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid desk id");
+		}
+
+		const command: RegenerateDeskQrCommand = {
+			deskId: parse.data.id,
+			requestedByUserId: req.user.id,
+		};
+		const qrPublicId = await this.executeAdminAction(() =>
+			this.regenerateDeskQrHandler.execute(command)
+		);
+		if (!qrPublicId) {
+			throwHttpError(404, "DESK_NOT_FOUND", "Desk not found");
+		}
+
+		return reply.send(mapRegenerateDeskQrResponse(parse.data.id, qrPublicId));
+	}
+
+	async regenerateAllQr(req: FastifyRequest, reply: FastifyReply) {
+		const command: RegenerateAllDesksQrCommand = {
+			requestedByUserId: req.user.id,
+		};
+		const updated = await this.executeAdminAction(() =>
+			this.regenerateAllDesksQrHandler.execute(command)
+		);
+		return reply.send(mapRegenerateAllDesksQrResponse(updated));
+	}
+
+	private async executeAdminAction<T>(action: () => Promise<T>): Promise<T> {
+		try {
+			return await action();
+		} catch (error) {
+			if (error instanceof AdminAuthorizationError) {
+				throwHttpError(403, "FORBIDDEN", "Forbidden");
+			}
+			throw error;
+		}
 	}
 }

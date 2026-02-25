@@ -29,6 +29,13 @@ Monorepo con backend propio y frontend ligero:
 - Serialización/formatos se resuelven en `infrastructure`.
 - Constantes de negocio y límites compartidos en `src/config/constants.ts`.
 
+### Convención de naming (normativa)
+- DB/SQL (`migrations`, tablas, columnas): `snake_case`.
+- Código de `domain` y `application`: `camelCase`.
+- Contrato HTTP público (request/response y OpenAPI): `camelCase`.
+- La traducción de naming se hace en mappers/adapters de `interfaces/http` (y en `infrastructure` para row DB -> modelo interno cuando aplique).
+- No introducir nuevos endpoints/respuestas en `snake_case`.
+
 ### CQRS (criterio pragmatica)
 - CQRS estricto solo se aplica cuando hay lecturas complejas o proyecciones.
 - En v1 se usa separacion comando/consulta donde aporta claridad (reservations).
@@ -59,6 +66,16 @@ Monorepo con backend propio y frontend ligero:
 - Dominio permitido por email (`ALLOWED_EMAIL_DOMAINS`).
 - Confirmacion por email en registro.
 - Restricciones de integridad en DB (índices unicos por dia).
+
+## Reglas normativas de check-in QR
+- `qr_public_id` de `desks` es estable (QR fijo por mesa) y se considera identificador público operativo.
+- La regeneración de `qr_public_id` es una acción administrativa excepcional y debe invalidar inmediatamente el QR anterior.
+- Tras regeneración de `qr_public_id`, es obligatorio reemplazar la señalética física del desk.
+- `POST /reservations/check-in/qr` solo es válido si existe una reserva del usuario para el desk y la fecha, con estado activo (`reserved`).
+- La ventana de check-in se evalúa con la política de oficina (`checkin_allowed_from`, `checkin_cutoff_time`) y timezone de la oficina.
+- Si una reserva permanece en `reserved` y supera `checkin_cutoff_time`, debe transicionar a `no_show`.
+- Una reserva en `no_show` deja de ser activa y el desk pasa a ser elegible para `walk_in`.
+- `walk_in` solo es válido si no existe reserva activa (`reserved`/`checked_in`) para el desk en la fecha y el usuario no acapara otra reserva activa incompatible.
 
 ## Observabilidad
 - Logs estructurados por request con `request id`.

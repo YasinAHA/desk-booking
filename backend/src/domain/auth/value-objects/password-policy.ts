@@ -23,13 +23,14 @@ export class PasswordPolicyError extends Error {
 	}
 }
 
+export const PASSWORD_POLICY_MIN_LENGTH = 12;
+
 export function validatePasswordPolicy(password: string): void {
-	const minLength = 12;
 	const errors: string[] = [];
 
 	// Length validation
-	if (password.length < minLength) {
-		errors.push(`Password must be at least ${minLength} characters long`);
+	if (password.length < PASSWORD_POLICY_MIN_LENGTH) {
+		errors.push(`Password must be at least ${PASSWORD_POLICY_MIN_LENGTH} characters long`);
 	}
 
 	// Uppercase validation
@@ -43,7 +44,7 @@ export function validatePasswordPolicy(password: string): void {
 	}
 
 	// Digit validation
-	if (!/[0-9]/.test(password)) {
+	if (!/\d/.test(password)) {
 		errors.push("Password must contain at least one digit (0-9)");
 	}
 

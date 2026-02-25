@@ -1,12 +1,14 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import Fastify, { type FastifyError, type FastifyInstance, type FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 
 import { ZodError } from "zod";
 
 import { env } from "@config/env.js";
+import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import { buildJwtTokenService } from "@composition/auth.container.js";
 import { authRoutes } from "@interfaces/http/auth/auth.routes.js";
 import { desksRoutes } from "@interfaces/http/desks/desks.routes.js";
 import { isHttpError, sendError } from "@interfaces/http/http-errors.js";
@@ -14,23 +16,32 @@ import { recordRequest } from "@interfaces/http/metrics/metrics.js";
 import { metricsRoutes } from "@interfaces/http/metrics/metrics.routes.js";
 import { registerAuthPlugin } from "@interfaces/http/plugins/auth.js";
 import { registerDbPlugin } from "@interfaces/http/plugins/db.js";
+import { registerSwaggerPlugin } from "@interfaces/http/plugins/swagger.js";
 import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies.js";
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
 
 type RequestWithUnknownBody = FastifyRequest & {
-	body: unknown;
+    body: unknown;
 };
 
 function tryParseBody(body: unknown): unknown {
-	if (typeof body !== "string" || body.length === 0) {
-		return body;
-	}
+    if (typeof body !== "string" || body.length === 0) {
+        return body;
+    }
 
-	try {
-		return JSON.parse(body);
-	} catch {
-		return body;
+    try {
+        return JSON.parse(body);
+    } catch {
+        return body;
+    }
+}
+
+function isFastifyErrorWithStatus(err: unknown): err is FastifyError {
+	if (!err || typeof err !== "object") {
+		return false;
 	}
+	const maybeErr = err as { statusCode?: unknown };
+	return typeof maybeErr.statusCode === "number";
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -82,18 +93,32 @@ export async function buildApp(): Promise<FastifyInstance> {
     // --- CORS (ajusta origin cuando haya frontend real) ---
     await app.register(cors, {
         origin: (origin, cb) => {
-            if (!origin) {
-                cb(null, true);
-                return;
+            // Requests without Origin (curl, Postman, server-to-server) => allow
+            if (!origin) return cb(null, true);
+
+            const isDev = env.NODE_ENV !== "production";
+
+            // Dev convenience: allow any localhost/127.0.0.1 origin
+            if (isDev) {
+                try {
+                    const { hostname } = new URL(origin);
+                    if (hostname === "localhost" || hostname === "127.0.0.1") {
+                        return cb(null, true);
+                    }
+                } catch {
+                    // invalid origin => deny without throwing
+                    return cb(null, false);
+                }
             }
 
+            // Strict allowlist from env
             if (env.CORS_ORIGINS.length === 0) {
-                cb(new Error("CORS origin not allowed"), false);
-                return;
+                // No origins configured -> deny without crashing (important)
+                return cb(null, false);
             }
 
             const allowed = env.CORS_ORIGINS.includes(origin);
-            cb(allowed ? null : new Error("CORS origin not allowed"), allowed);
+            return cb(null, allowed); // <-- key: never throw
         },
         credentials: true,
         methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -107,9 +132,9 @@ export async function buildApp(): Promise<FastifyInstance> {
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
+                styleSrc: ["'self'", "https:"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:"],
+                imgSrc: ["'self'", "data:", "https:"],
             },
         },
         hsts: {
@@ -127,13 +152,29 @@ export async function buildApp(): Promise<FastifyInstance> {
     // --- DB ---
     await app.register(registerDbPlugin);
 
+    // --- Session lifecycle service (single source for token verify/refresh/revocation checks) ---
+    const jwtTokenService = buildJwtTokenService(app);
+    const authSessionLifecycleService = new AuthSessionLifecycleService(jwtTokenService);
+    app.decorate("authSessionLifecycleService", authSessionLifecycleService);
+
     // --- Auth ---
-    await app.register(registerAuthPlugin);
+    await app.register(registerAuthPlugin, { authSessionLifecycleService });
+
+    // --- OpenAPI / Swagger (non-prod, non-test) ---
+    if (env.NODE_ENV !== "production" && env.NODE_ENV !== "test") {
+        await registerSwaggerPlugin(app);
+    }
 
     // --- Error handler ---
     app.setErrorHandler((err, _req, reply) => {
         if (err instanceof ZodError) {
             return sendError(reply, 400, "BAD_REQUEST", "Invalid payload");
+        }
+        if (isFastifyErrorWithStatus(err)) {
+            const statusCode = err.statusCode ?? 500;
+            const code = err.code ?? (statusCode >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST");
+            const message = err.message || (statusCode >= 500 ? "Unexpected error" : "Bad request");
+            return sendError(reply, statusCode, code, message);
         }
         if (isHttpError(err)) {
             return sendError(reply, err.statusCode, err.code, err.message);

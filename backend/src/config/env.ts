@@ -4,9 +4,10 @@ const nodeEnv = process.env.NODE_ENV || "development";
 
 const envSchema = z.object({
     NODE_ENV: z.string().default("development"),
+    APP_VERSION: z.string().default("dev"),
     PORT: z.coerce.number().int().positive().default(3001),
     HOST: z.string().default("0.0.0.0"),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     JWT_SECRET: z.string().min(1),
     JWT_EXPIRATION: z.string().default("15m"),
     JWT_REFRESH_SECRET:
@@ -14,6 +15,25 @@ const envSchema = z.object({
             ? z.string().min(32) // Production: strong enforcement
             : z.string().default("dev-refresh-secret-change-in-production"), // Dev/test: safe default
     JWT_REFRESH_EXPIRATION: z.string().default("7d"),
+    AUTH_REFRESH_COOKIE_SECURE: z.preprocess(
+        value => {
+            if (value === undefined || value === "") {
+                return nodeEnv === "production";
+            }
+            if (value === "true") {
+                return true;
+            }
+            if (value === "false") {
+                return false;
+            }
+            return value;
+        },
+        z.boolean()
+    ),
+    AUTH_REFRESH_COOKIE_SAME_SITE: z
+        .enum(["lax", "strict", "none"])
+        .default("lax"),
+    AUTH_REFRESH_COOKIE_DOMAIN: z.string().default(""),
     JWT_ISSUER: z.string().default("desk-booking"),
     JWT_AUDIENCE: z.string().default("desk-booking-api"),
     ALLOWED_EMAIL_DOMAINS: z.string().default("camerfirma.com"),
@@ -24,8 +44,11 @@ const envSchema = z.object({
     SMTP_FROM: z
         .string()
         .default("Desk Booking <no-reply@camerfirma.com>"),
-    APP_BASE_URL: z.string().url().default("http://localhost:3001"),
-    FRONTEND_BASE_URL: z.string().url().default("http://localhost:5500"),
+    APP_BASE_URL: z.url().default("http://localhost:3001"),
+    FRONTEND_BASE_URL: z.url().default("http://localhost:5500"),
+    SENTRY_DSN_BACKEND: z.string().default(""),
+    SENTRY_DSN_FRONTEND: z.string().default(""),
+    SENTRY_ENV: z.string().default(nodeEnv),
     CORS_ORIGINS: z.string().default(""),
     DB_SSL: z.preprocess(
         value => {

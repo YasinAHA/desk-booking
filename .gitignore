@@ -13,6 +13,8 @@ pnpm-debug.log*
 
 # Build outputs
 backend/dist/
+/.openapi/
+backend/.openapi/
 frontend/dist/
 **/*.tsbuildinfo
 
@@ -31,3 +33,14 @@ Thumbs.db
 
 # Docker
 docker/.env
+
+temp/
+docs/architecture-audit/
+
+# Deploy env secrets
+deploy/.env
+deploy/.env.backend
+deploy/.env.frontend
+deploy/env/*.env
+deploy/LOCAL-CMDS.md
+

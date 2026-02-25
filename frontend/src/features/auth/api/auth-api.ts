@@ -1,0 +1,58 @@
+﻿import { request } from "@shared/api/http-client";
+import type { paths } from "@shared/openapi";
+
+export type LoginRequest =
+  paths["/auth/login"]["post"]["requestBody"]["content"]["application/json"];
+export type LoginResponse =
+  paths["/auth/login"]["post"]["responses"][200]["content"]["application/json"];
+export type VerifyResponse =
+  paths["/auth/verify"]["post"]["responses"][200]["content"]["application/json"];
+export type RefreshResponse =
+  paths["/auth/refresh"]["post"]["responses"][200]["content"]["application/json"];
+export type RegisterRequest =
+  paths["/auth/register"]["post"]["requestBody"]["content"]["application/json"];
+export type RegisterResponse =
+  paths["/auth/register"]["post"]["responses"][200]["content"]["application/json"];
+
+export async function login(payload: LoginRequest): Promise<LoginResponse> {
+  return request<LoginResponse, LoginRequest>({
+    method: "POST",
+    path: "/auth/login",
+    body: payload
+  });
+}
+
+export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
+  return request<RegisterResponse, RegisterRequest>({
+    method: "POST",
+    path: "/auth/register",
+    body: payload
+  });
+}
+
+export async function verify(token: string): Promise<VerifyResponse> {
+  return request<VerifyResponse, { token: string }>({
+    method: "POST",
+    path: "/auth/verify",
+    body: { token },
+    retryOnUnauthorized: false
+  });
+}
+
+export async function refreshSession(): Promise<RefreshResponse> {
+  return request<RefreshResponse>({
+    method: "POST",
+    path: "/auth/refresh",
+    retryOnUnauthorized: false
+  });
+}
+
+export async function logout(): Promise<void> {
+  await request<void>({
+    method: "POST",
+    path: "/auth/logout",
+    auth: true,
+    retryOnUnauthorized: false
+  });
+}
+

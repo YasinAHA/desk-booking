@@ -6,6 +6,7 @@ import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
 import type { PasswordResetRepository } from "@application/auth/ports/password-reset-repository.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
+import { RecoveryAttemptPolicyService } from "@application/auth/services/recovery-attempt-policy.service.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
 import {
 	createTransactionalContext,
@@ -45,6 +46,10 @@ function buildDeps(overrides?: {
 		generate: () => "raw-token",
 		hash: token => `hash:${token}`,
 	};
+	const recoveryAttemptPolicyService = new RecoveryAttemptPolicyService(tokenService, {
+		forgotPasswordIdentifier: { max: 10, timeWindowMs: 60_000 },
+		resetPasswordIdentifier: { max: 10, timeWindowMs: 60_000 },
+	});
 	const txManager: TransactionManager = {
 		runInTransaction: async <T>(callback: (tx: TransactionalContext) => Promise<T>) => {
 			const tx = createTransactionalContext({
@@ -75,6 +80,7 @@ function buildDeps(overrides?: {
 		txManager,
 		userRepo,
 		passwordResetRepoFactory: () => passwordResetRepo,
+		recoveryAttemptPolicyService,
 		emailOutbox,
 		passwordResetBaseUrl: "http://localhost:3001",
 	};
@@ -83,7 +89,7 @@ function buildDeps(overrides?: {
 test("ForgotPasswordHandler.execute returns OK for unknown user (anti-enumeration)", async () => {
 	const handler = new ForgotPasswordHandler(buildDeps());
 	const result = await handler.execute({ email: "unknown@camerfirma.com" });
-	assert.deepEqual(result, { status: "OK" });
+	assert.deepEqual(result, { status: "OK", emailHash: "hash:unknown@camerfirma.com" });
 });
 
 test("ForgotPasswordHandler.execute creates reset and enqueues email for existing user", async () => {
@@ -120,9 +126,32 @@ test("ForgotPasswordHandler.execute creates reset and enqueues email for existin
 	);
 	const result = await handler.execute({ email: "user@camerfirma.com" });
 
-	assert.deepEqual(result, { status: "OK" });
+	assert.deepEqual(result, { status: "OK", emailHash: "hash:user@camerfirma.com" });
 	assert.equal(created, true);
 	assert.equal(enqueued, true);
 	assert.match(emailBody, /#token=raw-token/);
 	assert.doesNotMatch(emailBody, /\?token=/);
+});
+
+test("ForgotPasswordHandler.execute returns RATE_LIMITED when identifier limit is reached", async () => {
+	const tokenService: TokenService = {
+		generate: () => "raw-token",
+		hash: token => `hash:${token}`,
+	};
+	const recoveryAttemptPolicyService = new RecoveryAttemptPolicyService(tokenService, {
+		forgotPasswordIdentifier: { max: 1, timeWindowMs: 60_000 },
+		resetPasswordIdentifier: { max: 10, timeWindowMs: 60_000 },
+	});
+	const handler = new ForgotPasswordHandler({
+		...buildDeps(),
+		recoveryAttemptPolicyService,
+	});
+
+	await handler.execute({ email: "user@camerfirma.com" });
+	const second = await handler.execute({ email: "user@camerfirma.com" });
+
+	assert.deepEqual(second, {
+		status: "RATE_LIMITED",
+		emailHash: "hash:user@camerfirma.com",
+	});
 });

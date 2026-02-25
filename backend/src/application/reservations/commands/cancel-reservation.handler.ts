@@ -1,6 +1,10 @@
-﻿import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/types.js";
-import { ReservationDateInPastError } from "@domain/reservations/entities/reservation.js";
+import {
+	ReservationCancellationWindowClosedError,
+	ReservationDateInPastError,
+} from "@domain/reservations/entities/reservation.js";
+import { isSameDayBookingClosed } from "@domain/reservations/policies/reservation-policy.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
@@ -13,7 +17,9 @@ import { createUserId } from "@domain/auth/value-objects/user-id.js";
 type CancelReservationDependencies = Pick<
 	ReservationDependencies,
 	"commandRepo" | "queryRepo"
->;
+> & {
+	nowProvider?: () => Date;
+};
 
 export class CancelReservationHandler {
 	constructor(private readonly deps: CancelReservationDependencies) {}
@@ -22,15 +28,27 @@ export class CancelReservationHandler {
 		const userIdVO = createUserId(command.userId);
 		const reservationIdVO = createReservationId(command.reservationId);
 
-		const found = await this.deps.queryRepo.findActiveByIdForUser(reservationIdVO, userIdVO);
+		const found = await this.deps.queryRepo.findByIdForUser(reservationIdVO, userIdVO);
 
-		if (!found?.reservationDate) {
+		if (!found?.reservation) {
 			return false;
+		}
+		const now = this.deps.nowProvider?.();
+		if (
+			found.reservation.status === "reserved" &&
+			isSameDayBookingClosed({
+				reservationDate: found.reservation.reservationDate,
+				timezone: found.timezone,
+				checkinAllowedFrom: found.checkinAllowedFrom,
+				...(now ? { now } : {}),
+			})
+		) {
+			throw new ReservationCancellationWindowClosedError();
 		}
 
 		let reservationDate: ReservationDate;
 		try {
-			reservationDate = createReservationDate(found.reservationDate);
+			reservationDate = createReservationDate(found.reservation.reservationDate);
 		} catch (err) {
 			if (err instanceof InvalidReservationDateError) {
 				return false;
@@ -42,8 +60,7 @@ export class CancelReservationHandler {
 			throw new ReservationDateInPastError();
 		}
 
+		found.reservation.cancel(new Date().toISOString());
 		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
 	}
 }
-
-

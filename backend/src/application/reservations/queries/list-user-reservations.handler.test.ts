@@ -15,10 +15,12 @@ function mockQueryRepo(
 	overrides: Partial<ReservationQueryRepository> = {}
 ): ReservationQueryRepository {
 	return {
-		findActiveByIdForUser: async () => null,
+		findByIdForUser: async () => null,
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
+		getDeskBookingPolicyContext: async () => null,
+		findQrCheckInCandidate: async () => null,
 		...overrides,
 	};
 }
@@ -31,6 +33,7 @@ test("ListUserReservationsHandler.execute returns rows", async () => {
 			officeId: createOfficeId("office-1"),
 			deskName: "Puesto 01",
 			reservationDate: "2026-02-20",
+			status: "reserved",
 			source: "user",
 			cancelledAt: null,
 		},
@@ -47,3 +50,5 @@ test("ListUserReservationsHandler.execute returns rows", async () => {
 	const result = await handler.execute({ userId: "user" });
 	assert.deepEqual(result, rows);
 });
+
+

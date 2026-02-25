@@ -1,6 +1,5 @@
-import { Pool } from "pg";
-
-import { env } from "@config/env.js";
+﻿import { env } from "@config/env.js";
+import { buildPgRuntimeConfig, createPgPool } from "@config/pg-runtime.js";
 import { sendEmail } from "@infrastructure/email/mailer.js";
 
 type OutboxRow = {
@@ -12,11 +11,13 @@ type OutboxRow = {
 	attempts: number;
 };
 
-const pool = new Pool({
-	connectionString: env.DATABASE_URL,
-	ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
-	max: env.DB_POOL_MAX,
-});
+const pool = createPgPool(
+	buildPgRuntimeConfig({
+		DATABASE_URL: env.DATABASE_URL,
+		DB_SSL: env.DB_SSL,
+		DB_POOL_MAX: env.DB_POOL_MAX,
+	})
+);
 
 const pollIntervalMs = env.OUTBOX_POLL_INTERVAL_MS;
 const batchSize = env.OUTBOX_BATCH_SIZE;
@@ -29,13 +30,57 @@ function computeBackoffMs(attempts: number) {
 	return Math.min(backoffBaseMs * Math.pow(2, exp), backoffMaxMs);
 }
 
+function stripHtmlTags(input: string): string {
+	let inTag = false;
+	let output = "";
+	for (const ch of input) {
+		
+		if (ch === "<") {
+			inTag = true;
+			continue;
+		}
+		if (ch === ">") {
+			inTag = false;
+			continue;
+		}
+		if (!inTag) {
+			output += ch;
+		}
+	}
+	return output;
+}
+
+function collapseBlankLines(input: string): string {
+	const lines = input.split("\n");
+	const out: string[] = [];
+	let blankCount = 0;
+	for (const line of lines) {
+		const isBlank = line.trim().length === 0;
+		if (isBlank) {
+			blankCount += 1;
+			if (blankCount <= 2) {
+				out.push("");
+			}
+			continue;
+		}
+		blankCount = 0;
+		out.push(line);
+	}
+	return out.join("\n");
+}
+
 function toPlainText(html: string) {
-	return html
-		.replaceAll(/<\s*br\s*\/?\s*>/gi, "\n")
-		.replaceAll(/<\s*\/p\s*>/gi, "\n")
-		.replaceAll(/<[^>]+>/g, "")
-		.replaceAll(/\n{3,}/g, "\n\n")
-		.trim();
+	const normalizedBreaks = html
+		.replaceAll("<br>", "\n")
+		.replaceAll("<br/>", "\n")
+		.replaceAll("<br />", "\n")
+		.replaceAll("<BR>", "\n")
+		.replaceAll("<BR/>", "\n")
+		.replaceAll("<BR />", "\n")
+		.replaceAll("</p>", "\n")
+		.replaceAll("</P>", "\n");
+
+	return collapseBlankLines(stripHtmlTags(normalizedBreaks)).trim();
 }
 
 async function claimBatch(): Promise<OutboxRow[]> {
@@ -149,3 +194,4 @@ await main().catch(error => {
 	console.error("outbox worker fatal", error);
 	process.exit(1);
 });
+

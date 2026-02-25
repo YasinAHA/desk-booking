@@ -16,6 +16,6 @@ export const dateSchema = z
  * For endpoints that need full timestamp (used in auth, etc.)
  */
 export const isoDateTimeSchema = z
-	.string()
+	.iso
 	.datetime()
 	.describe("ISO 8601 datetime string");

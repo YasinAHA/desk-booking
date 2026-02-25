@@ -4,9 +4,9 @@ function mapUser(user: AuthUser) {
 	return {
 		id: user.id,
 		email: user.email,
-		first_name: user.firstName,
-		last_name: user.lastName,
-		second_last_name: user.secondLastName,
+		firstName: user.firstName,
+		lastName: user.lastName,
+		secondLastName: user.secondLastName,
 	};
 }
 

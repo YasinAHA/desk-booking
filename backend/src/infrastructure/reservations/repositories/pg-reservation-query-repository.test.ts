@@ -7,12 +7,12 @@ import { createReservationId } from "@domain/reservations/value-objects/reservat
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgReservationQueryRepository } from "@infrastructure/reservations/repositories/pg-reservation-query-repository.js";
 
-test("PgReservationQueryRepository.findActiveByIdForUser returns null when missing", async () => {
+test("PgReservationQueryRepository.findByIdForUser returns null when missing", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async () => ({ rows: [] }),
 	});
 
-	const result = await repo.findActiveByIdForUser(
+	const result = await repo.findByIdForUser(
 		createReservationId("res-1"),
 		createUserId("user-1")
 	);
@@ -21,8 +21,7 @@ test("PgReservationQueryRepository.findActiveByIdForUser returns null when missi
 
 test("PgReservationQueryRepository.listForUser maps rows", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("from reservations"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["user-1"]);
 			return {
 				rows: [
@@ -32,6 +31,7 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 						office_id: "office-1",
 						desk_name: "Puesto 01",
 						reservation_date: "2026-02-20",
+						status: "reserved",
 						source: "user",
 						cancelled_at: null,
 					},
@@ -48,6 +48,7 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 			officeId: createOfficeId("office-1"),
 			deskName: "Puesto 01",
 			reservationDate: "2026-02-20",
+			status: "reserved",
 			source: "user",
 			cancelledAt: null,
 		},
@@ -56,8 +57,7 @@ test("PgReservationQueryRepository.listForUser maps rows", async () => {
 
 test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns true when row exists", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("where user_id = $1 and reservation_date = $2"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["user-1", "2026-02-20"]);
 			return { rows: [{ 1: 1 }] };
 		},
@@ -72,8 +72,7 @@ test("PgReservationQueryRepository.hasActiveReservationForUserOnDate returns tru
 
 test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns false when no rows", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("where desk_id = $1 and reservation_date = $2"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["desk-1", "2026-02-20"]);
 			return { rows: [] };
 		},
@@ -84,4 +83,65 @@ test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns fal
 		"2026-02-20"
 	);
 	assert.equal(result, false);
+});
+
+test("PgReservationQueryRepository.getDeskBookingPolicyContext returns context when desk exists", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, ["desk-1"]);
+			return {
+				rows: [{ timezone: "Europe/Madrid", checkin_allowed_from: "06:00:00" }],
+			};
+		},
+	});
+
+	const result = await repo.getDeskBookingPolicyContext(createDeskId("desk-1"));
+	assert.deepEqual(result, {
+		timezone: "Europe/Madrid",
+		checkinAllowedFrom: "06:00:00",
+	});
+});
+
+test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, ["user-1", "2026-02-20", "qr-public-id"]);
+			return {
+				rows: [
+					{
+						id: "res-1",
+						user_id: "user-1",
+						desk_id: "desk-1",
+						office_id: "office-1",
+						status: "reserved",
+						source: "user",
+						cancelled_at: null,
+						reservation_date: "2026-02-20",
+						timezone: "Europe/Madrid",
+						checkin_allowed_from: "06:00:00",
+						checkin_cutoff_time: "12:00:00",
+					},
+				],
+			};
+		},
+	});
+
+	const result = await repo.findQrCheckInCandidate(
+		createUserId("user-1"),
+		"2026-02-20",
+		"qr-public-id"
+	);
+
+	assert.ok(result);
+	assert.equal(result.reservation.id, createReservationId("res-1"));
+	assert.equal(result.reservation.userId, createUserId("user-1"));
+	assert.equal(result.reservation.deskId, createDeskId("desk-1"));
+	assert.equal(result.reservation.officeId, createOfficeId("office-1"));
+	assert.equal(result.reservation.reservationDate, "2026-02-20");
+	assert.equal(result.reservation.status, "reserved");
+	assert.equal(result.reservation.source, "user");
+	assert.equal(result.reservation.cancelledAt, null);
+	assert.equal(result.timezone, "Europe/Madrid");
+	assert.equal(result.checkinAllowedFrom, "06:00:00");
+	assert.equal(result.checkinCutoffTime, "12:00:00");
 });

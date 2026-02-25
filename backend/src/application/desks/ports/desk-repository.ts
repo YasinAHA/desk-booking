@@ -9,6 +9,7 @@ export type DeskAvailability = {
 	officeId: OfficeId;
 	code: string;
 	name: string | null;
+	zone: string | null;
 	status: DeskStatus;
 	isReserved: boolean;
 	isMine: boolean;
@@ -16,8 +17,21 @@ export type DeskAvailability = {
 	occupantName: string | null;
 };
 
+export type AdminDeskRecord = {
+	id: DeskId;
+	officeId: OfficeId;
+	code: string;
+	name: string | null;
+	zone: string | null;
+	status: DeskStatus;
+	qrPublicId: string;
+};
+
 export interface DeskRepository {
 	listForDate(date: string, userId: UserId): Promise<DeskAvailability[]>;
+	listForAdmin(): Promise<AdminDeskRecord[]>;
+	regenerateQrPublicId(deskId: DeskId): Promise<string | null>;
+	regenerateAllQrPublicIds(): Promise<number>;
 }
 
 

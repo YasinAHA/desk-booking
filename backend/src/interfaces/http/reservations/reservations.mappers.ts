@@ -5,20 +5,30 @@ type ListUserReservationsItems = Awaited<ReturnType<ListUserReservationsHandler[
 export function mapCreateReservationResponse(reservationId: string) {
 	return {
 		ok: true,
-		reservation_id: reservationId,
+		reservationId,
+	};
+}
+
+export function mapQrCheckInResponse(
+	status: "checked_in" | "already_checked_in"
+) {
+	return {
+		ok: true,
+		status,
 	};
 }
 
 export function mapListUserReservationsResponse(items: ListUserReservationsItems) {
 	return {
 		items: items.map(item => ({
-			reservation_id: item.id,
-			desk_id: item.deskId,
-			office_id: item.officeId,
-			desk_name: item.deskName,
-			reservation_date: item.reservationDate,
+			reservationId: item.id,
+			deskId: item.deskId,
+			officeId: item.officeId,
+			deskName: item.deskName,
+			reservationDate: item.reservationDate,
+			status: item.status,
 			source: item.source,
-			cancelled_at: item.cancelledAt,
+			cancelledAt: item.cancelledAt,
 		})),
 	};
 }

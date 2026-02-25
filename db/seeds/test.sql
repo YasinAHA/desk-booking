@@ -43,4 +43,32 @@ BEGIN
     gen_random_uuid()::text
   FROM generate_series(1, 3) i
   ON CONFLICT (office_id, code) DO NOTHING;
+
+  INSERT INTO zones (office_id, name)
+  SELECT v_office_id, z.name
+  FROM (VALUES ('Zona A'), ('Zona B'), ('Zona C')) AS z(name)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM zones existing
+    WHERE existing.office_id = v_office_id AND existing.name = z.name
+  );
+
+  WITH ordered_desks AS (
+    SELECT d.id, row_number() OVER (ORDER BY d.code) AS rn
+    FROM desks d
+    WHERE d.office_id = v_office_id
+  ),
+  zone_refs AS (
+    SELECT z.id, z.name
+    FROM zones z
+    WHERE z.office_id = v_office_id AND z.name IN ('Zona A', 'Zona B', 'Zona C')
+  )
+  UPDATE desks d
+  SET zone_id = CASE ((ordered_desks.rn - 1) % 3)
+    WHEN 0 THEN (SELECT id FROM zone_refs WHERE name = 'Zona A')
+    WHEN 1 THEN (SELECT id FROM zone_refs WHERE name = 'Zona B')
+    ELSE (SELECT id FROM zone_refs WHERE name = 'Zona C')
+  END
+  FROM ordered_desks
+  WHERE d.id = ordered_desks.id
+    AND d.zone_id IS NULL;
 END $$;

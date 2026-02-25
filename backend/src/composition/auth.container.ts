@@ -1,19 +1,25 @@
-import type { FastifyInstance } from "fastify";
+﻿import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 
 import { ChangePasswordHandler } from "@application/auth/commands/change-password.handler.js";
 import { ConfirmEmailHandler } from "@application/auth/commands/confirm-email.handler.js";
 import { ForgotPasswordHandler } from "@application/auth/commands/forgot-password.handler.js";
+import { LogoutHandler } from "@application/auth/commands/logout.handler.js";
+import { RefreshSessionHandler } from "@application/auth/commands/refresh-session.handler.js";
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import { ResetPasswordHandler } from "@application/auth/commands/reset-password.handler.js";
 import { LoginHandler } from "@application/auth/queries/login.handler.js";
+import { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
+import { RecoveryAttemptPolicyService } from "@application/auth/services/recovery-attempt-policy.service.js";
 import {
 	getTransactionalDbClient,
 	type TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
 import {
 	AUTH_EMAIL_VERIFICATION_TTL_MS,
+	AUTH_FORGOT_PASSWORD_IDENTIFIER_RATE_LIMIT,
 	AUTH_PASSWORD_RESET_TTL_MS,
+	AUTH_RESET_PASSWORD_IDENTIFIER_RATE_LIMIT,
 } from "@config/constants.js";
 import { env } from "@config/env.js";
 import { DomainAuthPolicy } from "@infrastructure/auth/policies/domain-auth-policy.js";
@@ -24,10 +30,10 @@ import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/p
 import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
 import { PgUserSessionRepository } from "@infrastructure/auth/repositories/pg-user-session-repository.js";
 import { Argon2PasswordHasher } from "@infrastructure/auth/security/argon2-password-hasher.js";
+import { JoseJwtProvider } from "@infrastructure/auth/security/jose-jwt-provider.js";
 import { Sha256TokenService } from "@infrastructure/auth/security/sha256-token-service.js";
+import { JwtTokenService } from "@infrastructure/auth/security/jwt-token.service.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
-import { FastifyJwtProvider } from "@interfaces/http/auth/adapters/fastify-jwt-provider.js";
-import { JwtTokenService } from "@interfaces/http/auth/jwt-token.service.js";
 
 type AppWithDb = FastifyInstance & {
 	db: {
@@ -46,6 +52,9 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	forgotPasswordHandler: ForgotPasswordHandler;
 	resetPasswordHandler: ResetPasswordHandler;
 	changePasswordHandler: ChangePasswordHandler;
+	logoutHandler: LogoutHandler;
+	verifyTokenHandler: VerifyTokenHandler;
+	refreshSessionHandler: RefreshSessionHandler;
 } {
 	const dbApp = app as AppWithDb;
 	const passwordHasher = new Argon2PasswordHasher();
@@ -58,6 +67,10 @@ export function buildAuthHandlers(app: FastifyInstance): {
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 	const emailOutbox = new PgEmailOutbox(dbApp.db);
 	const userRepo = new PgUserRepository(dbApp.db);
+	const recoveryAttemptPolicyService = new RecoveryAttemptPolicyService(tokenService, {
+		forgotPasswordIdentifier: AUTH_FORGOT_PASSWORD_IDENTIFIER_RATE_LIMIT,
+		resetPasswordIdentifier: AUTH_RESET_PASSWORD_IDENTIFIER_RATE_LIMIT,
+	});
 
 	const userRepoFactory = (tx: TransactionalContext) =>
 		new PgUserRepository(getTransactionalDbClient(tx));
@@ -75,6 +88,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		userRepoFactory,
 		emailVerificationRepoFactory,
 		passwordResetRepoFactory,
+		recoveryAttemptPolicyService,
 		emailOutbox,
 		confirmationBaseUrl: env.APP_BASE_URL,
 		passwordResetBaseUrl: env.FRONTEND_BASE_URL,
@@ -87,12 +101,21 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		forgotPasswordHandler: new ForgotPasswordHandler(deps),
 		resetPasswordHandler: new ResetPasswordHandler(deps),
 		changePasswordHandler: new ChangePasswordHandler(deps),
+		logoutHandler: new LogoutHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
+		verifyTokenHandler: new VerifyTokenHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
+		refreshSessionHandler: new RefreshSessionHandler({
+			authSessionLifecycleService: app.authSessionLifecycleService,
+		}),
 	};
 }
 
 export function buildJwtTokenService(app: FastifyInstance): JwtTokenService {
 	const dbApp = app as AppWithDb;
-	const jwtProvider = new FastifyJwtProvider(app);
+	const jwtProvider = new JoseJwtProvider(env.JWT_SECRET, env.JWT_REFRESH_SECRET);
 	const tokenRevocationRepository = new PgTokenRevocationRepository(dbApp.db.pool);
 	const userSessionRepository = new PgUserSessionRepository(dbApp.db.pool);
 	return new JwtTokenService(jwtProvider, tokenRevocationRepository, userSessionRepository, {

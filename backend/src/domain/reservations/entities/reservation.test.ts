@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
 	Reservation,
+	ReservationNotCheckInAllowedError,
 	ReservationNotCancellableError,
 } from "@domain/reservations/entities/reservation.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
@@ -45,4 +46,18 @@ test("Reservation.cancel rejects non-cancellable reservations", () => {
 		() => cancelledReservation.cancel("2026-02-19T12:00:00.000Z"),
 		ReservationNotCancellableError
 	);
+});
+
+test("Reservation.checkIn transitions reserved reservation to checked_in", () => {
+	const reservation = buildReservation("reserved");
+	const checkedIn = reservation.checkIn();
+
+	assert.equal(checkedIn.status, "checked_in");
+	assert.equal(checkedIn.cancelledAt, null);
+});
+
+test("Reservation.checkIn rejects non-checkable reservations", () => {
+	const checkedInReservation = buildReservation("checked_in");
+
+	assert.throws(() => checkedInReservation.checkIn(), ReservationNotCheckInAllowedError);
 });

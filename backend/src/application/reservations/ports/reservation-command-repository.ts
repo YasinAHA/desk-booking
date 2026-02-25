@@ -13,6 +13,7 @@ export interface ReservationCommandRepository {
 		officeId: OfficeId | null
 	): Promise<ReservationId>;
 	cancel(reservationId: ReservationId, userId: UserId): Promise<boolean>;
+	checkInReservation(
+		reservationId: ReservationId
+	): Promise<"checked_in" | "already_checked_in" | "not_active">;
 }
-
-

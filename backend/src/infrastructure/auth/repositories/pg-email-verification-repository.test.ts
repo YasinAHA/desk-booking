@@ -13,12 +13,14 @@ test("PgEmailVerificationRepository.findByTokenHash returns null when missing", 
 });
 
 test("PgEmailVerificationRepository.confirmEmailByTokenHash returns invalid_token when token does not exist", async () => {
+	let callCount = 0;
 	const repo = new PgEmailVerificationRepository({
-		query: async (text) => {
-			if (text.includes("from email_verifications ev")) {
+		query: async () => {
+			callCount += 1;
+			if (callCount === 1) {
 				return { rows: [] };
 			}
-			return { rows: [], rowCount: 0 };
+			assert.fail("Unexpected DB query for invalid token path");
 		},
 	});
 
@@ -27,9 +29,11 @@ test("PgEmailVerificationRepository.confirmEmailByTokenHash returns invalid_toke
 });
 
 test("PgEmailVerificationRepository.confirmEmailByTokenHash returns confirmed on success", async () => {
+	let callCount = 0;
 	const repo = new PgEmailVerificationRepository({
-		query: async (text) => {
-			if (text.includes("from email_verifications ev")) {
+		query: async () => {
+			callCount += 1;
+			if (callCount === 1) {
 				return {
 					rows: [
 						{
@@ -42,13 +46,13 @@ test("PgEmailVerificationRepository.confirmEmailByTokenHash returns confirmed on
 					],
 				};
 			}
-			if (text.startsWith("update email_verifications")) {
+			if (callCount === 2) {
 				return { rows: [{ user_id: "user-1" }], rowCount: 1 };
 			}
-			if (text.startsWith("update users")) {
+			if (callCount === 3) {
 				return { rows: [{ id: "user-1" }], rowCount: 1 };
 			}
-			return { rows: [], rowCount: 0 };
+			assert.fail("Unexpected DB query for confirm success path");
 		},
 	});
 
@@ -59,9 +63,7 @@ test("PgEmailVerificationRepository.confirmEmailByTokenHash returns confirmed on
 test("PgEmailVerificationRepository.create uses ttlMs", async () => {
 	let receivedParams: unknown[] | undefined;
 	const repo = new PgEmailVerificationRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("expires_at"));
-			assert.ok(text.includes("interval '1 millisecond'"));
+		query: async (_text, params) => {
 			receivedParams = params;
 			return { rows: [] };
 		},

@@ -35,6 +35,27 @@ export class ReservationDateInPastError extends Error {
 	}
 }
 
+export class ReservationOnNonWorkingDayError extends Error {
+	constructor() {
+		super("Reservation date is not a working day");
+		this.name = "ReservationOnNonWorkingDayError";
+	}
+}
+
+export class ReservationSameDayBookingClosedError extends Error {
+	constructor() {
+		super("Same-day reservation window has closed");
+		this.name = "ReservationSameDayBookingClosedError";
+	}
+}
+
+export class ReservationCancellationWindowClosedError extends Error {
+	constructor() {
+		super("Reservation cancellation window has closed");
+		this.name = "ReservationCancellationWindowClosedError";
+	}
+}
+
 export class ReservationDateInvalidError extends Error {
 	constructor() {
 		super("Reservation date is invalid");
@@ -46,6 +67,13 @@ export class ReservationNotCancellableError extends Error {
 	constructor(status: ReservationStatus) {
 		super(`Reservation is not cancellable in status: ${status}`);
 		this.name = "ReservationNotCancellableError";
+	}
+}
+
+export class ReservationNotCheckInAllowedError extends Error {
+	constructor(status: ReservationStatus) {
+		super(`Reservation cannot be checked in from status: ${status}`);
+		this.name = "ReservationNotCheckInAllowedError";
 	}
 }
 
@@ -86,7 +114,7 @@ export class Reservation {
 	}
 
 	canBeCancelled(): boolean {
-		return this.isActive() && this.cancelledAt === null;
+		return this.status === "reserved" && this.cancelledAt === null;
 	}
 
 	cancel(cancelledAtIso: string): Reservation {
@@ -104,6 +132,35 @@ export class Reservation {
 			source: this.source,
 			cancelledAt: cancelledAtIso,
 		});
+	}
+
+	canBeCheckedIn(): boolean {
+		return this.status === "reserved";
+	}
+
+	checkIn(): Reservation {
+		if (!this.canBeCheckedIn()) {
+			throw new ReservationNotCheckInAllowedError(this.status);
+		}
+
+		return new Reservation({
+			id: this.id,
+			userId: this.userId,
+			deskId: this.deskId,
+			officeId: this.officeId,
+			reservationDate: this.reservationDate,
+			status: "checked_in",
+			source: this.source,
+			cancelledAt: this.cancelledAt,
+		});
+	}
+
+	static isAlreadyCheckedInStatus(status: ReservationStatus): boolean {
+		return status === "checked_in";
+	}
+
+	static canCheckInFromStatus(status: ReservationStatus): boolean {
+		return status === "reserved";
 	}
 }
 

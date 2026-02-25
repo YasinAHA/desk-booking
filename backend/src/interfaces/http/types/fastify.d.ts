@@ -1,41 +1,35 @@
-import "@fastify/jwt";
 import type { preHandlerHookHandler } from "fastify";
+import type { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 
-declare module "@fastify/jwt" {
-    interface FastifyJWT {
-        payload: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            secondLastName: string | null;
-            jti?: string;
-            iat?: number;
-            exp?: number;
-            type?: "access" | "refresh";
-        };
-        user: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            secondLastName: string | null;
-        };
-    }
-}
+type AuthenticatedUser = {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
+	jti?: string | undefined;
+	iat?: number | undefined;
+	exp?: number | undefined;
+	type?: "access" | "refresh" | undefined;
+};
 
 declare module "fastify" {
-    interface FastifyInstance {
-        db: {
-            query: (text: string, params?: unknown[]) => Promise<{
-                rows: unknown[];
-                rowCount?: number | null;
-            }>;
-        };
-        requireAuth: preHandlerHookHandler;
-    }
+	interface FastifyInstance {
+		db: {
+			query: (text: string, params?: unknown[]) => Promise<{
+				rows: unknown[];
+				rowCount?: number | null;
+			}>;
+		};
+		requireAuth: preHandlerHookHandler;
+		authSessionLifecycleService: AuthSessionLifecycleService;
+	}
 
-    interface FastifyReply {
-        rateLimit?: (opts?: { max?: number; timeWindow?: string | number }) => void;
-    }
+	interface FastifyReply {
+		rateLimit?: (opts?: { max?: number; timeWindow?: string | number }) => void;
+	}
+
+	interface FastifyRequest {
+		user: AuthenticatedUser;
+	}
 }

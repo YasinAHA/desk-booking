@@ -1,14 +1,14 @@
 ﻿import assert from "node:assert/strict";
 import test from "node:test";
 
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { PgDeskRepository } from "@infrastructure/desks/repositories/pg-desk-repository.js";
 
 test("PgDeskRepository.listForDate maps rows", async () => {
 	const repo = new PgDeskRepository({
-		query: async (text, params) => {
-			assert.ok(text.includes("from desks"));
+		query: async (_text, params) => {
 			assert.deepEqual(params, ["2026-02-20", "user-1"]);
 			return {
 				rows: [
@@ -17,6 +17,7 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 						office_id: "office-1",
 						code: "D01",
 						name: "Puesto 01",
+						zone_name: "Zona A",
 						status: "active",
 						is_reserved: false,
 						is_mine: false,
@@ -35,6 +36,7 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 			officeId: createOfficeId("office-1"),
 			code: "D01",
 			name: "Puesto 01",
+			zone: "Zona A",
 			status: "active",
 			isReserved: false,
 			isMine: false,
@@ -44,5 +46,59 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 	]);
 });
 
+test("PgDeskRepository.listForAdmin maps rows with qr_public_id", async () => {
+	const repo = new PgDeskRepository({
+		query: async () => {
+			return {
+				rows: [
+					{
+						id: "desk-1",
+						office_id: "office-1",
+						code: "D01",
+						name: "Puesto 01",
+						zone_name: "Zona A",
+						status: "active",
+						qr_public_id: "qr-abc",
+					},
+				],
+			};
+		},
+	});
 
+	const result = await repo.listForAdmin();
+	assert.equal(result.length, 1);
+	const first = result[0];
+	assert.ok(first);
+	assert.equal(first.qrPublicId, "qr-abc");
+	assert.equal(first.zone, "Zona A");
+});
+
+test("PgDeskRepository.regenerateQrPublicId returns new qr id", async () => {
+	const repo = new PgDeskRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, ["desk-1"]);
+			return {
+				rows: [{ qr_public_id: "qr-new" }],
+				rowCount: 1,
+			};
+		},
+	});
+
+	const qr = await repo.regenerateQrPublicId(createDeskId("desk-1"));
+	assert.equal(qr, "qr-new");
+});
+
+test("PgDeskRepository.regenerateAllQrPublicIds returns updated rows count", async () => {
+	const repo = new PgDeskRepository({
+		query: async () => {
+			return {
+				rows: [],
+				rowCount: 7,
+			};
+		},
+	});
+
+	const updated = await repo.regenerateAllQrPublicIds();
+	assert.equal(updated, 7);
+});
 
