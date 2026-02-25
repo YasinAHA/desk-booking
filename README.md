@@ -13,6 +13,12 @@ Validación backend actual: `lint`, `lint:types`, `build` y `test` en verde (`96
 - Confirmación de email y recuperación de contraseña con patrón outbox.
 - Base de seguridad y observabilidad para evolución `v0.8.0+`.
 
+## Acceso a la plataforma (evaluacion)
+
+- URL publica: `https://deskbooking-yasin.duckdns.org`
+- Las credenciales de acceso (usuario demo y administrador) se entregan por correo al tutor para revision funcional.
+- Si hay incidencia puntual con el inicio de sesion, el registro de nuevos usuarios permanece habilitado desde la propia aplicacion.
+
 ## Estructura
 
 ```text
