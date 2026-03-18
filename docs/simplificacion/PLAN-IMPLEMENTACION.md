@@ -7,6 +7,21 @@
 
 ---
 
+## 0. Estado actual (2026-03-18)
+
+### 0.1 OpenAPI / contratos
+- [x] Prefijo v1 adoptado: `/api/internal/desk-booking/v1`
+- [x] OpenAPI regenerado desde backend (`docs/openapi.json`)
+- [x] Contrato con `POST /reservations/{id}/check-in` actualizado
+
+### 0.2 Backend/DB ya ejecutado
+- [x] Migración de simplificación aplicada y estabilizada (`008_internal_simplification.sql`)
+- [x] Seed de simplificación aplicado (`db:seed -- simplificacion`)
+- [x] Refactor principal de reservas a `starts_at`/`ends_at`
+- [x] Validación de suite backend (`lint`, `lint:types`, `test`, `test:e2e:temporal`)
+
+---
+
 ## 1. Fases de Implementación
 
 ### Fase 1: Preparación de Base de Datos (Migración)
@@ -16,10 +31,10 @@
 #### 1.1 Pre-requisitos
 - [ ] Backup de producción actual completado
 - [ ] Ambiente de testing aislado preparado
-- [ ] Scripts de migración validados (007_internal_simplification.sql)
+- [x] Scripts de migración validados (008_internal_simplification.sql)
 
 #### 1.2 Pasos de Migración
-1. Aplicar migración `007_internal_simplification.sql` en testing
+1. Aplicar migración `008_internal_simplification.sql` en testing
    - Crear tabla `user_preferences`
    - Crear tabla `app_settings` con configuración global
    - Crear tabla `allowed_email_domains`
@@ -27,7 +42,7 @@
    - Alternar `zeros`, `desks` → eliminar `floor_id`, agregar campos de layout
    - Aplicar hardening en `desk_blocks` (constraints de exclusión)
 
-2. Aplicar seed `007_internal_seed.sql`
+2. Aplicar seed `simplificacion`
    - Crear organización "Camerfirma"
    - Crear oficina "Camerfirma HQ"
    - Crear 3 zonas (A, B, C)
@@ -61,21 +76,21 @@
 - [ ] `GET /desks` (usuario) → retornar datos de layout para plano
 
 #### 2.3 Reservations
-- [ ] Refactorizar modelo: `reservation_date` → `starts_at`, `ends_at`
+- [x] Refactorizar modelo: `reservation_date` → `starts_at`, `ends_at`
 - [ ] Validación de solapamientos con constraint de exclusión (PostgreSQL)
 - [ ] `POST /reservations` (usuario) → crear reservas por rango
 - [ ] `POST /admin/reservations` → soportar tipo `guest` con `guest_name`, `guest_email`, `guest_company`, `host_user_id`
 - [ ] `PATCH /admin/reservations/{id}` → cambio de status
-- [ ] Estados: `reserved`, `checked_in`, `cancelled`, `no_show`
+- [x] Estados: `reserved`, `checked_in`, `cancelled`, `no_show`
 
 #### 2.4 Check-in
-- [ ] Nuevo endpoint: `POST /reservations/{id}/check-in`
+- [x] Nuevo endpoint: `POST /reservations/{id}/check-in`
   - Validar status = `reserved`
   - Validar ventana de checkin (defaults: `starts_at ± 15 min`)
   - Marcar `checked_in_at = now()`
   - Cambiar status → `checked_in`
   
-- [ ] Mantener deprecated: `POST /reservations/check-in/qr`
+- [x] Mantener deprecated: `POST /reservations/check-in/qr`
   - Buscar reservación activa por `qr_public_id`
   - Delegar a nuevo endpoint
 
