@@ -104,10 +104,11 @@ export class PgDeskRepository implements DeskRepository {
 				"r.id as reservation_id, " +
 				"case when r.user_id is null then null else concat_ws(' ', u.first_name, u.last_name, u.second_last_name) end as occupant_name " +
 				"from desks d " +
+				"join offices o on o.id = d.office_id " +
 				"left join zones z on z.id = d.zone_id " +
 				"left join reservations r " +
 				"on r.desk_id = d.id " +
-				"and r.reservation_date = $1 " +
+				"and (r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date = $1::date " +
 				"and r.status in ('reserved', 'checked_in') " +
 				"left join users u on u.id = r.user_id " +
 				"order by d.code asc",

@@ -2,7 +2,6 @@
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import type { CheckInByQrCommand } from "@application/reservations/commands/check-in-by-qr.command.js";
-import { evaluateQrCheckInPolicy } from "@domain/reservations/policies/reservation-policy.js";
 import {
 	createReservationDate,
 	reservationDateToString,
@@ -34,21 +33,13 @@ export class CheckInByQrHandler {
 			return "not_found";
 		}
 
-		const checkInDecision = evaluateQrCheckInPolicy({
-			status: candidate.reservation.status,
-			reservationDate: candidate.reservation.reservationDate,
-			timezone: candidate.timezone,
-			checkinAllowedFrom: candidate.checkinAllowedFrom,
-			checkinCutoffTime: candidate.checkinCutoffTime,
-		});
-		if (checkInDecision === "already_checked_in") {
+		if (candidate.reservation.status === "checked_in") {
 			return "already_checked_in";
 		}
-		if (checkInDecision === "not_active") {
+		if (candidate.reservation.status !== "reserved") {
 			return "not_active";
 		}
 
-		const checkedInReservation = candidate.reservation.checkIn();
-		return this.deps.commandRepo.checkInReservation(checkedInReservation.id);
+		return this.deps.commandRepo.checkInReservation(candidate.reservation.id);
 	}
 }

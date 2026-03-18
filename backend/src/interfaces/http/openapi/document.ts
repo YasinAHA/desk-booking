@@ -118,6 +118,8 @@ const listReservationsResponseSchema = z.object({
 			officeId: uuidSchema,
 			deskName: z.string(),
 			reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+			startsAt: z.iso.datetime().optional(),
+			endsAt: z.iso.datetime().optional(),
 			status: z.enum(["reserved", "checked_in", "cancelled", "no_show"]),
 			source: z.enum(["user", "admin", "walk_in", "system"]),
 			cancelledAt: z.string().nullable(),
@@ -393,6 +395,22 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		responses: {
 			200: { description: "Check-in processed", content: json(checkInByQrResponseSchema) },
 			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			404: err("Reservation not found"),
+			409: err("Reservation not active"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/reservations/{id}/check-in",
+		tags: ["reservations"],
+		security: [{ bearerAuth: [] }],
+		request: { params: reservationIdParamSchema },
+		responses: {
+			200: { description: "Check-in processed", content: json(checkInByQrResponseSchema) },
+			400: err("Invalid reservation id"),
 			401: err("Unauthorized"),
 			404: err("Reservation not found"),
 			409: err("Reservation not active"),

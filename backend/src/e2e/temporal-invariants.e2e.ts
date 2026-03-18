@@ -40,28 +40,6 @@ function getLocalDate(timezone: string, now = new Date()): string {
 	return `${values.get("year") ?? ""}-${values.get("month") ?? ""}-${values.get("day") ?? ""}`;
 }
 
-function getLocalTime(timezone: string, now = new Date()): string {
-	const parts = new Intl.DateTimeFormat("en-CA", {
-		timeZone: timezone,
-		hour: "2-digit",
-		minute: "2-digit",
-		hour12: false,
-	}).formatToParts(now);
-	const values = new Map(parts.map(part => [part.type, part.value]));
-	return `${values.get("hour") ?? "00"}:${values.get("minute") ?? "00"}`;
-}
-
-function addMinutesToTime(value: string, minutesToAdd: number): string {
-	const [h = "0", m = "0"] = value.split(":");
-	const total = Number.parseInt(h, 10) * 60 + Number.parseInt(m, 10) + minutesToAdd;
-	const normalized = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
-	const hour = Math.floor(normalized / 60)
-		.toString()
-		.padStart(2, "0");
-	const minute = (normalized % 60).toString().padStart(2, "0");
-	return `${hour}:${minute}`;
-}
-
 function getErrorCode(body: unknown): string | undefined {
 	if (!body || typeof body !== "object") {
 		return undefined;
@@ -119,8 +97,9 @@ async function insertTemporalFixture(
 	input: {
 		timezone: string;
 		reservationDate: string;
-		checkinAllowedFrom: string;
-		checkinCutoffTime: string;
+		startsAt?: Date;
+		endsAt?: Date;
+		checkinDeadlineAt?: Date;
 		status?: "reserved" | "checked_in" | "cancelled" | "no_show";
 	}
 ): Promise<Fixture> {
@@ -143,10 +122,6 @@ async function insertTemporalFixture(
 		[fixture.officeId, fixture.organizationId, `E2E Office ${fixture.officeId}`, input.timezone]
 	);
 	await db.query(
-		"insert into reservation_policies (organization_id, office_id, max_advance_days, max_reservations_per_day, checkin_allowed_from, checkin_cutoff_time, cancellation_deadline_hours, require_email_domain_match) values ($1, $2, 30, 1, $3::time, $4::time, 1, false)",
-		[fixture.organizationId, fixture.officeId, input.checkinAllowedFrom, input.checkinCutoffTime]
-	);
-	await db.query(
 		"insert into users (id, email, password_hash, first_name, last_name, second_last_name, role, status) values ($1, $2, $3, 'E2E', 'User', null, 'user', 'active')",
 		[fixture.userId, fixture.email, "hash:e2e-password"]
 	);
@@ -161,13 +136,16 @@ async function insertTemporalFixture(
 		]
 	);
 	await db.query(
-		"insert into reservations (id, user_id, desk_id, office_id, reservation_date, status, source) values ($1, $2, $3, $4, $5::date, $6, 'user')",
+		"insert into reservations (id, user_id, desk_id, office_id, starts_at, ends_at, checkin_deadline_at, status, source) " +
+			"values ($1, $2, $3, $4, $5::timestamptz, $6::timestamptz, $7::timestamptz, $8, 'user')",
 		[
 			fixture.reservationId,
 			fixture.userId,
 			fixture.deskId,
 			fixture.officeId,
-			input.reservationDate,
+			(input.startsAt ?? new Date(`${input.reservationDate}T08:00:00.000Z`)).toISOString(),
+			(input.endsAt ?? new Date(`${input.reservationDate}T16:00:00.000Z`)).toISOString(),
+			(input.checkinDeadlineAt ?? new Date(`${input.reservationDate}T12:00:00.000Z`)).toISOString(),
 			input.status ?? "reserved",
 		]
 	);
@@ -179,10 +157,6 @@ async function cleanupFixture(db: DbClient, fixture: Fixture): Promise<void> {
 	await db.query("delete from reservations where id = $1", [fixture.reservationId]);
 	await db.query("delete from desks where id = $1", [fixture.deskId]);
 	await db.query("delete from users where id = $1", [fixture.userId]);
-	await db.query(
-		"delete from reservation_policies where organization_id = $1 and office_id = $2",
-		[fixture.organizationId, fixture.officeId]
-	);
 	await db.query("delete from offices where id = $1", [fixture.officeId]);
 	await db.query("delete from organizations where id = $1", [fixture.organizationId]);
 }
@@ -196,12 +170,12 @@ test("E2E temporal: check-in QR applies office timezone (non-UTC date)", async (
 	const selectedTimezone =
 		timezones.find(tz => getLocalDate(tz, now) !== utcDate) ?? "Pacific/Kiritimati";
 	const localDate = getLocalDate(selectedTimezone, now);
-	const localTime = getLocalTime(selectedTimezone, now);
 	const fixture = await insertTemporalFixture(db, {
 		timezone: selectedTimezone,
 		reservationDate: localDate,
-		checkinAllowedFrom: addMinutesToTime(localTime, -1),
-		checkinCutoffTime: addMinutesToTime(localTime, 2),
+		startsAt: new Date(now.getTime() - 15 * 60 * 1000),
+		endsAt: new Date(now.getTime() + 8 * 60 * 60 * 1000),
+		checkinDeadlineAt: new Date(now.getTime() + 15 * 60 * 1000),
 	});
 
 	try {
@@ -237,12 +211,12 @@ test("E2E temporal: check-in QR enforces allowed window", async () => {
 	const now = new Date();
 	const timezone = "UTC";
 	const reservationDate = toIsoDate(now);
-	const localTime = getLocalTime(timezone, now);
 	const fixture = await insertTemporalFixture(db, {
 		timezone,
 		reservationDate,
-		checkinAllowedFrom: addMinutesToTime(localTime, 5),
-		checkinCutoffTime: addMinutesToTime(localTime, 30),
+		startsAt: new Date(now.getTime() - 30 * 60 * 1000),
+		endsAt: new Date(now.getTime() + 8 * 60 * 60 * 1000),
+		checkinDeadlineAt: new Date(now.getTime() - 5 * 60 * 1000),
 	});
 
 	try {
@@ -280,8 +254,9 @@ test("E2E temporal: no_show transition is applied before listing desks", async (
 	const fixture = await insertTemporalFixture(db, {
 		timezone: "UTC",
 		reservationDate,
-		checkinAllowedFrom: "06:00",
-		checkinCutoffTime: "12:00",
+		startsAt: new Date(`${reservationDate}T08:00:00.000Z`),
+		endsAt: new Date(`${reservationDate}T16:00:00.000Z`),
+		checkinDeadlineAt: new Date(`${reservationDate}T12:00:00.000Z`),
 		status: "reserved",
 	});
 

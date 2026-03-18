@@ -9,12 +9,14 @@ export const reservationsRoutes: FastifyPluginAsync = async app => {
 	const controller = new ReservationController(
 		handlers.createReservationHandler,
 		handlers.cancelReservationHandler,
+		handlers.checkInReservationHandler,
 		handlers.checkInByQrHandler,
 		handlers.listUserReservationsHandler
 	);
 	const auth = withAuth(app);
 
 	app.post("/", auth, (req, reply) => controller.create(req, reply));
+	app.post("/:id/check-in", auth, (req, reply) => controller.checkIn(req, reply));
 	app.post("/check-in/qr", auth, (req, reply) => controller.checkInByQr(req, reply));
 	app.delete("/:id", auth, (req, reply) => controller.cancel(req, reply));
 	app.get("/me", auth, (req, reply) => controller.listForUser(req, reply));

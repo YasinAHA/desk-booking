@@ -13,6 +13,8 @@ export type ReservationRecord = {
 	officeId: OfficeId;
 	deskName: string;
 	reservationDate: string;
+	startsAt?: string;
+	endsAt?: string;
 	status: Reservation["status"];
 	source: ReservationSource;
 	cancelledAt: string | null;
@@ -20,9 +22,6 @@ export type ReservationRecord = {
 
 export type QrCheckInCandidate = {
 	reservation: Reservation;
-	timezone: string;
-	checkinAllowedFrom: string;
-	checkinCutoffTime: string;
 };
 
 export type ReservationBookingPolicyContext = {

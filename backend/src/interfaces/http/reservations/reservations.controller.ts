@@ -1,5 +1,7 @@
-﻿import type { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import type { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
 import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
+import type { CheckInReservationHandler } from "@application/reservations/commands/check-in-reservation.handler.js";
+import type { CheckInReservationCommand } from "@application/reservations/commands/check-in-reservation.command.js";
 import type { CheckInByQrHandler } from "@application/reservations/commands/check-in-by-qr.handler.js";
 import type { CheckInByQrCommand } from "@application/reservations/commands/check-in-by-qr.command.js";
 import type { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
@@ -101,16 +103,11 @@ const CREATE_ERROR_MAPPINGS: readonly HttpErrorMapping[] = [
 	},
 ];
 
-/**
- * ReservationController: Handles HTTP layer concerns for reservation operations
- * - Request validation
- * - Response mapping
- * - Error mapping (DateInPast, Conflict)
- */
 export class ReservationController {
 	constructor(
 		private readonly createReservationHandler: CreateReservationHandler,
 		private readonly cancelReservationHandler: CancelReservationHandler,
+		private readonly checkInReservationHandler: CheckInReservationHandler,
 		private readonly checkInByQrHandler: CheckInByQrHandler,
 		private readonly listUserReservationsHandler: ListUserReservationsHandler
 	) {}
@@ -131,7 +128,7 @@ export class ReservationController {
 					event: "reservation.create",
 					userId: req.user.id,
 					deskId: parse.data.deskId,
-					date: parse.data.date,
+					date: parse.data.date ?? parse.data.startsAt?.slice(0, 10),
 					reservationId,
 				},
 				"Reservation created"
@@ -183,6 +180,27 @@ export class ReservationController {
 		return reply.send(mapListUserReservationsResponse(items));
 	}
 
+	async checkIn(req: FastifyRequest, reply: FastifyReply) {
+		const parse = reservationIdParamSchema.safeParse(req.params);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid id");
+		}
+
+		const command: CheckInReservationCommand = {
+			userId: req.user.id,
+			reservationId: parse.data.id,
+		};
+		const result = await this.checkInReservationHandler.execute(command);
+		if (result === "not_found") {
+			throwHttpError(404, "RESERVATION_NOT_FOUND", "Reservation not found.");
+		}
+		if (result === "not_active") {
+			throwHttpError(409, "RESERVATION_NOT_ACTIVE", "Reservation is not active for check-in.");
+		}
+
+		return reply.send(mapQrCheckInResponse(result));
+	}
+
 	async checkInByQr(req: FastifyRequest, reply: FastifyReply) {
 		const parse = checkInByQrSchema.safeParse(req.body);
 		if (!parse.success) {
@@ -220,15 +238,22 @@ export class ReservationController {
 	private buildCreateReservationCommand(
 		userId: string,
 		payload: {
-			date: string;
+			date?: string | undefined;
+			startsAt?: string | undefined;
+			endsAt?: string | undefined;
 			deskId: string;
 			officeId?: string | undefined;
 			source?: "user" | "admin" | "walk_in" | "system" | undefined;
 		}
 	): CreateReservationCommand {
+		const date = payload.date ?? payload.startsAt?.slice(0, 10);
+		if (!date) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+
 		return {
 			userId,
-			date: payload.date,
+			date,
 			deskId: payload.deskId,
 			...(payload.source ? { source: payload.source } : {}),
 			...(payload.officeId ? { officeId: payload.officeId } : {}),
@@ -240,3 +265,4 @@ export class ReservationController {
 		throw err;
 	}
 }
+

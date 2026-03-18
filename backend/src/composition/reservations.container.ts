@@ -7,6 +7,7 @@ import {
 } from "@application/common/ports/transaction-manager.js";
 import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
 import { CancelReservationHandler } from "@application/reservations/commands/cancel-reservation.handler.js";
+import { CheckInReservationHandler } from "@application/reservations/commands/check-in-reservation.handler.js";
 import { CheckInByQrHandler } from "@application/reservations/commands/check-in-by-qr.handler.js";
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
@@ -29,6 +30,7 @@ type AppWithDb = FastifyInstance & {
 export function buildReservationHandlers(app: FastifyInstance): {
 	createReservationHandler: CreateReservationHandler;
 	cancelReservationHandler: CancelReservationHandler;
+	checkInReservationHandler: CheckInReservationHandler;
 	checkInByQrHandler: CheckInByQrHandler;
 	listUserReservationsHandler: ListUserReservationsHandler;
 } {
@@ -55,6 +57,7 @@ export function buildReservationHandlers(app: FastifyInstance): {
 			noShowPolicyServiceFactory,
 		}),
 		cancelReservationHandler: new CancelReservationHandler({ commandRepo, queryRepo }),
+		checkInReservationHandler: new CheckInReservationHandler({ commandRepo, queryRepo }),
 		checkInByQrHandler: new CheckInByQrHandler({ commandRepo, queryRepo, noShowPolicyService }),
 		listUserReservationsHandler: new ListUserReservationsHandler({ queryRepo }),
 	};

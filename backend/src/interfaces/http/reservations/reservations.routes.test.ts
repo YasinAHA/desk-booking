@@ -524,6 +524,48 @@ test("POST /reservations/check-in/qr returns 409 when reservation is not active"
 	await app.close();
 });
 
+test("POST /reservations/:id/check-in returns 200 when reservation is checked in", async () => {
+	const app = await buildTestApp(async (_text, params) => {
+		if (
+			params?.[0] === "22222222-2222-2222-8222-222222222222" &&
+			params?.[1] === "user-1"
+		) {
+			return {
+				rows: [
+					{
+						id: "22222222-2222-2222-8222-222222222222",
+						user_id: "user-1",
+						desk_id: "11111111-1111-1111-8111-111111111111",
+						office_id: "22222222-2222-2222-8222-222222222222",
+						reservation_date: "2099-01-01",
+						status: "reserved",
+						source: "user",
+						cancelled_at: null,
+						timezone: "UTC",
+						checkin_allowed_from: "00:00:00",
+					},
+				],
+			};
+		}
+		if (params?.[0] === "22222222-2222-2222-8222-222222222222" && params.length === 1) {
+			return { rows: [{ id: "22222222-2222-2222-8222-222222222222" }], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations/22222222-2222-2222-8222-222222222222/check-in",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.ok, true);
+	assert.equal(body.status, "checked_in");
+	await app.close();
+});
+
 
 
 

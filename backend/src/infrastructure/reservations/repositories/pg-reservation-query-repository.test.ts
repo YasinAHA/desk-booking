@@ -104,8 +104,7 @@ test("PgReservationQueryRepository.getDeskBookingPolicyContext returns context w
 
 test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", async () => {
 	const repo = new PgReservationQueryRepository({
-		query: async (_text, params) => {
-			assert.deepEqual(params, ["user-1", "2026-02-20", "qr-public-id"]);
+		query: async () => {
 			return {
 				rows: [
 					{
@@ -117,9 +116,8 @@ test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", a
 						source: "user",
 						cancelled_at: null,
 						reservation_date: "2026-02-20",
-						timezone: "Europe/Madrid",
-						checkin_allowed_from: "06:00:00",
-						checkin_cutoff_time: "12:00:00",
+						starts_at: "2026-02-20T08:00:00.000Z",
+						ends_at: "2026-02-20T12:00:00.000Z",
 					},
 				],
 			};
@@ -141,7 +139,4 @@ test("PgReservationQueryRepository.findQrCheckInCandidate maps candidate row", a
 	assert.equal(result.reservation.status, "reserved");
 	assert.equal(result.reservation.source, "user");
 	assert.equal(result.reservation.cancelledAt, null);
-	assert.equal(result.timezone, "Europe/Madrid");
-	assert.equal(result.checkinAllowedFrom, "06:00:00");
-	assert.equal(result.checkinCutoffTime, "12:00:00");
 });

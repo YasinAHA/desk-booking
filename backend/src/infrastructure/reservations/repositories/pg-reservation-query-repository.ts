@@ -26,7 +26,6 @@ import {
 } from "@domain/reservations/entities/reservation.js";
 import {
 	RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM,
-	RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME,
 } from "@domain/reservations/policies/reservation-policy.js";
 
 type DbQueryResult = {
@@ -46,6 +45,8 @@ type ActiveReservationRow = {
 	desk_id: string;
 	office_id: string;
 	reservation_date: string;
+	starts_at?: string;
+	ends_at?: string;
 	status: "reserved" | "checked_in" | "cancelled" | "no_show";
 	source: ReservationSource;
 	cancelled_at: string | null;
@@ -59,6 +60,8 @@ type ReservationRecordRow = {
 	office_id: string;
 	desk_name: string;
 	reservation_date: string;
+	starts_at?: string;
+	ends_at?: string;
 	status: "reserved" | "checked_in" | "cancelled" | "no_show";
 	source: ReservationRecord["source"];
 	cancelled_at: string | null;
@@ -73,9 +76,6 @@ type QrCheckInCandidateRow = {
 	source: ReservationSource;
 	cancelled_at: string | null;
 	reservation_date: string;
-	timezone: string;
-	checkin_allowed_from: string;
-	checkin_cutoff_time: string;
 };
 
 type DeskBookingPolicyRow = {
@@ -95,6 +95,8 @@ function isActiveReservationRow(value: unknown): value is ActiveReservationRow {
 		typeof row.desk_id === "string" &&
 		typeof row.office_id === "string" &&
 		typeof row.reservation_date === "string" &&
+		(typeof row.starts_at === "string" || typeof row.reservation_date === "string") &&
+		(typeof row.ends_at === "string" || typeof row.reservation_date === "string") &&
 		(row.status === "reserved" ||
 			row.status === "checked_in" ||
 			row.status === "cancelled" ||
@@ -140,6 +142,8 @@ function isReservationRecordRow(value: unknown): value is ReservationRecordRow {
 		typeof row.office_id === "string" &&
 		typeof row.desk_name === "string" &&
 		typeof row.reservation_date === "string" &&
+		(typeof row.starts_at === "string" || row.starts_at === undefined) &&
+		(typeof row.ends_at === "string" || row.ends_at === undefined) &&
 		(row.status === "reserved" ||
 			row.status === "checked_in" ||
 			row.status === "cancelled" ||
@@ -175,20 +179,17 @@ function isQrCheckInCandidateRow(value: unknown): value is QrCheckInCandidateRow
 			row.source === "walk_in" ||
 			row.source === "system") &&
 		(typeof row.cancelled_at === "string" || row.cancelled_at === null) &&
-		typeof row.reservation_date === "string" &&
-		typeof row.timezone === "string" &&
-		typeof row.checkin_allowed_from === "string" &&
-		typeof row.checkin_cutoff_time === "string"
+		typeof row.reservation_date === "string"
 	);
 }
 
 function toReservationEntityFromQrCandidateRow(row: QrCheckInCandidateRow): Reservation {
-	return new ReservationEntity({
+		return new ReservationEntity({
 		id: createReservationId(row.id),
 		userId: createUserId(row.user_id),
 		deskId: createDeskId(row.desk_id),
 		officeId: createOfficeId(row.office_id),
-		reservationDate: createReservationDate(row.reservation_date),
+			reservationDate: createReservationDate(row.reservation_date),
 		status: row.status,
 		source: row.source,
 		cancelledAt: row.cancelled_at,
@@ -219,13 +220,13 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		checkinAllowedFrom: string;
 	} | null> {
 		const result = await this.db.query(
-				"select r.id, r.user_id, r.desk_id, r.office_id, r.reservation_date::text as reservation_date, " +
+				"select r.id, r.user_id, r.desk_id, r.office_id, " +
+				"(r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date::text as reservation_date, " +
+				"r.starts_at::text as starts_at, r.ends_at::text as ends_at, " +
 				"r.status, r.source, r.cancelled_at::text as cancelled_at, o.timezone, " +
-				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from ` +
+				"to_char((r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::time, 'HH24:MI:SS') as checkin_allowed_from " +
 				"from reservations r " +
 				"join offices o on o.id = r.office_id " +
-				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
-				"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
 				"where r.id = $1 and r.user_id = $2",
 			[reservationIdToString(reservationId), userIdToString(userId)]
 		);
@@ -243,11 +244,14 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 	async listForUser(userId: UserId): Promise<ReservationRecord[]> {
 		const result = await this.db.query(
 			"select r.id, r.desk_id, r.office_id, d.name as desk_name, " +
-				"r.reservation_date::text as reservation_date, r.status, r.source, r.cancelled_at::text as cancelled_at " +
+				"(r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date::text as reservation_date, " +
+				"r.starts_at::text as starts_at, r.ends_at::text as ends_at, " +
+				"r.status, r.source, r.cancelled_at::text as cancelled_at " +
 				"from reservations r " +
 				"join desks d on d.id = r.desk_id " +
+				"join offices o on o.id = r.office_id " +
 				"where r.user_id = $1 " +
-				"order by r.reservation_date desc",
+				"order by r.starts_at desc",
 			[userIdToString(userId)]
 		);
 
@@ -257,6 +261,8 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 			officeId: createOfficeId(row.office_id),
 			deskName: row.desk_name,
 			reservationDate: row.reservation_date,
+			...(row.starts_at ? { startsAt: row.starts_at } : {}),
+			...(row.ends_at ? { endsAt: row.ends_at } : {}),
 			status: row.status,
 			source: row.source,
 			cancelledAt: row.cancelled_at,
@@ -265,8 +271,11 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 
 	async hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean> {
 		const result = await this.db.query(
-			"select 1 from reservations " +
-				"where user_id = $1 and reservation_date = $2 and status in ('reserved', 'checked_in') " +
+			"select 1 from reservations r " +
+				"join offices o on o.id = r.office_id " +
+				"where r.user_id = $1 " +
+				"and (r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date = $2::date " +
+				"and r.status in ('reserved', 'checked_in') " +
 				"limit 1",
 			[userIdToString(userId), date]
 		);
@@ -275,8 +284,11 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 
 	async hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean> {
 		const result = await this.db.query(
-			"select 1 from reservations " +
-				"where desk_id = $1 and reservation_date = $2 and status in ('reserved', 'checked_in') " +
+			"select 1 from reservations r " +
+				"join offices o on o.id = r.office_id " +
+				"where r.desk_id = $1 " +
+				"and (r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date = $2::date " +
+				"and r.status in ('reserved', 'checked_in') " +
 				"limit 1",
 			[deskIdToString(deskId), date]
 		);
@@ -288,11 +300,9 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 	): Promise<{ timezone: string; checkinAllowedFrom: string } | null> {
 		const result = await this.db.query(
 			"select o.timezone, " +
-				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from ` +
+				`'${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::text as checkin_allowed_from ` +
 			"from desks d " +
 			"join offices o on o.id = d.office_id " +
-			"left join reservation_policies p_office on p_office.office_id = o.id " +
-			"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
 			"where d.id = $1 and d.status = 'active' " +
 			"limit 1",
 			[deskIdToString(deskId)]
@@ -314,15 +324,13 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 	): Promise<QrCheckInCandidate | null> {
 		const result = await this.db.query(
 				"select r.id, r.user_id, r.desk_id, r.office_id, r.status, r.source, r.cancelled_at::text as cancelled_at, " +
-				"r.reservation_date::text as reservation_date, o.timezone, " +
-				`coalesce(p_office.checkin_allowed_from, p_org.checkin_allowed_from, '${RESERVATION_DEFAULT_CHECKIN_ALLOWED_FROM}'::time)::text as checkin_allowed_from, ` +
-				`coalesce(p_office.checkin_cutoff_time, p_org.checkin_cutoff_time, '${RESERVATION_DEFAULT_CHECKIN_CUTOFF_TIME}'::time)::text as checkin_cutoff_time ` +
+				"(r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date::text as reservation_date " +
 				"from reservations r " +
 				"join desks d on d.id = r.desk_id " +
 				"join offices o on o.id = r.office_id " +
-				"left join reservation_policies p_office on p_office.office_id = r.office_id " +
-				"left join reservation_policies p_org on p_org.organization_id = o.organization_id and p_org.office_id is null " +
-				"where r.user_id = $1 and r.reservation_date = $2 and d.qr_public_id = $3 and d.status = 'active' " +
+				"where r.user_id = $1 " +
+				"and (r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date = $2::date " +
+				"and d.qr_public_id = $3 and d.status = 'active' " +
 				"order by r.created_at desc " +
 				"limit 1",
 			[userIdToString(userId), date, qrPublicId]
@@ -335,9 +343,6 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 
 		return {
 			reservation: toReservationEntityFromQrCandidateRow(row),
-			timezone: row.timezone,
-			checkinAllowedFrom: row.checkin_allowed_from,
-			checkinCutoffTime: row.checkin_cutoff_time,
 		};
 	}
 }

@@ -13,10 +13,7 @@ test("PgNoShowPolicyService marks eligible rows as no_show", async () => {
 					rows: [
 						{
 							id: "8ac1b2fa-95d1-4fcb-88d0-1ea2d7f7f001",
-							status: "reserved",
-							reservation_date: "2026-02-21",
-							timezone: "UTC",
-							checkin_cutoff_time: "00:00:00",
+							checkin_deadline_at: "2020-01-01T00:00:00.000Z",
 						},
 					],
 				};
@@ -44,10 +41,7 @@ test("PgNoShowPolicyService skips update when no row is eligible", async () => {
 				rows: [
 					{
 						id: "8ac1b2fa-95d1-4fcb-88d0-1ea2d7f7f002",
-						status: "reserved",
-						reservation_date: "2099-12-01",
-						timezone: "UTC",
-						checkin_cutoff_time: "23:59:00",
+						checkin_deadline_at: "2099-12-01T23:59:00.000Z",
 					},
 				],
 			};

@@ -81,9 +81,6 @@ test("CheckInByQrHandler.execute returns already_checked_in when reservation was
 		queryRepo: mockQueryRepo({
 			findQrCheckInCandidate: async () => ({
 				reservation: buildReservation("checked_in", "2026-03-10"),
-				timezone: "Europe/Madrid",
-				checkinAllowedFrom: "08:00",
-				checkinCutoffTime: "12:00",
 			}),
 		}),
 		noShowPolicyService: mockNoShowPolicyService(),
@@ -114,9 +111,6 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 			assert.equal(qrPublicId, "qr-123");
 			return {
 				reservation: buildReservation("reserved", today),
-				timezone: "UTC",
-				checkinAllowedFrom: "00:00",
-				checkinCutoffTime: "23:59",
 			};
 		},
 	});
