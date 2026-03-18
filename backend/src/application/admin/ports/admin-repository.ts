@@ -115,6 +115,19 @@ export type AdminDeskStatusPatch = {
 	statusReason?: string | null;
 };
 
+export type AdminFloorplanConfig = {
+	officeId: string;
+	floorplanImageUrl: string | null;
+	canvasWidth: number | null;
+	canvasHeight: number | null;
+};
+
+export type AdminFloorplanConfigPatch = {
+	floorplanImageUrl?: string | null;
+	canvasWidth?: number | null;
+	canvasHeight?: number | null;
+};
+
 export type CreateAdminReservationInput = {
 	reservationType: "internal" | "guest";
 	userId?: string;
@@ -215,6 +228,11 @@ export interface AdminRepository {
 	listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]>;
 	updateDeskLayout(deskId: string, patch: AdminDeskLayoutPatch): Promise<AdminDeskRecord | null>;
 	updateDeskStatus(deskId: string, patch: AdminDeskStatusPatch): Promise<AdminDeskRecord | null>;
+	getFloorplanConfig(officeId: string): Promise<AdminFloorplanConfig | null>;
+	updateFloorplanConfig(
+		officeId: string,
+		patch: AdminFloorplanConfigPatch
+	): Promise<AdminFloorplanConfig | null>;
 	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
 	updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null>;
 	listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]>;

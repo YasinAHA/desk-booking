@@ -4,6 +4,7 @@ import type {
 	AdminDeskLayoutPatch,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
+	AdminFloorplanConfigPatch,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminAuditLogFilters,
@@ -53,6 +54,20 @@ export class AdminService {
 	async updateDeskStatus(requestedByUserId: string, deskId: string, patch: AdminDeskStatusPatch) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.updateDeskStatus(deskId, patch);
+	}
+
+	async getFloorplanConfig(requestedByUserId: string, officeId: string) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.getFloorplanConfig(officeId);
+	}
+
+	async updateFloorplanConfig(
+		requestedByUserId: string,
+		officeId: string,
+		patch: AdminFloorplanConfigPatch
+	) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.updateFloorplanConfig(officeId, patch);
 	}
 
 	async listUsers(requestedByUserId: string, filters: AdminUsersFilters) {

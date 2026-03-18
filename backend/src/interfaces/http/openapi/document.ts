@@ -218,6 +218,23 @@ const adminDeskIdParamOpenApiSchema = z.object({
 	id: uuidSchema,
 });
 
+const adminFloorplanQueryOpenApiSchema = z.object({
+	officeId: uuidSchema,
+});
+
+const adminFloorplanConfigSchema = z.object({
+	officeId: uuidSchema,
+	floorplanImageUrl: z.string().nullable(),
+	canvasWidth: z.number().int().nullable(),
+	canvasHeight: z.number().int().nullable(),
+});
+
+const adminFloorplanPatchOpenApiSchema = z.object({
+	floorplanImageUrl: z.string().nullable().optional(),
+	canvasWidth: z.number().int().positive().nullable().optional(),
+	canvasHeight: z.number().int().positive().nullable().optional(),
+});
+
 const adminUserSchema = z.object({
 	id: uuidSchema,
 	email: z.email(),
@@ -724,6 +741,41 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
 			404: err("Desk not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/floorplan",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminFloorplanQueryOpenApiSchema },
+		responses: {
+			200: { description: "Floorplan config", content: json(adminFloorplanConfigSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Office not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/floorplan",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			query: adminFloorplanQueryOpenApiSchema,
+			body: { required: true, content: json(adminFloorplanPatchOpenApiSchema) },
+		},
+		responses: {
+			200: { description: "Updated floorplan config", content: json(adminFloorplanConfigSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Office not found"),
 			500: err("Internal error"),
 		},
 	});

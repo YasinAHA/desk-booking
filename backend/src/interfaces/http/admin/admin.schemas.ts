@@ -53,6 +53,22 @@ export const adminDeskStatusPatchSchema = z.object({
 	statusReason: z.string().trim().min(1).nullable().optional(),
 });
 
+export const adminFloorplanQuerySchema = z.object({
+	officeId: uuidSchema,
+});
+
+export const adminFloorplanPatchSchema = z.object({
+	floorplanImageUrl: z.url().nullable().optional(),
+	canvasWidth: z.number().int().positive().nullable().optional(),
+	canvasHeight: z.number().int().positive().nullable().optional(),
+}).refine(
+	value =>
+		value.floorplanImageUrl !== undefined ||
+		value.canvasWidth !== undefined ||
+		value.canvasHeight !== undefined,
+	{ message: "At least one floorplan field must be provided" }
+);
+
 export const adminUserPatchSchema = z.object({
 	role: z.enum(["user", "admin"]).optional(),
 	status: z.enum(["active", "suspended"]).optional(),

@@ -1,5 +1,7 @@
 import type {
 	AdminDeskLayoutPatch,
+	AdminFloorplanConfig,
+	AdminFloorplanConfigPatch,
 	AdminDeskRecord,
 	AdminDeskStatus,
 	AdminDeskStatusPatch,
@@ -170,6 +172,15 @@ function mapAdminDeskRecord(row: Record<string, unknown>): AdminDeskRecord {
 	};
 }
 
+function mapAdminFloorplanConfig(row: Record<string, unknown>): AdminFloorplanConfig {
+	return {
+		officeId: toStringOrEmpty(row.office_id),
+		floorplanImageUrl: toStringOrNull(row.floorplan_image_url),
+		canvasWidth: toNumberOrNull(row.canvas_width),
+		canvasHeight: toNumberOrNull(row.canvas_height),
+	};
+}
+
 const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowedEmailDomains">, string> = {
 	allowSelfRegistration: "allow_self_registration",
 	guestModeEnabled: "guest_mode_enabled",
@@ -260,6 +271,61 @@ export class PgAdminRepository implements AdminRepository {
 			defaultReservationDurationMinutes: updated.defaultReservationDurationMinutes,
 		});
 		return updated;
+	}
+
+	async getFloorplanConfig(officeId: string): Promise<AdminFloorplanConfig | null> {
+		const result = await this.db.query(
+			"select id::text as office_id, floorplan_image_url, canvas_width, canvas_height " +
+				"from offices where id = $1::uuid limit 1",
+			[officeId]
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminFloorplanConfig(row as Record<string, unknown>);
+	}
+
+	async updateFloorplanConfig(
+		officeId: string,
+		patch: AdminFloorplanConfigPatch
+	): Promise<AdminFloorplanConfig | null> {
+		const updates: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+
+		if (patch.floorplanImageUrl !== undefined) {
+			updates.push(`floorplan_image_url = $${index}`);
+			params.push(patch.floorplanImageUrl);
+			index += 1;
+		}
+		if (patch.canvasWidth !== undefined) {
+			updates.push(`canvas_width = $${index}`);
+			params.push(patch.canvasWidth);
+			index += 1;
+		}
+		if (patch.canvasHeight !== undefined) {
+			updates.push(`canvas_height = $${index}`);
+			params.push(patch.canvasHeight);
+			index += 1;
+		}
+		if (updates.length === 0) {
+			return null;
+		}
+
+		params.push(officeId);
+		const result = await this.db.query(
+			"update offices set " +
+				`${updates.join(", ")}, updated_at = now() ` +
+				`where id = $${index}::uuid ` +
+				"returning id::text as office_id, floorplan_image_url, canvas_width, canvas_height",
+			params
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminFloorplanConfig(row as Record<string, unknown>);
 	}
 
 	async listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]> {

@@ -6,6 +6,7 @@ import type {
 	AdminDeskLayoutPatch,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
+	AdminFloorplanConfigPatch,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminAuditLogFilters,
@@ -20,6 +21,8 @@ import {
 	adminDeskLayoutPatchSchema,
 	adminDeskStatusPatchSchema,
 	adminDesksQuerySchema,
+	adminFloorplanPatchSchema,
+	adminFloorplanQuerySchema,
 	adminReportsQuerySchema,
 	adminUserPatchSchema,
 	adminUsersQuerySchema,
@@ -136,6 +139,45 @@ export class AdminController {
 			);
 			if (!updated) {
 				throwHttpError(404, "NOT_FOUND", "Desk not found");
+			}
+			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async getFloorplanConfig(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminFloorplanQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const config = await this.adminService.getFloorplanConfig(req.user.id, parse.data.officeId);
+			if (!config) {
+				throwHttpError(404, "NOT_FOUND", "Office not found");
+			}
+			return reply.send(config);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchFloorplanConfig(req: FastifyRequest, reply: FastifyReply) {
+		const query = adminFloorplanQuerySchema.safeParse(req.query);
+		const body = adminFloorplanPatchSchema.safeParse(req.body);
+		if (!query.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.updateFloorplanConfig(
+				req.user.id,
+				query.data.officeId,
+				removeUndefined(body.data) as AdminFloorplanConfigPatch
+			);
+			if (!updated) {
+				throwHttpError(404, "NOT_FOUND", "Office not found");
 			}
 			return reply.send(updated);
 		} catch (err) {

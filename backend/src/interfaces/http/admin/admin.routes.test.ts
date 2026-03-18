@@ -140,9 +140,9 @@ test("GET /admin/desks returns filtered desks for admin", async () => {
 		if (text.includes("from desks d")) {
 			return {
 				rows: [{
-					id: "d1111111-1111-4111-8111-111111111111",
-					office_id: "o1111111-1111-4111-8111-111111111111",
-					zone_id: "z1111111-1111-4111-8111-111111111111",
+					id: "a1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					zone_id: "c1111111-1111-4111-8111-111111111111",
 					zone_name: "Zona A",
 					code: "D-01",
 					name: "Desk 01",
@@ -183,9 +183,9 @@ test("PATCH /admin/desks/:id/layout updates layout values", async () => {
 		if (text.includes("with updated as (update desks set")) {
 			return {
 				rows: [{
-					id: "d1111111-1111-4111-8111-111111111111",
-					office_id: "o1111111-1111-4111-8111-111111111111",
-					zone_id: "z1111111-1111-4111-8111-111111111111",
+					id: "a1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					zone_id: "c1111111-1111-4111-8111-111111111111",
 					zone_name: "Zona A",
 					code: "D-01",
 					name: "Desk 01",
@@ -208,7 +208,7 @@ test("PATCH /admin/desks/:id/layout updates layout values", async () => {
 
 	const res = await app.inject({
 		method: "PATCH",
-		url: "/admin/desks/d1111111-1111-4111-8111-111111111111/layout",
+		url: "/admin/desks/a1111111-1111-4111-8111-111111111111/layout",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: {
 			layoutX: 30,
@@ -240,9 +240,65 @@ test("PATCH /admin/desks/:id/status returns 404 for unknown desk", async () => {
 
 	const res = await app.inject({
 		method: "PATCH",
-		url: "/admin/desks/d2222222-1111-4111-8111-111111111111/status",
+		url: "/admin/desks/a2222222-1111-4111-8111-111111111111/status",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 		payload: { status: "maintenance", statusReason: "Maintenance window" },
+	});
+
+	assert.equal(res.statusCode, 404);
+	await app.close();
+});
+
+test("GET /admin/floorplan returns office config", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from offices where id =")) {
+			return {
+				rows: [{
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					floorplan_image_url: "https://cdn.example/floorplan.png",
+					canvas_width: 1200,
+					canvas_height: 800,
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/floorplan?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.canvasWidth, 1200);
+	assert.equal(body.floorplanImageUrl, "https://cdn.example/floorplan.png");
+	await app.close();
+});
+
+test("PATCH /admin/floorplan returns 404 when office does not exist", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update offices set")) {
+			return { rows: [], rowCount: 0 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/floorplan?officeId=b9999999-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			canvasWidth: 1400,
+			canvasHeight: 900,
+		},
 	});
 
 	assert.equal(res.statusCode, 404);
@@ -526,3 +582,4 @@ test("GET /admin/reports/summary format=csv returns attachment", async () => {
 	assert.match(res.body, /totalReservations/);
 	await app.close();
 });
+
