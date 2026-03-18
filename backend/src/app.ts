@@ -11,6 +11,7 @@ import { API_V1_PREFIX } from "@config/api-prefix.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
 import { buildJwtTokenService } from "@composition/auth.container.js";
 import { authRoutes } from "@interfaces/http/auth/auth.routes.js";
+import { adminRoutes } from "@interfaces/http/admin/admin.routes.js";
 import { desksRoutes } from "@interfaces/http/desks/desks.routes.js";
 import { isHttpError, sendError } from "@interfaces/http/http-errors.js";
 import { recordRequest } from "@interfaces/http/metrics/metrics.js";
@@ -187,6 +188,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     // --- Routes ---
     await app.register(authRoutes, { prefix: `${API_V1_PREFIX}/auth` });
+    await app.register(adminRoutes, { prefix: `${API_V1_PREFIX}/admin` });
     await app.register(desksRoutes, { prefix: `${API_V1_PREFIX}/desks` });
     await app.register(reservationsRoutes, { prefix: `${API_V1_PREFIX}/reservations` });
     await app.register(metricsRoutes, { prefix: `${API_V1_PREFIX}/metrics` });

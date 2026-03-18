@@ -23,6 +23,13 @@ import {
 	reservationIdParamSchema,
 } from "@interfaces/http/reservations/reservations.schemas.js";
 import {
+	adminReportsQuerySchema,
+	adminReservationStatusPatchSchema,
+	adminReservationsQuerySchema,
+	adminSettingsPatchSchema,
+	createAdminReservationSchema,
+} from "@interfaces/http/admin/admin.schemas.js";
+import {
 	errorResponseSchema,
 	tokenSchema,
 	uuidSchema,
@@ -146,6 +153,81 @@ const metricsResponseSchema = z.object({
 			p95Ms: z.number().nonnegative(),
 		})
 	),
+});
+
+const adminSettingsResponseSchema = z.object({
+	id: uuidSchema,
+	allowSelfRegistration: z.boolean(),
+	guestModeEnabled: z.boolean(),
+	checkinWindowMinutes: z.number().int().positive(),
+	maxAdvanceDays: z.number().int().nonnegative(),
+	maxReservationsPerUser: z.number().int().positive(),
+	cancellationDeadlineMinutes: z.number().int().nonnegative(),
+	defaultReservationDurationMinutes: z.number().int().positive(),
+	businessHoursStart: z.string(),
+	businessHoursEnd: z.string(),
+	allowedEmailDomains: z.array(z.string()),
+});
+
+const adminReservationsListResponseSchema = z.object({
+	items: z.array(
+		z.object({
+			id: uuidSchema,
+			reservationType: z.enum(["internal", "guest"]),
+			userId: uuidSchema.nullable(),
+			hostUserId: uuidSchema.nullable(),
+			deskId: uuidSchema,
+			officeId: uuidSchema,
+			startsAt: z.string(),
+			endsAt: z.string(),
+			status: z.enum(["reserved", "checked_in", "cancelled", "no_show"]),
+			source: z.enum(["user", "admin", "walk_in", "system"]),
+			guestName: z.string().nullable(),
+			guestEmail: z.string().nullable(),
+			guestCompany: z.string().nullable(),
+		})
+	),
+});
+
+const adminCreateReservationResponseSchema = z.object({
+	ok: z.literal(true),
+	reservationId: uuidSchema,
+});
+
+const adminOccupancyReportResponseSchema = z.object({
+	start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	items: z.array(
+		z.object({
+			deskId: uuidSchema,
+			deskCode: z.string(),
+			zoneName: z.string().nullable(),
+			totalSlots: z.number().int().nonnegative(),
+			occupiedSlots: z.number().int().nonnegative(),
+			occupancyRate: z.number().nonnegative(),
+		})
+	),
+});
+
+const adminNoShowsReportResponseSchema = z.object({
+	start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	items: z.array(
+		z.object({
+			actorUserId: uuidSchema,
+			actorEmail: z.string().nullable(),
+			noShows: z.number().int().nonnegative(),
+		})
+	),
+});
+
+const adminSummaryReportResponseSchema = z.object({
+	start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	totalReservations: z.number().int().nonnegative(),
+	checkedIn: z.number().int().nonnegative(),
+	cancelled: z.number().int().nonnegative(),
+	noShow: z.number().int().nonnegative(),
 });
 
 function json(schema: z.ZodTypeAny) {
@@ -443,6 +525,129 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		responses: {
 			200: { description: "User reservations", content: json(listReservationsResponseSchema) },
 			401: err("Unauthorized"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/settings",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		responses: {
+			200: { description: "Global admin settings", content: json(adminSettingsResponseSchema) },
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/settings",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { body: { required: true, content: json(adminSettingsPatchSchema) } },
+		responses: {
+			200: { description: "Updated global admin settings", content: json(adminSettingsResponseSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/reservations",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminReservationsQuerySchema },
+		responses: {
+			200: { description: "Admin reservations listing", content: json(adminReservationsListResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/admin/reservations",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { body: { required: true, content: json(createAdminReservationSchema) } },
+		responses: {
+			201: { description: "Admin reservation created", content: json(adminCreateReservationResponseSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			409: err("Reservation conflict"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/reservations/{id}",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			params: reservationIdParamSchema,
+			body: { required: true, content: json(adminReservationStatusPatchSchema) },
+		},
+		responses: {
+			200: { description: "Reservation status updated", content: json(okSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Reservation not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/reports/occupancy",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminReportsQuerySchema },
+		responses: {
+			200: { description: "Occupancy report", content: json(adminOccupancyReportResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/reports/no-shows",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminReportsQuerySchema },
+		responses: {
+			200: { description: "No-shows report", content: json(adminNoShowsReportResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/reports/summary",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminReportsQuerySchema },
+		responses: {
+			200: { description: "Summary report", content: json(adminSummaryReportResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
 			500: err("Internal error"),
 		},
 	});
