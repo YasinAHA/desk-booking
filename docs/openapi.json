@@ -3742,6 +3742,971 @@
         }
       }
     },
+    "/admin/desks": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "officeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "zoneId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "maintenance",
+                "disabled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "includeArchived",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin desks listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "officeId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "zoneId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
+                          "zoneName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "maintenance",
+                              "disabled"
+                            ]
+                          },
+                          "statusReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "qrPublicId": {
+                            "type": "string"
+                          },
+                          "layoutX": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutY": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutW": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutH": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "rotationDeg": {
+                            "type": "number"
+                          },
+                          "displayOrder": {
+                            "type": "integer"
+                          },
+                          "archivedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "officeId",
+                          "zoneId",
+                          "zoneName",
+                          "code",
+                          "name",
+                          "status",
+                          "statusReason",
+                          "qrPublicId",
+                          "layoutX",
+                          "layoutY",
+                          "layoutW",
+                          "layoutH",
+                          "rotationDeg",
+                          "displayOrder",
+                          "archivedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/desks/{id}/layout": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "layoutX": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "layoutY": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "layoutW": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "layoutH": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "rotationDeg": {
+                    "type": "number",
+                    "minimum": -360,
+                    "maximum": 360
+                  },
+                  "displayOrder": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin desk layout updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "officeId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "zoneId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "zoneName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "maintenance",
+                        "disabled"
+                      ]
+                    },
+                    "statusReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "qrPublicId": {
+                      "type": "string"
+                    },
+                    "layoutX": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutY": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutW": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutH": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "rotationDeg": {
+                      "type": "number"
+                    },
+                    "displayOrder": {
+                      "type": "integer"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "officeId",
+                    "zoneId",
+                    "zoneName",
+                    "code",
+                    "name",
+                    "status",
+                    "statusReason",
+                    "qrPublicId",
+                    "layoutX",
+                    "layoutY",
+                    "layoutW",
+                    "layoutH",
+                    "rotationDeg",
+                    "displayOrder",
+                    "archivedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Desk not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/desks/{id}/status": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "maintenance",
+                      "disabled"
+                    ]
+                  },
+                  "statusReason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin desk status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "officeId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "zoneId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "zoneName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "maintenance",
+                        "disabled"
+                      ]
+                    },
+                    "statusReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "qrPublicId": {
+                      "type": "string"
+                    },
+                    "layoutX": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutY": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutW": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "layoutH": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "rotationDeg": {
+                      "type": "number"
+                    },
+                    "displayOrder": {
+                      "type": "integer"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "officeId",
+                    "zoneId",
+                    "zoneName",
+                    "code",
+                    "name",
+                    "status",
+                    "statusReason",
+                    "qrPublicId",
+                    "layoutX",
+                    "layoutY",
+                    "layoutW",
+                    "layoutH",
+                    "rotationDeg",
+                    "displayOrder",
+                    "archivedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Desk not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/users": {
       "get": {
         "tags": [

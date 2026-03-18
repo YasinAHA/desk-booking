@@ -23,6 +23,36 @@ export const adminUsersQuerySchema = z.object({
 	pageSize: z.coerce.number().int().min(1).max(100).optional(),
 });
 
+export const adminDesksQuerySchema = z.object({
+	officeId: uuidSchema.optional(),
+	zoneId: uuidSchema.optional(),
+	status: z.enum(["active", "maintenance", "disabled"]).optional(),
+	includeArchived: z.coerce.boolean().optional(),
+});
+
+export const adminDeskLayoutPatchSchema = z.object({
+	layoutX: z.number().nullable().optional(),
+	layoutY: z.number().nullable().optional(),
+	layoutW: z.number().nullable().optional(),
+	layoutH: z.number().nullable().optional(),
+	rotationDeg: z.number().min(-360).max(360).optional(),
+	displayOrder: z.number().int().optional(),
+}).refine(
+	value =>
+		value.layoutX !== undefined ||
+		value.layoutY !== undefined ||
+		value.layoutW !== undefined ||
+		value.layoutH !== undefined ||
+		value.rotationDeg !== undefined ||
+		value.displayOrder !== undefined,
+	{ message: "At least one layout field must be provided" }
+);
+
+export const adminDeskStatusPatchSchema = z.object({
+	status: z.enum(["active", "maintenance", "disabled"]),
+	statusReason: z.string().trim().min(1).nullable().optional(),
+});
+
 export const adminUserPatchSchema = z.object({
 	role: z.enum(["user", "admin"]).optional(),
 	status: z.enum(["active", "suspended"]).optional(),
@@ -84,6 +114,7 @@ export const createAdminReservationSchema = z.object({
 
 export const reservationIdParamSchema = createUuidParamSchema("id");
 export const userIdParamSchema = createUuidParamSchema("id");
+export const deskIdParamSchema = createUuidParamSchema("id");
 
 export const adminReservationStatusPatchSchema = z.object({
 	status: z.enum(["reserved", "checked_in", "cancelled", "no_show"]),

@@ -3,6 +3,9 @@ import type { AdminService } from "@application/admin/services/admin.service.js"
 import { throwHttpError, throwMappedHttpError, type HttpErrorMapping } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
+	AdminDeskLayoutPatch,
+	AdminDeskStatusPatch,
+	AdminDesksFilters,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminAuditLogFilters,
@@ -14,6 +17,9 @@ import type {
 
 import {
 	adminAuditLogQuerySchema,
+	adminDeskLayoutPatchSchema,
+	adminDeskStatusPatchSchema,
+	adminDesksQuerySchema,
 	adminReportsQuerySchema,
 	adminUserPatchSchema,
 	adminUsersQuerySchema,
@@ -21,6 +27,7 @@ import {
 	adminReservationsQuerySchema,
 	adminSettingsPatchSchema,
 	createAdminReservationSchema,
+	deskIdParamSchema,
 	reservationIdParamSchema,
 	userIdParamSchema,
 } from "./admin.schemas.js";
@@ -70,6 +77,67 @@ export class AdminController {
 				removeUndefined(parse.data) as AdminSettingsPatch
 			);
 			return reply.send(settings);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async listDesks(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminDesksQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const items = await this.adminService.listDesks(
+				req.user.id,
+				removeUndefined(parse.data) as AdminDesksFilters
+			);
+			return reply.send({ items });
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchDeskLayout(req: FastifyRequest, reply: FastifyReply) {
+		const params = deskIdParamSchema.safeParse(req.params);
+		const body = adminDeskLayoutPatchSchema.safeParse(req.body);
+		if (!params.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.updateDeskLayout(
+				req.user.id,
+				params.data.id,
+				removeUndefined(body.data) as AdminDeskLayoutPatch
+			);
+			if (!updated) {
+				throwHttpError(404, "NOT_FOUND", "Desk not found");
+			}
+			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchDeskStatus(req: FastifyRequest, reply: FastifyReply) {
+		const params = deskIdParamSchema.safeParse(req.params);
+		const body = adminDeskStatusPatchSchema.safeParse(req.body);
+		if (!params.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.updateDeskStatus(
+				req.user.id,
+				params.data.id,
+				removeUndefined(body.data) as AdminDeskStatusPatch
+			);
+			if (!updated) {
+				throwHttpError(404, "NOT_FOUND", "Desk not found");
+			}
+			return reply.send(updated);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

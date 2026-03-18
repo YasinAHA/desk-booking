@@ -1,4 +1,9 @@
 import type {
+	AdminDeskLayoutPatch,
+	AdminDeskRecord,
+	AdminDeskStatus,
+	AdminDeskStatusPatch,
+	AdminDesksFilters,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminUsersPage,
@@ -102,6 +107,20 @@ function toNumberOrZero(value: unknown): number {
 	return 0;
 }
 
+function toNumberOrNull(value: unknown): number | null {
+	if (value === null || value === undefined) {
+		return null;
+	}
+	if (typeof value === "number") {
+		return value;
+	}
+	if (typeof value === "string") {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+	return null;
+}
+
 function normalizeAdminUserRole(value: unknown): AdminUserRole {
 	return value === "admin" ? "admin" : "user";
 }
@@ -120,6 +139,34 @@ function mapAdminUserRecord(row: Record<string, unknown>): AdminUserRecord {
 		role: normalizeAdminUserRole(row.role),
 		status: normalizeAdminUserStatus(row.status),
 		createdAt: toStringOrEmpty(row.created_at),
+	};
+}
+
+function normalizeAdminDeskStatus(value: unknown): AdminDeskStatus {
+	if (value === "maintenance" || value === "disabled") {
+		return value;
+	}
+	return "active";
+}
+
+function mapAdminDeskRecord(row: Record<string, unknown>): AdminDeskRecord {
+	return {
+		id: toStringOrEmpty(row.id),
+		officeId: toStringOrEmpty(row.office_id),
+		zoneId: toStringOrNull(row.zone_id),
+		zoneName: toStringOrNull(row.zone_name),
+		code: toStringOrEmpty(row.code),
+		name: toStringOrNull(row.name),
+		status: normalizeAdminDeskStatus(row.status),
+		statusReason: toStringOrNull(row.status_reason),
+		qrPublicId: toStringOrEmpty(row.qr_public_id),
+		layoutX: toNumberOrNull(row.layout_x),
+		layoutY: toNumberOrNull(row.layout_y),
+		layoutW: toNumberOrNull(row.layout_w),
+		layoutH: toNumberOrNull(row.layout_h),
+		rotationDeg: toNumberOrZero(row.rotation_deg),
+		displayOrder: toNumberOrZero(row.display_order),
+		archivedAt: toStringOrNull(row.archived_at),
 	};
 }
 
@@ -213,6 +260,121 @@ export class PgAdminRepository implements AdminRepository {
 			defaultReservationDurationMinutes: updated.defaultReservationDurationMinutes,
 		});
 		return updated;
+	}
+
+	async listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]> {
+		const where: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+
+		if (filters.officeId) {
+			where.push(`d.office_id = $${index}::uuid`);
+			params.push(filters.officeId);
+			index += 1;
+		}
+		if (filters.zoneId) {
+			where.push(`d.zone_id = $${index}::uuid`);
+			params.push(filters.zoneId);
+			index += 1;
+		}
+		if (filters.status) {
+			where.push(`d.status = $${index}`);
+			params.push(filters.status);
+		}
+		if (!filters.includeArchived) {
+			where.push("d.archived_at is null");
+		}
+
+		const whereSql = where.length > 0 ? `where ${where.join(" and ")}` : "";
+		const result = await this.db.query(
+			"select d.id::text as id, d.office_id::text as office_id, d.zone_id::text as zone_id, z.name as zone_name, " +
+				"d.code, d.name, d.status, d.status_reason, d.qr_public_id, d.layout_x, d.layout_y, d.layout_w, d.layout_h, " +
+				"d.rotation_deg, d.display_order, d.archived_at::text as archived_at " +
+			"from desks d " +
+			"left join zones z on z.id = d.zone_id " +
+			`${whereSql} ` +
+			"order by d.display_order asc, d.code asc",
+			params
+		);
+
+		return result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>));
+	}
+
+	async updateDeskLayout(
+		deskId: string,
+		patch: AdminDeskLayoutPatch
+	): Promise<AdminDeskRecord | null> {
+		const updates: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+
+		const columns: Array<[keyof AdminDeskLayoutPatch, string]> = [
+			["layoutX", "layout_x"],
+			["layoutY", "layout_y"],
+			["layoutW", "layout_w"],
+			["layoutH", "layout_h"],
+			["rotationDeg", "rotation_deg"],
+			["displayOrder", "display_order"],
+		];
+		for (const [key, column] of columns) {
+			const value = patch[key];
+			if (value === undefined) {
+				continue;
+			}
+			updates.push(`${column} = $${index}`);
+			params.push(value);
+			index += 1;
+		}
+		if (updates.length === 0) {
+			return null;
+		}
+
+		params.push(deskId);
+		const result = await this.db.query(
+			"with updated as (" +
+				"update desks set " +
+				`${updates.join(", ")}, updated_at = now() ` +
+				`where id = $${index}::uuid ` +
+				"returning *" +
+			") " +
+			"select u.id::text as id, u.office_id::text as office_id, u.zone_id::text as zone_id, z.name as zone_name, " +
+				"u.code, u.name, u.status, u.status_reason, u.qr_public_id, u.layout_x, u.layout_y, u.layout_w, u.layout_h, " +
+				"u.rotation_deg, u.display_order, u.archived_at::text as archived_at " +
+			"from updated u " +
+			"left join zones z on z.id = u.zone_id",
+			params
+		);
+
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminDeskRecord(row as Record<string, unknown>);
+	}
+
+	async updateDeskStatus(
+		deskId: string,
+		patch: AdminDeskStatusPatch
+	): Promise<AdminDeskRecord | null> {
+		const result = await this.db.query(
+			"with updated as (" +
+				"update desks set status = $1, status_reason = $2, status_changed_at = now(), updated_at = now() " +
+				"where id = $3::uuid " +
+				"returning *" +
+			") " +
+			"select u.id::text as id, u.office_id::text as office_id, u.zone_id::text as zone_id, z.name as zone_name, " +
+				"u.code, u.name, u.status, u.status_reason, u.qr_public_id, u.layout_x, u.layout_y, u.layout_w, u.layout_h, " +
+				"u.rotation_deg, u.display_order, u.archived_at::text as archived_at " +
+			"from updated u " +
+			"left join zones z on z.id = u.zone_id",
+			[patch.status, patch.statusReason ?? null, deskId]
+		);
+
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminDeskRecord(row as Record<string, unknown>);
 	}
 
 	async listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage> {

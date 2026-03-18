@@ -170,6 +170,54 @@ const adminSettingsResponseSchema = z.object({
 	allowedEmailDomains: z.array(z.string()),
 });
 
+const adminDeskSchema = z.object({
+	id: uuidSchema,
+	officeId: uuidSchema,
+	zoneId: uuidSchema.nullable(),
+	zoneName: z.string().nullable(),
+	code: z.string(),
+	name: z.string().nullable(),
+	status: z.enum(["active", "maintenance", "disabled"]),
+	statusReason: z.string().nullable(),
+	qrPublicId: z.string(),
+	layoutX: z.number().nullable(),
+	layoutY: z.number().nullable(),
+	layoutW: z.number().nullable(),
+	layoutH: z.number().nullable(),
+	rotationDeg: z.number(),
+	displayOrder: z.number().int(),
+	archivedAt: z.string().nullable(),
+});
+
+const adminDesksListResponseSchema = z.object({
+	items: z.array(adminDeskSchema),
+});
+
+const adminDesksQueryOpenApiSchema = z.object({
+	officeId: uuidSchema.optional(),
+	zoneId: uuidSchema.optional(),
+	status: z.enum(["active", "maintenance", "disabled"]).optional(),
+	includeArchived: z.coerce.boolean().optional(),
+});
+
+const adminDeskLayoutPatchOpenApiSchema = z.object({
+	layoutX: z.number().nullable().optional(),
+	layoutY: z.number().nullable().optional(),
+	layoutW: z.number().nullable().optional(),
+	layoutH: z.number().nullable().optional(),
+	rotationDeg: z.number().min(-360).max(360).optional(),
+	displayOrder: z.number().int().optional(),
+});
+
+const adminDeskStatusPatchOpenApiSchema = z.object({
+	status: z.enum(["active", "maintenance", "disabled"]),
+	statusReason: z.string().nullable().optional(),
+});
+
+const adminDeskIdParamOpenApiSchema = z.object({
+	id: uuidSchema,
+});
+
 const adminUserSchema = z.object({
 	id: uuidSchema,
 	email: z.email(),
@@ -623,6 +671,59 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/desks",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminDesksQueryOpenApiSchema },
+		responses: {
+			200: { description: "Admin desks listing", content: json(adminDesksListResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/desks/{id}/layout",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			params: adminDeskIdParamOpenApiSchema,
+			body: { required: true, content: json(adminDeskLayoutPatchOpenApiSchema) },
+		},
+		responses: {
+			200: { description: "Admin desk layout updated", content: json(adminDeskSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Desk not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/desks/{id}/status",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			params: adminDeskIdParamOpenApiSchema,
+			body: { required: true, content: json(adminDeskStatusPatchOpenApiSchema) },
+		},
+		responses: {
+			200: { description: "Admin desk status updated", content: json(adminDeskSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Desk not found"),
 			500: err("Internal error"),
 		},
 	});

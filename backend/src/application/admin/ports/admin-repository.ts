@@ -19,6 +19,7 @@ export type AdminSettingsPatch = Partial<Omit<AdminSettings, "id" | "allowedEmai
 export type AdminReservationStatus = "reserved" | "checked_in" | "cancelled" | "no_show";
 export type AdminUserRole = "user" | "admin";
 export type AdminUserStatus = "active" | "suspended";
+export type AdminDeskStatus = "active" | "maintenance" | "disabled";
 
 export type AdminReservationRecord = {
 	id: string;
@@ -72,6 +73,46 @@ export type AdminUsersPage = {
 export type AdminUserPatch = {
 	role?: AdminUserRole;
 	status?: AdminUserStatus;
+};
+
+export type AdminDeskRecord = {
+	id: string;
+	officeId: string;
+	zoneId: string | null;
+	zoneName: string | null;
+	code: string;
+	name: string | null;
+	status: AdminDeskStatus;
+	statusReason: string | null;
+	qrPublicId: string;
+	layoutX: number | null;
+	layoutY: number | null;
+	layoutW: number | null;
+	layoutH: number | null;
+	rotationDeg: number;
+	displayOrder: number;
+	archivedAt: string | null;
+};
+
+export type AdminDesksFilters = {
+	officeId?: string;
+	zoneId?: string;
+	status?: AdminDeskStatus;
+	includeArchived?: boolean;
+};
+
+export type AdminDeskLayoutPatch = {
+	layoutX?: number | null;
+	layoutY?: number | null;
+	layoutW?: number | null;
+	layoutH?: number | null;
+	rotationDeg?: number;
+	displayOrder?: number;
+};
+
+export type AdminDeskStatusPatch = {
+	status: AdminDeskStatus;
+	statusReason?: string | null;
 };
 
 export type CreateAdminReservationInput = {
@@ -171,6 +212,9 @@ export type AdminAuditLogFilters = AdminReportFilters & {
 export interface AdminRepository {
 	getGlobalSettings(): Promise<AdminSettings>;
 	updateGlobalSettings(patch: AdminSettingsPatch): Promise<AdminSettings>;
+	listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]>;
+	updateDeskLayout(deskId: string, patch: AdminDeskLayoutPatch): Promise<AdminDeskRecord | null>;
+	updateDeskStatus(deskId: string, patch: AdminDeskStatusPatch): Promise<AdminDeskRecord | null>;
 	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
 	updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null>;
 	listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]>;

@@ -132,6 +132,123 @@ test("GET /admin/settings returns settings for admin", async () => {
 	await app.close();
 });
 
+test("GET /admin/desks returns filtered desks for admin", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from desks d")) {
+			return {
+				rows: [{
+					id: "d1111111-1111-4111-8111-111111111111",
+					office_id: "o1111111-1111-4111-8111-111111111111",
+					zone_id: "z1111111-1111-4111-8111-111111111111",
+					zone_name: "Zona A",
+					code: "D-01",
+					name: "Desk 01",
+					status: "active",
+					status_reason: null,
+					qr_public_id: "qr-111",
+					layout_x: 10,
+					layout_y: 20,
+					layout_w: 1,
+					layout_h: 1,
+					rotation_deg: 0,
+					display_order: 1,
+					archived_at: null,
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/desks?status=active",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.items.length, 1);
+	assert.equal(body.items[0]?.code, "D-01");
+	await app.close();
+});
+
+test("PATCH /admin/desks/:id/layout updates layout values", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("with updated as (update desks set")) {
+			return {
+				rows: [{
+					id: "d1111111-1111-4111-8111-111111111111",
+					office_id: "o1111111-1111-4111-8111-111111111111",
+					zone_id: "z1111111-1111-4111-8111-111111111111",
+					zone_name: "Zona A",
+					code: "D-01",
+					name: "Desk 01",
+					status: "active",
+					status_reason: null,
+					qr_public_id: "qr-111",
+					layout_x: 30,
+					layout_y: 40,
+					layout_w: 1.2,
+					layout_h: 1.1,
+					rotation_deg: 15,
+					display_order: 5,
+					archived_at: null,
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/desks/d1111111-1111-4111-8111-111111111111/layout",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			layoutX: 30,
+			layoutY: 40,
+			layoutW: 1.2,
+			layoutH: 1.1,
+			rotationDeg: 15,
+			displayOrder: 5,
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.layoutX, 30);
+	assert.equal(body.rotationDeg, 15);
+	await app.close();
+});
+
+test("PATCH /admin/desks/:id/status returns 404 for unknown desk", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("with updated as (update desks set status =")) {
+			return { rows: [], rowCount: 0 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/desks/d2222222-1111-4111-8111-111111111111/status",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: { status: "maintenance", statusReason: "Maintenance window" },
+	});
+
+	assert.equal(res.statusCode, 404);
+	await app.close();
+});
+
 test("GET /admin/users returns paginated users for admin", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {

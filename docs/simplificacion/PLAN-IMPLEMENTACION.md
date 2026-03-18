@@ -71,8 +71,8 @@
 - [ ] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`
 
 #### 2.2 Desks & Layout
-- [ ] `GET /admin/desks` → agregar filtros por zona/estado
-- [ ] `PATCH /admin/desks/{id}/layout` → guardar `layout_x`, `layout_y`, `layout_w`, `layout_h`, `rotation_deg`
+- [x] `GET /admin/desks` → agregar filtros por zona/estado
+- [x] `PATCH /admin/desks/{id}/layout` → guardar `layout_x`, `layout_y`, `layout_w`, `layout_h`, `rotation_deg`
 - [ ] `GET /desks` (usuario) → retornar datos de layout para plano
 
 #### 2.3 Reservations
