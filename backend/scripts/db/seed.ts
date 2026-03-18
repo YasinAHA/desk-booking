@@ -8,7 +8,7 @@ import {
 } from "../../src/config/pg-runtime.js";
 
 const seedEnvironment = (process.argv[2] ?? "dev").toLowerCase();
-const allowed = new Set(["dev", "test", "correction"]);
+const allowed = new Set(["dev", "test", "correction", "simplificacion"]);
 if (!allowed.has(seedEnvironment)) {
 	throw new Error(`Unknown seed environment: ${seedEnvironment}`);
 }

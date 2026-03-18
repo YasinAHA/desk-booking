@@ -1,0 +1,1414 @@
+openapi: 3.0.0
+info:
+  title: Desk Booking API - Camerfirma Internal v1
+  version: 1.0.0
+  description: |
+    Simplified desk booking API for Camerfirma internal use.
+    - Base URL: /api/internal/desk-booking/v1
+    - Auth: Bearer token (JWT)
+    - Internal use only (no public API at v1)
+
+servers:
+  - url: /api/internal/desk-booking/v1
+    description: Production
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        status:
+          type: string
+          enum: [active, suspended]
+        createdAt:
+          type: string
+          format: date-time
+
+    Desk:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        officeId:
+          type: string
+          format: uuid
+        zoneId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, maintenance, disabled]
+        qrPublicId:
+          type: string
+        layoutX:
+          type: number
+        layoutY:
+          type: number
+        layoutW:
+          type: number
+        layoutH:
+          type: number
+        rotationDeg:
+          type: number
+        displayOrder:
+          type: integer
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        deskId:
+          type: string
+          format: uuid
+        officeId:
+          type: string
+          format: uuid
+        reservationType:
+          type: string
+          enum: [internal, guest]
+        hostUserId:
+          type: string
+          format: uuid
+          nullable: true
+        guestName:
+          type: string
+          nullable: true
+        guestEmail:
+          type: string
+          nullable: true
+        guestCompany:
+          type: string
+          nullable: true
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        checkinDeadlineAt:
+          type: string
+          format: date-time
+        checkedInAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        noShowAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [reserved, checked_in, cancelled, no_show]
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        officeId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+        displayOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    DeskBlock:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deskId:
+          type: string
+          format: uuid
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    OccupancyReport:
+      type: object
+      properties:
+        desk:
+          $ref: '#/components/schemas/Desk'
+        zone:
+          type: string
+        totalSlots:
+          type: integer
+        occupiedSlots:
+          type: integer
+        occupancyRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+
+    CancellationReport:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        userEmail:
+          type: string
+        cancelledAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+        count:
+          type: integer
+        avgLeadTimeMinutes:
+          type: number
+
+    NoShowReport:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        deskCode:
+          type: string
+        noShowAt:
+          type: string
+          format: date-time
+        count:
+          type: integer
+        incidenceRate:
+          type: number
+          format: double
+
+    SummaryReport:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [today, this_week, this_month]
+        occupancyToday:
+          type: number
+        cancellationsThisWeek:
+          type: integer
+        noShowsThisMonth:
+          type: integer
+        totalDesks:
+          type: integer
+        availableDesks:
+          type: integer
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required: [email, password]
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      security: []
+      summary: User registration (restricted to allowed email domains)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+              required: [email, password, firstName, lastName]
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid email domain or missing fields
+        '409':
+          description: User already exists
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+              required: [refreshToken]
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: User logout
+      responses:
+        '200':
+          description: Logged out
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /desks:
+    get:
+      tags: [User - Desks]
+      summary: List available desks (with layout data)
+      parameters:
+        - name: officeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: zoneId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+      responses:
+        '200':
+          description: List of desks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Desk'
+
+  /reservations:
+    post:
+      tags: [User - Reservations]
+      summary: Create a new reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deskId:
+                  type: string
+                  format: uuid
+                startsAt:
+                  type: string
+                  format: date-time
+                endsAt:
+                  type: string
+                  format: date-time
+              required: [deskId, startsAt, endsAt]
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Invalid input or overlapping reservation
+        '409':
+          description: Desk unavailable for requested time
+
+  /reservations/me:
+    get:
+      tags: [User - Reservations]
+      summary: List user's reservations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [reserved, checked_in, cancelled, no_show]
+          required: false
+      responses:
+        '200':
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+
+  /reservations/{id}:
+    delete:
+      tags: [User - Reservations]
+      summary: Cancel a reservation
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        '204':
+          description: Reservation cancelled
+        '404':
+          description: Reservation not found
+        '403':
+          description: Forbidden (not owner)
+
+  /reservations/{id}/check-in:
+    post:
+      tags: [User - Check-in]
+      summary: Check in to a reservation
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qrPublicId:
+                  type: string
+                  description: Optional QR validation
+      responses:
+        '200':
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Invalid check-in window or reservation state
+        '404':
+          description: Reservation not found
+
+  /reservations/check-in/qr:
+    post:
+      tags: [User - Check-in]
+      summary: Check in by QR (deprecated, use /reservations/{id}/check-in)
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qrPublicId:
+                  type: string
+              required: [qrPublicId]
+      responses:
+        '200':
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: QR not found or no active reservation
+
+  /me/preferences:
+    get:
+      tags: [User - Preferences]
+      summary: Get user preferences
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  theme:
+                    type: string
+                    enum: [light, dark, system]
+                  language:
+                    type: string
+                    enum: [es, en]
+                  timezone:
+                    type: string
+                  emailNotificationsEnabled:
+                    type: boolean
+
+    patch:
+      tags: [User - Preferences]
+      summary: Update user preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme:
+                  type: string
+                  enum: [light, dark, system]
+                language:
+                  type: string
+                  enum: [es, en]
+                timezone:
+                  type: string
+                emailNotificationsEnabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Preferences updated
+
+  /admin/desks:
+    get:
+      tags: [Admin - Desks]
+      summary: List all desks with status
+      parameters:
+        - name: officeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, maintenance, disabled]
+          required: false
+      responses:
+        '200':
+          description: List of desks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Desk'
+
+    post:
+      tags: [Admin - Desks]
+      summary: Create a new desk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officeId:
+                  type: string
+                  format: uuid
+                zoneId:
+                  type: string
+                  format: uuid
+                code:
+                  type: string
+                name:
+                  type: string
+              required: [officeId, zoneId, code, name]
+      responses:
+        '201':
+          description: Desk created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desk'
+
+  /admin/desks/{id}:
+    patch:
+      tags: [Admin - Desks]
+      summary: Update desk properties
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, maintenance, disabled]
+                zoneId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Desk updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desk'
+
+  /admin/desks/{id}/layout:
+    patch:
+      tags: [Admin - Desks]
+      summary: Update desk layout position and dimensions
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                layoutX:
+                  type: number
+                layoutY:
+                  type: number
+                layoutW:
+                  type: number
+                layoutH:
+                  type: number
+                rotationDeg:
+                  type: number
+      responses:
+        '200':
+          description: Layout updated
+
+  /admin/desks/{id}/qr/regenerate:
+    post:
+      tags: [Admin - Desks]
+      summary: Regenerate desk QR code
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        '200':
+          description: QR regenerated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qrPublicId:
+                    type: string
+
+  /admin/desks/qr:
+    get:
+      tags: [Admin - QR Codes]
+      summary: List all desk QR codes
+      parameters:
+        - name: officeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+      responses:
+        '200':
+          description: List of desk QR codes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    deskId:
+                      type: string
+                      format: uuid
+                    deskCode:
+                      type: string
+                    deskName:
+                      type: string
+                    qrPublicId:
+                      type: string
+                    zoneId:
+                      type: string
+                      format: uuid
+                    zoneName:
+                      type: string
+
+  /admin/desks/qr/regenerate-bulk:
+    post:
+      tags: [Admin - QR Codes]
+      summary: Regenerate multiple desk QR codes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deskIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Leave empty to regenerate all desks in office
+                officeId:
+                  type: string
+                  format: uuid
+              required: [officeId]
+      responses:
+        '200':
+          description: QRs regenerated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regeneratedCount:
+                    type: integer
+                  desks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        deskId:
+                          type: string
+                          format: uuid
+                        qrPublicId:
+                          type: string
+
+  /admin/reservations:
+    get:
+      tags: [Admin - Reservations]
+      summary: List all reservations with filters
+      parameters:
+        - name: officeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [reserved, checked_in, cancelled, no_show]
+          required: false
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          required: false
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          required: false
+      responses:
+        '200':
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+
+    post:
+      tags: [Admin - Reservations]
+      summary: Create reservation for user or guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reservationType:
+                  type: string
+                  enum: [internal, guest]
+                userId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                guestName:
+                  type: string
+                  nullable: true
+                guestEmail:
+                  type: string
+                  nullable: true
+                guestCompany:
+                  type: string
+                  nullable: true
+                hostUserId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                deskId:
+                  type: string
+                  format: uuid
+                startsAt:
+                  type: string
+                  format: date-time
+                endsAt:
+                  type: string
+                  format: date-time
+              required: [reservationType, deskId, startsAt, endsAt]
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+
+  /admin/reservations/{id}:
+    patch:
+      tags: [Admin - Reservations]
+      summary: Update reservation status
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [reserved, checked_in, cancelled, no_show]
+      responses:
+        '200':
+          description: Reservation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+
+  /admin/zones:
+    get:
+      tags: [Admin - Zones]
+      summary: List zones
+      responses:
+        '200':
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+
+    post:
+      tags: [Admin - Zones]
+      summary: Create a new zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officeId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                color:
+                  type: string
+                  nullable: true
+              required: [officeId, name]
+      responses:
+        '201':
+          description: Zone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+
+  /admin/zones/{id}:
+    patch:
+      tags: [Admin - Zones]
+      summary: Update zone
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+                displayOrder:
+                  type: integer
+      responses:
+        '200':
+          description: Zone updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+
+  /admin/desk-blocks:
+    get:
+      tags: [Admin - Desk Blocks]
+      summary: List desk blocks (maintenance/unavailability periods)
+      responses:
+        '200':
+          description: List of desk blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeskBlock'
+
+    post:
+      tags: [Admin - Desk Blocks]
+      summary: Create a desk block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deskId:
+                  type: string
+                  format: uuid
+                startAt:
+                  type: string
+                  format: date-time
+                endAt:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+                  nullable: true
+              required: [deskId, startAt, endAt]
+      responses:
+        '201':
+          description: Desk block created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeskBlock'
+
+  /admin/desk-blocks/{id}:
+    patch:
+      tags: [Admin - Desk Blocks]
+      summary: Update desk block
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endAt:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Desk block updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeskBlock'
+
+  /admin/settings:
+    get:
+      tags: [Admin - Settings]
+      summary: Get global app settings
+      responses:
+        '200':
+          description: App settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowSelfRegistration:
+                    type: boolean
+                  guestModeEnabled:
+                    type: boolean
+                  checkinWindowMinutes:
+                    type: integer
+                  maxAdvanceDays:
+                    type: integer
+                  maxReservationsPerUser:
+                    type: integer
+                  cancellationDeadlineMinutes:
+                    type: integer
+                  defaultReservationDurationMinutes:
+                    type: integer
+                  businessHoursStart:
+                    type: string
+                    format: time
+                  businessHoursEnd:
+                    type: string
+                    format: time
+                  allowedEmailDomains:
+                    type: array
+                    items:
+                      type: string
+
+    patch:
+      tags: [Admin - Settings]
+      summary: Update global app settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allowSelfRegistration:
+                  type: boolean
+                guestModeEnabled:
+                  type: boolean
+                checkinWindowMinutes:
+                  type: integer
+                maxAdvanceDays:
+                  type: integer
+                maxReservationsPerUser:
+                  type: integer
+                cancellationDeadlineMinutes:
+                  type: integer
+                defaultReservationDurationMinutes:
+                  type: integer
+                businessHoursStart:
+                  type: string
+                  format: time
+                businessHoursEnd:
+                  type: string
+                  format: time
+                allowedEmailDomains:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Settings updated
+
+  /admin/users:
+    get:
+      tags: [Admin - Users]
+      summary: List all users
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, suspended]
+          required: false
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /admin/users/{id}:
+    patch:
+      tags: [Admin - Users]
+      summary: Update user status or role
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, suspended]
+                role:
+                  type: string
+                  enum: [user, admin]
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /admin/reports/occupancy:
+    get:
+      tags: [Admin - Reports]
+      summary: Get occupancy report
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: officeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: zoneId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+      responses:
+        '200':
+          description: Occupancy data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: object
+                    properties:
+                      start:
+                        type: string
+                        format: date
+                      end:
+                        type: string
+                        format: date
+                  desks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OccupancyReport'
+                  aggregates:
+                    type: object
+                    properties:
+                      totalDesks:
+                        type: integer
+                      avgOccupancyRate:
+                        type: number
+
+  /admin/reports/cancellations:
+    get:
+      tags: [Admin - Reports]
+      summary: Get cancellations report
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+          required: false
+      responses:
+        '200':
+          description: Cancellations data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CancellationReport'
+                  total:
+                    type: integer
+
+  /admin/reports/no-shows:
+    get:
+      tags: [Admin - Reports]
+      summary: Get no-shows report
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: No-shows data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NoShowReport'
+                  totalIncidences:
+                    type: integer
+                  incidenceRate:
+                    type: number
+
+  /admin/reports/audit-log:
+    get:
+      tags: [Admin - Reports]
+      summary: Get audit log (compliance)
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: actorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - name: eventType
+          in: query
+          schema:
+            type: string
+            enum: [reservation_created, reservation_cancelled, reservation_checked_in, reservation_no_show, desk_status_changed, desk_block_created, desk_block_ended, user_status_changed, admin_action]
+          required: false
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        eventType:
+                          type: string
+                        actorUserId:
+                          type: string
+                          format: uuid
+                        actorEmail:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        metadata:
+                          type: object
+                  total:
+                    type: integer
+
+  /admin/reports/summary:
+    get:
+      tags: [Admin - Reports]
+      summary: Get summary dashboard report
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [today, this_week, this_month]
+          required: true
+      responses:
+        '200':
+          description: Summary report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryReport'

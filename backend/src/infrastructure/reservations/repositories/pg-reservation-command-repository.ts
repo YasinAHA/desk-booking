@@ -69,13 +69,26 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 	): Promise<ReservationId> {
 		try {
 			const result = await this.db.query(
-				"insert into reservations (user_id, desk_id, reservation_date, source, office_id) " +
-					"values ($1, $2, $3, $4, $5) returning id",
+				"insert into reservations (" +
+					"user_id, desk_id, source, office_id, starts_at, ends_at, checkin_deadline_at" +
+				") " +
+				"select " +
+					"$1, $2, $3, coalesce($5, d.office_id), " +
+					"($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')), " +
+					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
+						"make_interval(mins => coalesce(s.default_reservation_duration_minutes, 480))), " +
+					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
+						"make_interval(mins => coalesce(s.checkin_window_minutes, 15))) " +
+				"from desks d " +
+				"join offices o on o.id = d.office_id " +
+				"left join app_settings s on s.scope_type = 'global' " +
+				"where d.id = $2 " +
+				"returning id",
 				[
 					userIdToString(userId),
 					deskIdToString(deskId),
-					date,
 					source,
+					date,
 					officeId ? officeIdToString(officeId) : null,
 				]
 			);
@@ -103,8 +116,8 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 		reservationId: ReservationId
 	): Promise<"checked_in" | "already_checked_in" | "not_active"> {
 		const updateResult = await this.db.query(
-			"update reservations set status = 'checked_in', check_in_at = now() " +
-				"where id = $1 and status = 'reserved' returning id",
+			"update reservations set status = 'checked_in', checked_in_at = now() " +
+				"where id = $1 and status = 'reserved' and now() <= checkin_deadline_at returning id",
 			[reservationIdToString(reservationId)]
 		);
 		if ((updateResult.rowCount ?? 0) > 0) {
