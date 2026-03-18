@@ -602,11 +602,7 @@ Si más adelante la API se abre a un contexto no interno o más genérico, se po
 - `Desks` → cubierto por `GET/POST/PATCH /admin/desks`
 - `Bookings` → cubierto por `GET/POST/PATCH /admin/reservations`
 - `Floor Plan` → cubierto por `PATCH /admin/desks/{id}/layout` + modelo layout persistente
-- `QR Codes` → **parcialmente cubierto** por `POST /admin/desks/{id}/qr/regenerate`
-
-Gap recomendado para cerrar `QR Codes` como módulo admin completo:
-- `GET /admin/desks/qr` (listado con `deskId`, `deskCode`, `qrPublicId`, estado)
-- `POST /admin/desks/qr/regenerate-bulk` (rotación masiva opcional)
+- `QR Codes` → cubierto por `GET /admin/desks/qr`, `POST /admin/desks/qr/regenerate-bulk` y `POST /admin/desks/{id}/qr/regenerate`
 
 ### Sidebar de app (captura)
 - `Dashboard` → no requiere endpoint propio obligatorio en v1; puede componerse desde reservas/ocupación

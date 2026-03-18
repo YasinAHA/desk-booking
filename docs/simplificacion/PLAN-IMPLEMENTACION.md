@@ -160,7 +160,7 @@
 - [ ] Desks tab → drag & drop persistente via `PATCH /admin/desks/{id}/layout`
 - [ ] Bookings tab → crear reservas tipo `internal` e `guest`
 - [ ] Floor Plan → editor visual con persistencia
-- [ ] QR Codes tab → listar QRs (nuevos endpoints `/admin/desks/qr`, `/admin/desks/qr/regenerate-bulk`)
+- [x] QR Codes tab → listar QRs (nuevos endpoints `/admin/desks/qr`, `/admin/desks/qr/regenerate-bulk`)
 - [ ] Reports → tabs/módulo con gráficas de ocupación, cancelaciones, no-shows
 - [ ] Settings → interfaz para editar `app_settings`
 
