@@ -15,6 +15,8 @@
   --color-primary-foreground: #ffffff;
   --color-secondary: hsl(218 15% 47%);
   --color-accent: hsl(169 75% 44%);
+  --color-accent-hover: hsl(169 75% 40%);
+  --color-accent-active: hsl(169 75% 36%);
   --color-accent-foreground: #ffffff;
   --color-muted: hsl(220 10% 50%);
   --color-subtle: hsl(220 10% 58%);
