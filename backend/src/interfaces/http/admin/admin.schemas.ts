@@ -77,4 +77,9 @@ export const adminReportsQuerySchema = z.object({
 	start: dateSchema,
 	end: dateSchema,
 	officeId: uuidSchema.optional(),
+	format: z.enum(["json", "csv"]).optional(),
+});
+
+export const adminAuditLogQuerySchema = adminReportsQuerySchema.extend({
+	actorId: uuidSchema.optional(),
 });

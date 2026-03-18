@@ -3,6 +3,7 @@ import type { AdminService } from "@application/admin/services/admin.service.js"
 import { throwHttpError, throwMappedHttpError, type HttpErrorMapping } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
+	AdminAuditLogFilters,
 	AdminReportFilters,
 	AdminReservationFilters,
 	AdminSettingsPatch,
@@ -10,6 +11,7 @@ import type {
 } from "@application/admin/ports/admin-repository.js";
 
 import {
+	adminAuditLogQuerySchema,
 	adminReportsQuerySchema,
 	adminReservationStatusPatchSchema,
 	adminReservationsQuerySchema,
@@ -17,6 +19,7 @@ import {
 	createAdminReservationSchema,
 	reservationIdParamSchema,
 } from "./admin.schemas.js";
+import { toCsv } from "./admin.csv.js";
 
 const ADMIN_ERROR_MAPPINGS: readonly HttpErrorMapping[] = [
 	{
@@ -34,6 +37,12 @@ function removeUndefined<T extends Record<string, unknown>>(value: T): T {
 
 export class AdminController {
 	constructor(private readonly adminService: AdminService) {}
+
+	private sendCsv(reply: FastifyReply, fileName: string, csvBody: string): FastifyReply {
+		reply.header("content-type", "text/csv; charset=utf-8");
+		reply.header("content-disposition", `attachment; filename="${fileName}"`);
+		return reply.send(csvBody);
+	}
 
 	async getSettings(req: FastifyRequest, reply: FastifyReply) {
 		try {
@@ -126,8 +135,64 @@ export class AdminController {
 		try {
 			const report = await this.adminService.getOccupancyReport(
 				req.user.id,
-				removeUndefined(parse.data) as AdminReportFilters
+				removeUndefined({
+					start: parse.data.start,
+					end: parse.data.end,
+					officeId: parse.data.officeId,
+				}) as AdminReportFilters
 			);
+			if (parse.data.format === "csv") {
+				return this.sendCsv(
+					reply,
+					`occupancy-${report.start}-${report.end}.csv`,
+					toCsv(
+						report.items.map(item => ({
+							deskId: item.deskId,
+							deskCode: item.deskCode,
+							zoneName: item.zoneName,
+							totalSlots: item.totalSlots,
+							occupiedSlots: item.occupiedSlots,
+							occupancyRate: item.occupancyRate,
+						}))
+					)
+				);
+			}
+			return reply.send(report);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async getCancellationsReport(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminReportsQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const report = await this.adminService.getCancellationsReport(
+				req.user.id,
+				removeUndefined({
+					start: parse.data.start,
+					end: parse.data.end,
+					officeId: parse.data.officeId,
+				}) as AdminReportFilters
+			);
+			if (parse.data.format === "csv") {
+				return this.sendCsv(
+					reply,
+					`cancellations-${report.start}-${report.end}.csv`,
+					toCsv(
+						report.items.map(item => ({
+							cancellationDate: item.cancellationDate,
+							actorUserId: item.actorUserId,
+							actorEmail: item.actorEmail,
+							cancellations: item.cancellations,
+							avgCancellationLeadMinutes: item.avgCancellationLeadMinutes,
+						}))
+					)
+				);
+			}
 			return reply.send(report);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
@@ -143,8 +208,68 @@ export class AdminController {
 		try {
 			const report = await this.adminService.getNoShowReport(
 				req.user.id,
-				removeUndefined(parse.data) as AdminReportFilters
+				removeUndefined({
+					start: parse.data.start,
+					end: parse.data.end,
+					officeId: parse.data.officeId,
+				}) as AdminReportFilters
 			);
+			if (parse.data.format === "csv") {
+				return this.sendCsv(
+					reply,
+					`no-shows-${report.start}-${report.end}.csv`,
+					toCsv(
+						report.items.map(item => ({
+							actorUserId: item.actorUserId,
+							actorEmail: item.actorEmail,
+							noShows: item.noShows,
+						}))
+					)
+				);
+			}
+			return reply.send(report);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async getAuditLogReport(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminAuditLogQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const report = await this.adminService.getAuditLogReport(
+				req.user.id,
+				removeUndefined({
+					start: parse.data.start,
+					end: parse.data.end,
+					officeId: parse.data.officeId,
+					actorId: parse.data.actorId,
+				}) as AdminAuditLogFilters
+			);
+			if (parse.data.format === "csv") {
+				return this.sendCsv(
+					reply,
+					`audit-log-${report.start}-${report.end}.csv`,
+					toCsv(
+						report.items.map(item => ({
+							id: item.id,
+							eventType: item.eventType,
+							actorType: item.actorType,
+							actorUserId: item.actorUserId,
+							actorEmail: item.actorEmail,
+							reservationId: item.reservationId,
+							deskId: item.deskId,
+							officeId: item.officeId,
+							reason: item.reason,
+							metadata: item.metadata ? JSON.stringify(item.metadata) : null,
+							createdAt: item.createdAt,
+						}))
+					)
+				);
+			}
 			return reply.send(report);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
@@ -160,8 +285,28 @@ export class AdminController {
 		try {
 			const report = await this.adminService.getSummaryReport(
 				req.user.id,
-				removeUndefined(parse.data) as AdminReportFilters
+				removeUndefined({
+					start: parse.data.start,
+					end: parse.data.end,
+					officeId: parse.data.officeId,
+				}) as AdminReportFilters
 			);
+			if (parse.data.format === "csv") {
+				return this.sendCsv(
+					reply,
+					`summary-${report.start}-${report.end}.csv`,
+					toCsv([
+						{
+							start: report.start,
+							end: report.end,
+							totalReservations: report.totalReservations,
+							checkedIn: report.checkedIn,
+							cancelled: report.cancelled,
+							noShow: report.noShow,
+						},
+					])
+				);
+			}
 			return reply.send(report);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);

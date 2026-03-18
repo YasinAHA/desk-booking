@@ -1,6 +1,7 @@
 import type { UserAuthorizationRepository } from "@application/auth/ports/user-authorization-repository.js";
 import { AdminAuthorizationError } from "@application/desks/errors/admin-authorization-error.js";
 import type {
+	AdminAuditLogFilters,
 	AdminReportFilters,
 	AdminRepository,
 	AdminReservationFilters,
@@ -58,9 +59,19 @@ export class AdminService {
 		return this.deps.adminRepo.getOccupancyReport(filters);
 	}
 
+	async getCancellationsReport(requestedByUserId: string, filters: AdminReportFilters) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.getCancellationsReport(filters);
+	}
+
 	async getNoShowReport(requestedByUserId: string, filters: AdminReportFilters) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.getNoShowReport(filters);
+	}
+
+	async getAuditLogReport(requestedByUserId: string, filters: AdminAuditLogFilters) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.getAuditLogReport(filters);
 	}
 
 	async getSummaryReport(requestedByUserId: string, filters: AdminReportFilters) {

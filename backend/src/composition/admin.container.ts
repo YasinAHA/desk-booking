@@ -6,6 +6,6 @@ import { PgAdminRepository } from "@infrastructure/admin/repositories/pg-admin-r
 
 export function buildAdminService(app: FastifyInstance): AdminService {
 	const userAuthorizationRepo = new PgUserAuthorizationRepository(app.db);
-	const adminRepo = new PgAdminRepository(app.db);
+	const adminRepo = new PgAdminRepository(app.db, app.runtimeAppSettings);
 	return new AdminService({ adminRepo, userAuthorizationRepo });
 }

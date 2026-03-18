@@ -95,7 +95,7 @@
   - Delegar a nuevo endpoint
 
 #### 2.5 Settings & Configuración
-- [ ] Cargar `app_settings` en startup (cache en memoria)
+- [x] Cargar `app_settings` en startup (cache en memoria)
 - [x] Endpoints `GET/PATCH /admin/settings`
 - [ ] Valores por defecto:
   - `allow_self_registration = false`
@@ -123,7 +123,7 @@
   - Query sobre reservations + desks
   - Retornar: `desk_id`, `zone_name`, `total_slots`, `occupied_slots`, `occupancy_rate`
 
-- [ ] `GET /admin/reports/cancellations?start=YYYY-MM-DD&end=YYYY-MM-DD&period=day|week|month`
+- [x] `GET /admin/reports/cancellations?start=YYYY-MM-DD&end=YYYY-MM-DD&period=day|week|month`
   - Agrupar por usuario, fecha de cancelación
   - Incluir `avg_cancellation_lead_time`
 
@@ -131,15 +131,15 @@
   - Contar por usuario, filtrar status = `no_show`
   - Calcular `incidence_rate` (%)
 
-- [ ] `GET /admin/reports/audit-log?start=YYYY-MM-DD&end=YYYY-MM-DD&actor_id=uuid`
+- [x] `GET /admin/reports/audit-log?start=YYYY-MM-DD&end=YYYY-MM-DD&actor_id=uuid`
   - Retornar respuesta filtrada de `audit_events` (compliance)
 
 - [x] `GET /admin/reports/summary?period=today|this_week|this_month`
   - Dashboard rápido
 
 #### 3.2 Exportación CSV
-- [ ] Implementar helper para convertir reportes a CSV
-- [ ] Agregar header `Content-Disposition: attachment; filename=report-XXX.csv`
+- [x] Implementar helper para convertir reportes a CSV
+- [x] Agregar header `Content-Disposition: attachment; filename=report-XXX.csv`
 
 ### Fase 4: Frontend - Lovable Adaptación (4-6 días)
 **Responsable:** Frontend/Lovable  

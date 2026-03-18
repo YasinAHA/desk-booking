@@ -38,12 +38,20 @@ export function buildReservationHandlers(app: FastifyInstance): {
 	const errorTranslator = new PgErrorTranslator();
 	const txManager = new PgTransactionManager(dbApp.db.pool);
 
-	const commandRepo = new PgReservationCommandRepository(dbApp.db, errorTranslator);
+	const commandRepo = new PgReservationCommandRepository(
+		dbApp.db,
+		errorTranslator,
+		app.runtimeAppSettings
+	);
 	const queryRepo = new PgReservationQueryRepository(dbApp.db);
 	const noShowPolicyService = new PgNoShowPolicyService(dbApp.db);
 
 	const commandRepoFactory = (tx: TransactionalContext) =>
-		new PgReservationCommandRepository(getTransactionalDbClient(tx), errorTranslator);
+		new PgReservationCommandRepository(
+			getTransactionalDbClient(tx),
+			errorTranslator,
+			app.runtimeAppSettings
+		);
 	const queryRepoFactory = (tx: TransactionalContext) =>
 		new PgReservationQueryRepository(getTransactionalDbClient(tx));
 	const noShowPolicyServiceFactory = (tx: TransactionalContext): NoShowPolicyService =>

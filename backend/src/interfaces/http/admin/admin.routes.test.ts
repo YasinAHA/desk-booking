@@ -37,6 +37,17 @@ async function buildToken(userId = "admin-1"): Promise<string> {
 async function buildTestApp(query: DbQuery, authenticatedUserId = "admin-1") {
 	const app = Fastify({ logger: false });
 	app.decorate("db", { query });
+	app.decorate("runtimeAppSettings", {
+		get: () => ({
+			checkinWindowMinutes: 15,
+			defaultReservationDurationMinutes: 480,
+		}),
+		apply: () => {},
+		refresh: async () => ({
+			checkinWindowMinutes: 15,
+			defaultReservationDurationMinutes: 480,
+		}),
+	});
 
 	const authSessionLifecycleService = {
 		async verifyAccessToken() {
@@ -200,5 +211,104 @@ test("GET /admin/reports/summary returns aggregate counters", async () => {
 	const body = res.json();
 	assert.equal(body.totalReservations, 8);
 	assert.equal(body.noShow, 1);
+	await app.close();
+});
+
+test("GET /admin/reports/cancellations returns grouped results", async () => {
+	const app = await buildTestApp(async (text, params) => {
+		if (params?.[0] === "admin-1") {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("avg_cancellation_lead_minutes")) {
+			return {
+				rows: [{
+					cancellation_date: "2026-04-01",
+					actor_user_id: "11111111-1111-1111-8111-111111111111",
+					actor_email: "maria@camerfirma.com",
+					cancellations: 3,
+					avg_cancellation_lead_minutes: 180,
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/reports/cancellations?start=2026-04-01&end=2026-04-30",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.items[0]?.cancellations, 3);
+	await app.close();
+});
+
+test("GET /admin/reports/audit-log supports actor filter", async () => {
+	const app = await buildTestApp(async (text, params) => {
+		if (params?.[0] === "admin-1") {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from audit_events")) {
+			return {
+				rows: [{
+					id: "88888888-8888-4888-8888-888888888888",
+					event_type: "reservation_cancelled",
+					actor_type: "admin",
+					actor_user_id: "11111111-1111-1111-8111-111111111111",
+					actor_email: "admin@camerfirma.com",
+					reservation_id: "99999999-9999-4999-8999-999999999999",
+					desk_id: "22222222-2222-2222-8222-222222222222",
+					office_id: "33333333-3333-3333-8333-333333333333",
+					reason: "Policy update",
+					metadata: { source: "admin-panel" },
+					created_at: "2026-04-18T10:00:00.000Z",
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/reports/audit-log?start=2026-04-01&end=2026-04-30&actorId=11111111-1111-1111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.items[0]?.eventType, "reservation_cancelled");
+	await app.close();
+});
+
+test("GET /admin/reports/summary format=csv returns attachment", async () => {
+	const app = await buildTestApp(async (text, params) => {
+		if (params?.[0] === "admin-1") {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("total_reservations")) {
+			return {
+				rows: [{
+					total_reservations: 2,
+					checked_in: 1,
+					cancelled: 1,
+					no_show: 0,
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/reports/summary?start=2026-04-01&end=2026-04-30&format=csv",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.match(res.headers["content-type"] ?? "", /text\/csv/);
+	assert.match(res.headers["content-disposition"] ?? "", /summary-2026-04-01-2026-04-30\.csv/);
+	assert.match(res.body, /totalReservations/);
 	await app.close();
 });

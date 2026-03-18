@@ -21,6 +21,7 @@ import { registerDbPlugin } from "@interfaces/http/plugins/db.js";
 import { registerSwaggerPlugin } from "@interfaces/http/plugins/swagger.js";
 import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies.js";
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
+import { RuntimeAppSettingsStore } from "@infrastructure/settings/runtime-app-settings-store.js";
 
 type RequestWithUnknownBody = FastifyRequest & {
     body: unknown;
@@ -153,6 +154,8 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     // --- DB ---
     await app.register(registerDbPlugin);
+    const runtimeAppSettings = await RuntimeAppSettingsStore.create(app.db);
+    app.decorate("runtimeAppSettings", runtimeAppSettings);
 
     // --- Session lifecycle service (single source for token verify/refresh/revocation checks) ---
     const jwtTokenService = buildJwtTokenService(app);

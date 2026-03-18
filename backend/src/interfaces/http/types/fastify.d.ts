@@ -1,5 +1,6 @@
 import type { preHandlerHookHandler } from "fastify";
 import type { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
+import type { RuntimeAppSettingsStore } from "@application/common/ports/runtime-app-settings-store.js";
 
 type AuthenticatedUser = {
 	id: string;
@@ -23,6 +24,7 @@ declare module "fastify" {
 		};
 		requireAuth: preHandlerHookHandler;
 		authSessionLifecycleService: AuthSessionLifecycleService;
+		runtimeAppSettings: RuntimeAppSettingsStore;
 	}
 
 	interface FastifyReply {

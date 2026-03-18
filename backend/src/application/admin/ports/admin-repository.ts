@@ -91,10 +91,48 @@ export type SummaryReport = {
 	noShow: number;
 };
 
+export type CancellationsReportItem = {
+	cancellationDate: string;
+	actorUserId: string;
+	actorEmail: string | null;
+	cancellations: number;
+	avgCancellationLeadMinutes: number;
+};
+
+export type CancellationsReport = {
+	start: string;
+	end: string;
+	items: CancellationsReportItem[];
+};
+
+export type AuditLogReportItem = {
+	id: string;
+	eventType: string;
+	actorType: "user" | "admin" | "system";
+	actorUserId: string | null;
+	actorEmail: string | null;
+	reservationId: string | null;
+	deskId: string | null;
+	officeId: string | null;
+	reason: string | null;
+	metadata: unknown;
+	createdAt: string;
+};
+
+export type AuditLogReport = {
+	start: string;
+	end: string;
+	items: AuditLogReportItem[];
+};
+
 export type AdminReportFilters = {
 	start: string;
 	end: string;
 	officeId?: string;
+};
+
+export type AdminAuditLogFilters = AdminReportFilters & {
+	actorId?: string;
 };
 
 export interface AdminRepository {
@@ -107,6 +145,8 @@ export interface AdminRepository {
 		status: AdminReservationStatus
 	): Promise<boolean>;
 	getOccupancyReport(filters: AdminReportFilters): Promise<OccupancyReport>;
+	getCancellationsReport(filters: AdminReportFilters): Promise<CancellationsReport>;
 	getNoShowReport(filters: AdminReportFilters): Promise<NoShowReport>;
+	getAuditLogReport(filters: AdminAuditLogFilters): Promise<AuditLogReport>;
 	getSummaryReport(filters: AdminReportFilters): Promise<SummaryReport>;
 }

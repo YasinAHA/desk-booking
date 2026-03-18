@@ -1,5 +1,6 @@
-﻿import type { ErrorTranslator } from "@application/common/ports/error-translator.js";
+import type { ErrorTranslator } from "@application/common/ports/error-translator.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
+import type { RuntimeAppSettingsStore } from "@application/common/ports/runtime-app-settings-store.js";
 import {
 	deskIdToString,
 	type DeskId,
@@ -57,7 +58,8 @@ function isReservationStatusRow(value: unknown): value is ReservationStatusRow {
 export class PgReservationCommandRepository implements ReservationCommandRepository {
 	constructor(
 		private readonly db: DbClient,
-		private readonly errorTranslator: ErrorTranslator
+		private readonly errorTranslator: ErrorTranslator,
+		private readonly runtimeSettingsStore?: RuntimeAppSettingsStore
 	) {}
 
 	async create(
@@ -68,6 +70,10 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 		officeId: OfficeId | null
 	): Promise<ReservationId> {
 		try {
+			const runtime = this.runtimeSettingsStore?.get();
+			const checkinWindowMinutes = runtime?.checkinWindowMinutes ?? 15;
+			const defaultReservationDurationMinutes =
+				runtime?.defaultReservationDurationMinutes ?? 480;
 			const result = await this.db.query(
 				"insert into reservations (" +
 					"user_id, desk_id, source, office_id, starts_at, ends_at, checkin_deadline_at" +
@@ -76,12 +82,11 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 					"$1, $2, $3, coalesce($5, d.office_id), " +
 					"($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')), " +
 					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
-						"make_interval(mins => coalesce(s.default_reservation_duration_minutes, 480))), " +
+						"make_interval(mins => $6::int)), " +
 					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
-						"make_interval(mins => coalesce(s.checkin_window_minutes, 15))) " +
+						"make_interval(mins => $7::int)) " +
 				"from desks d " +
 				"join offices o on o.id = d.office_id " +
-				"left join app_settings s on s.scope_type = 'global' " +
 				"where d.id = $2 " +
 				"returning id",
 				[
@@ -90,6 +95,8 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 					source,
 					date,
 					officeId ? officeIdToString(officeId) : null,
+					defaultReservationDurationMinutes,
+					checkinWindowMinutes,
 				]
 			);
 			const row = toReservationIdRow(result.rows[0]);

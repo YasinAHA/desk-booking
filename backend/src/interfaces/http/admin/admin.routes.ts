@@ -19,6 +19,10 @@ export const adminRoutes: FastifyPluginAsync = async app => {
 	);
 
 	app.get("/reports/occupancy", auth, (req, reply) => controller.getOccupancyReport(req, reply));
+	app.get("/reports/cancellations", auth, (req, reply) =>
+		controller.getCancellationsReport(req, reply)
+	);
 	app.get("/reports/no-shows", auth, (req, reply) => controller.getNoShowsReport(req, reply));
+	app.get("/reports/audit-log", auth, (req, reply) => controller.getAuditLogReport(req, reply));
 	app.get("/reports/summary", auth, (req, reply) => controller.getSummaryReport(req, reply));
 };

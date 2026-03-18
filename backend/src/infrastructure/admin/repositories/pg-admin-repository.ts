@@ -1,4 +1,5 @@
 import type {
+	AdminAuditLogFilters,
 	AdminReportFilters,
 	AdminRepository,
 	AdminReservationFilters,
@@ -6,11 +7,14 @@ import type {
 	AdminReservationStatus,
 	AdminSettings,
 	AdminSettingsPatch,
+	AuditLogReport,
+	CancellationsReport,
 	CreateAdminReservationInput,
 	NoShowReport,
 	OccupancyReport,
 	SummaryReport,
 } from "@application/admin/ports/admin-repository.js";
+import type { RuntimeAppSettingsStore } from "@application/common/ports/runtime-app-settings-store.js";
 
 type DbQueryResult = {
 	rows: unknown[];
@@ -82,7 +86,14 @@ function toStringOrEmpty(value: unknown): string {
 }
 
 function toNumberOrZero(value: unknown): number {
-	return typeof value === "number" ? value : 0;
+	if (typeof value === "number") {
+		return value;
+	}
+	if (typeof value === "string") {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : 0;
+	}
+	return 0;
 }
 
 const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowedEmailDomains">, string> = {
@@ -98,7 +109,10 @@ const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowed
 };
 
 export class PgAdminRepository implements AdminRepository {
-	constructor(private readonly db: DbClient) {}
+	constructor(
+		private readonly db: DbClient,
+		private readonly runtimeSettingsStore?: RuntimeAppSettingsStore
+	) {}
 
 	private async readGlobalSettings(): Promise<AdminSettings> {
 		const result = await this.db.query(
@@ -166,7 +180,12 @@ export class PgAdminRepository implements AdminRepository {
 			}
 		}
 
-		return this.readGlobalSettings();
+		const updated = await this.readGlobalSettings();
+		this.runtimeSettingsStore?.apply({
+			checkinWindowMinutes: updated.checkinWindowMinutes,
+			defaultReservationDurationMinutes: updated.defaultReservationDurationMinutes,
+		});
+		return updated;
 	}
 
 	async listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]> {
@@ -231,16 +250,15 @@ export class PgAdminRepository implements AdminRepository {
 
 	async createReservation(input: CreateAdminReservationInput): Promise<string> {
 		const source = input.source ?? "admin";
+		const runtime = this.runtimeSettingsStore?.get();
+		const checkinWindowMinutes = runtime?.checkinWindowMinutes ?? 15;
 		const result = await this.db.query(
-			"with s as (" +
-				"select checkin_window_minutes from app_settings where scope_type = 'global' limit 1" +
-			") " +
 			"insert into reservations (" +
 				"reservation_type, user_id, host_user_id, desk_id, office_id, starts_at, ends_at, checkin_deadline_at, source, " +
 				"guest_name, guest_email, guest_company" +
 			") values (" +
 				"$1, $2::uuid, $3::uuid, $4::uuid, coalesce($5::uuid, (select office_id from desks where id = $4::uuid)), " +
-				"$6::timestamptz, $7::timestamptz, ($6::timestamptz + make_interval(mins => coalesce((select checkin_window_minutes from s), 15))), " +
+				"$6::timestamptz, $7::timestamptz, ($6::timestamptz + make_interval(mins => $12::int)), " +
 				"$8, $9, $10, $11" +
 			") returning id::text as id",
 			[
@@ -255,6 +273,7 @@ export class PgAdminRepository implements AdminRepository {
 				input.guestName ?? null,
 				input.guestEmail ?? null,
 				input.guestCompany ?? null,
+				checkinWindowMinutes,
 			]
 		);
 		const row = result.rows[0] as { id?: unknown } | undefined;
@@ -325,6 +344,41 @@ export class PgAdminRepository implements AdminRepository {
 		};
 	}
 
+	async getCancellationsReport(filters: AdminReportFilters): Promise<CancellationsReport> {
+		const result = await this.db.query(
+			"select (r.cancelled_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date::text as cancellation_date, " +
+				"coalesce(r.user_id, r.host_user_id)::text as actor_user_id, " +
+				"u.email::text as actor_email, " +
+				"count(*)::int as cancellations, " +
+				"round(avg(extract(epoch from (r.starts_at - r.cancelled_at)) / 60.0), 2) as avg_cancellation_lead_minutes " +
+			"from reservations r " +
+			"join offices o on o.id = r.office_id " +
+			"left join users u on u.id = coalesce(r.user_id, r.host_user_id) " +
+			"where r.status = 'cancelled' " +
+				"and r.cancelled_at is not null " +
+				"and (r.cancelled_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date between $1::date and $2::date " +
+				"and ($3::uuid is null or r.office_id = $3::uuid) " +
+			"group by cancellation_date, coalesce(r.user_id, r.host_user_id), u.email " +
+			"order by cancellation_date asc, cancellations desc",
+			[filters.start, filters.end, filters.officeId ?? null]
+		);
+
+		return {
+			start: filters.start,
+			end: filters.end,
+			items: result.rows.map(row => {
+				const value = row as Record<string, unknown>;
+				return {
+					cancellationDate: toStringOrEmpty(value.cancellation_date),
+					actorUserId: toStringOrEmpty(value.actor_user_id),
+					actorEmail: toStringOrNull(value.actor_email),
+					cancellations: toNumberOrZero(value.cancellations),
+					avgCancellationLeadMinutes: toNumberOrZero(value.avg_cancellation_lead_minutes),
+				};
+			}),
+		};
+	}
+
 	async getNoShowReport(filters: AdminReportFilters): Promise<NoShowReport> {
 		const result = await this.db.query(
 			"select coalesce(r.user_id, r.host_user_id)::text as actor_user_id, " +
@@ -349,6 +403,44 @@ export class PgAdminRepository implements AdminRepository {
 					actorUserId: toStringOrEmpty(value.actor_user_id),
 					actorEmail: toStringOrNull(value.actor_email),
 					noShows: toNumberOrZero(value.no_shows),
+				};
+			}),
+		};
+	}
+
+	async getAuditLogReport(filters: AdminAuditLogFilters): Promise<AuditLogReport> {
+		const result = await this.db.query(
+			"select ae.id::text as id, ae.event_type, ae.actor_type, ae.actor_user_id::text as actor_user_id, " +
+				"u.email::text as actor_email, ae.reservation_id::text as reservation_id, ae.desk_id::text as desk_id, " +
+				"ae.office_id::text as office_id, ae.reason, ae.metadata, ae.created_at::text as created_at " +
+			"from audit_events ae " +
+			"left join users u on u.id = ae.actor_user_id " +
+			"left join offices o on o.id = ae.office_id " +
+			"where (ae.created_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date between $1::date and $2::date " +
+				"and ($3::uuid is null or ae.office_id = $3::uuid) " +
+				"and ($4::uuid is null or ae.actor_user_id = $4::uuid) " +
+			"order by ae.created_at desc",
+			[filters.start, filters.end, filters.officeId ?? null, filters.actorId ?? null]
+		);
+
+		return {
+			start: filters.start,
+			end: filters.end,
+			items: result.rows.map(row => {
+				const value = row as Record<string, unknown>;
+				const actorType = toStringOrEmpty(value.actor_type);
+				return {
+					id: toStringOrEmpty(value.id),
+					eventType: toStringOrEmpty(value.event_type),
+					actorType: actorType === "admin" || actorType === "system" ? actorType : "user",
+					actorUserId: toStringOrNull(value.actor_user_id),
+					actorEmail: toStringOrNull(value.actor_email),
+					reservationId: toStringOrNull(value.reservation_id),
+					deskId: toStringOrNull(value.desk_id),
+					officeId: toStringOrNull(value.office_id),
+					reason: toStringOrNull(value.reason),
+					metadata: value.metadata ?? null,
+					createdAt: toStringOrEmpty(value.created_at),
 				};
 			}),
 		};

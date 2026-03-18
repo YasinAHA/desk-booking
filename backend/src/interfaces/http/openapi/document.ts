@@ -23,6 +23,7 @@ import {
 	reservationIdParamSchema,
 } from "@interfaces/http/reservations/reservations.schemas.js";
 import {
+	adminAuditLogQuerySchema,
 	adminReportsQuerySchema,
 	adminReservationStatusPatchSchema,
 	adminReservationsQuerySchema,
@@ -217,6 +218,40 @@ const adminNoShowsReportResponseSchema = z.object({
 			actorUserId: uuidSchema,
 			actorEmail: z.string().nullable(),
 			noShows: z.number().int().nonnegative(),
+		})
+	),
+});
+
+const adminCancellationsReportResponseSchema = z.object({
+	start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	items: z.array(
+		z.object({
+			cancellationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+			actorUserId: uuidSchema,
+			actorEmail: z.string().nullable(),
+			cancellations: z.number().int().nonnegative(),
+			avgCancellationLeadMinutes: z.number().nonnegative(),
+		})
+	),
+});
+
+const adminAuditLogReportResponseSchema = z.object({
+	start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	items: z.array(
+		z.object({
+			id: uuidSchema,
+			eventType: z.string(),
+			actorType: z.enum(["user", "admin", "system"]),
+			actorUserId: uuidSchema.nullable(),
+			actorEmail: z.string().nullable(),
+			reservationId: uuidSchema.nullable(),
+			deskId: uuidSchema.nullable(),
+			officeId: uuidSchema.nullable(),
+			reason: z.string().nullable(),
+			metadata: z.unknown().nullable(),
+			createdAt: z.iso.datetime(),
 		})
 	),
 });
@@ -624,12 +659,42 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 
 	registry.registerPath({
 		method: "get",
+		path: "/admin/reports/cancellations",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminReportsQuerySchema },
+		responses: {
+			200: { description: "Cancellations report", content: json(adminCancellationsReportResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
 		path: "/admin/reports/no-shows",
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
 		request: { query: adminReportsQuerySchema },
 		responses: {
 			200: { description: "No-shows report", content: json(adminNoShowsReportResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/reports/audit-log",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminAuditLogQuerySchema },
+		responses: {
+			200: { description: "Audit log report", content: json(adminAuditLogReportResponseSchema) },
 			400: err("Invalid query"),
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
