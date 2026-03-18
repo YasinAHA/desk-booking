@@ -96,16 +96,18 @@ services:
     container_name: deskbooking_frontend
     working_dir: /app
     volumes:
-      - ..:/app
+      - ..:/app:ro
       - root_node_modules_frontend:/app/node_modules
       - frontend_node_modules:/app/frontend/node_modules
     environment:
+      NODE_ENV: development
+      NPM_CONFIG_PRODUCTION: "false"
       HOST: 0.0.0.0
       VITE_API_BASE_URL: http://localhost:3001
       HUSKY: "0"
     ports:
       - "5173:5173"
-    command: sh -c "npm ci -w frontend && npm -w frontend run dev -- --host 0.0.0.0 --port 5173"
+    command: sh -c "npm ci -w frontend --include=dev && npm -w frontend run dev -- --host 0.0.0.0 --port 5173"
     depends_on:
       - backend
   frontend-prod:
