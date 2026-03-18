@@ -1,4 +1,10 @@
 import type {
+	AdminUserPatch,
+	AdminUsersFilters,
+	AdminUsersPage,
+	AdminUserRecord,
+	AdminUserRole,
+	AdminUserStatus,
 	AdminAuditLogFilters,
 	AdminReportFilters,
 	AdminRepository,
@@ -96,6 +102,27 @@ function toNumberOrZero(value: unknown): number {
 	return 0;
 }
 
+function normalizeAdminUserRole(value: unknown): AdminUserRole {
+	return value === "admin" ? "admin" : "user";
+}
+
+function normalizeAdminUserStatus(value: unknown): AdminUserStatus {
+	return value === "suspended" ? "suspended" : "active";
+}
+
+function mapAdminUserRecord(row: Record<string, unknown>): AdminUserRecord {
+	return {
+		id: toStringOrEmpty(row.id),
+		email: toStringOrEmpty(row.email),
+		firstName: toStringOrEmpty(row.first_name),
+		lastName: toStringOrEmpty(row.last_name),
+		secondLastName: toStringOrNull(row.second_last_name),
+		role: normalizeAdminUserRole(row.role),
+		status: normalizeAdminUserStatus(row.status),
+		createdAt: toStringOrEmpty(row.created_at),
+	};
+}
+
 const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowedEmailDomains">, string> = {
 	allowSelfRegistration: "allow_self_registration",
 	guestModeEnabled: "guest_mode_enabled",
@@ -188,6 +215,95 @@ export class PgAdminRepository implements AdminRepository {
 		return updated;
 	}
 
+	async listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage> {
+		const where: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+
+		if (filters.q) {
+			where.push(
+				"(u.email::text ilike $1 or concat_ws(' ', u.first_name, u.last_name, coalesce(u.second_last_name, '')) ilike $1)"
+			);
+			params.push(`%${filters.q.trim()}%`);
+			index += 1;
+		}
+		if (filters.role) {
+			where.push(`u.role = $${index}`);
+			params.push(filters.role);
+			index += 1;
+		}
+		if (filters.status) {
+			where.push(`u.status = $${index}`);
+			params.push(filters.status);
+		}
+
+		const whereSql = where.length > 0 ? `where ${where.join(" and ")}` : "";
+		const page = filters.page ?? 1;
+		const pageSize = filters.pageSize ?? 20;
+		const offset = (page - 1) * pageSize;
+
+		const countResult = await this.db.query(
+			`select count(*)::int as total from users u ${whereSql}`,
+			params
+		);
+		const total = toNumberOrZero((countResult.rows[0] as Record<string, unknown> | undefined)?.total);
+
+		const listParams = [...params, pageSize, offset];
+		const limitPlaceholder = `$${params.length + 1}`;
+		const offsetPlaceholder = `$${params.length + 2}`;
+		const listResult = await this.db.query(
+			"select u.id::text as id, u.email::text as email, u.first_name, u.last_name, " +
+				"u.second_last_name, u.role, u.status, u.created_at::text as created_at " +
+			"from users u " +
+			`${whereSql} ` +
+			"order by u.created_at desc " +
+			`limit ${limitPlaceholder} offset ${offsetPlaceholder}`,
+			listParams
+		);
+
+		return {
+			items: listResult.rows.map(row => mapAdminUserRecord(row as Record<string, unknown>)),
+			total,
+			page,
+			pageSize,
+		};
+	}
+
+	async updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null> {
+		const updates: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+
+		if (patch.role !== undefined) {
+			updates.push(`role = $${index}`);
+			params.push(patch.role);
+			index += 1;
+		}
+		if (patch.status !== undefined) {
+			updates.push(`status = $${index}`);
+			params.push(patch.status);
+			index += 1;
+		}
+
+		if (updates.length === 0) {
+			return null;
+		}
+
+		params.push(userId);
+		const result = await this.db.query(
+			"update users set " +
+				`${updates.join(", ")}, updated_at = now() ` +
+				`where id = $${index}::uuid ` +
+				"returning id::text as id, email::text as email, first_name, last_name, second_last_name, role, status, created_at::text as created_at",
+			params
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminUserRecord(row as Record<string, unknown>);
+	}
+
 	async listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]> {
 		const params: unknown[] = [];
 		const where: string[] = [];
@@ -278,7 +394,7 @@ export class PgAdminRepository implements AdminRepository {
 		);
 		const row = result.rows[0] as { id?: unknown } | undefined;
 		if (typeof row?.id !== "string") {
-			throw new Error("Reservation creation failed");
+			throw new TypeError("Reservation creation failed");
 		}
 		return row.id;
 	}

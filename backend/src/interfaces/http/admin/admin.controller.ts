@@ -3,6 +3,8 @@ import type { AdminService } from "@application/admin/services/admin.service.js"
 import { throwHttpError, throwMappedHttpError, type HttpErrorMapping } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
+	AdminUserPatch,
+	AdminUsersFilters,
 	AdminAuditLogFilters,
 	AdminReportFilters,
 	AdminReservationFilters,
@@ -13,11 +15,14 @@ import type {
 import {
 	adminAuditLogQuerySchema,
 	adminReportsQuerySchema,
+	adminUserPatchSchema,
+	adminUsersQuerySchema,
 	adminReservationStatusPatchSchema,
 	adminReservationsQuerySchema,
 	adminSettingsPatchSchema,
 	createAdminReservationSchema,
 	reservationIdParamSchema,
+	userIdParamSchema,
 } from "./admin.schemas.js";
 import { toCsv } from "./admin.csv.js";
 
@@ -65,6 +70,45 @@ export class AdminController {
 				removeUndefined(parse.data) as AdminSettingsPatch
 			);
 			return reply.send(settings);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async listUsers(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminUsersQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const usersPage = await this.adminService.listUsers(
+				req.user.id,
+				removeUndefined(parse.data) as AdminUsersFilters
+			);
+			return reply.send(usersPage);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchUser(req: FastifyRequest, reply: FastifyReply) {
+		const params = userIdParamSchema.safeParse(req.params);
+		const body = adminUserPatchSchema.safeParse(req.body);
+		if (!params.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.updateUser(
+				req.user.id,
+				params.data.id,
+				removeUndefined(body.data) as AdminUserPatch
+			);
+			if (!updated) {
+				throwHttpError(404, "NOT_FOUND", "User not found");
+			}
+			return reply.send(updated);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

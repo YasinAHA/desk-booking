@@ -170,6 +170,41 @@ const adminSettingsResponseSchema = z.object({
 	allowedEmailDomains: z.array(z.string()),
 });
 
+const adminUserSchema = z.object({
+	id: uuidSchema,
+	email: z.email(),
+	firstName: z.string(),
+	lastName: z.string(),
+	secondLastName: z.string().nullable(),
+	role: z.enum(["user", "admin"]),
+	status: z.enum(["active", "suspended"]),
+	createdAt: z.iso.datetime(),
+});
+
+const adminUsersListResponseSchema = z.object({
+	items: z.array(adminUserSchema),
+	total: z.number().int().nonnegative(),
+	page: z.number().int().positive(),
+	pageSize: z.number().int().positive(),
+});
+
+const adminUsersQueryOpenApiSchema = z.object({
+	q: z.string().trim().min(1).optional(),
+	role: z.enum(["user", "admin"]).optional(),
+	status: z.enum(["active", "suspended"]).optional(),
+	page: z.coerce.number().int().min(1).optional(),
+	pageSize: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+const adminUserPatchOpenApiSchema = z.object({
+	role: z.enum(["user", "admin"]).optional(),
+	status: z.enum(["active", "suspended"]).optional(),
+});
+
+const adminUserIdParamOpenApiSchema = z.object({
+	id: uuidSchema,
+});
+
 const adminReservationsListResponseSchema = z.object({
 	items: z.array(
 		z.object({
@@ -588,6 +623,40 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			400: err("Invalid payload"),
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/users",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminUsersQueryOpenApiSchema },
+		responses: {
+			200: { description: "Admin users listing", content: json(adminUsersListResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/users/{id}",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			params: adminUserIdParamOpenApiSchema,
+			body: { required: true, content: json(adminUserPatchOpenApiSchema) },
+		},
+		responses: {
+			200: { description: "Admin user updated", content: json(adminUserSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("User not found"),
 			500: err("Internal error"),
 		},
 	});

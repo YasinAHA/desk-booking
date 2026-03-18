@@ -96,8 +96,8 @@ test("GET /admin/settings returns 403 for non-admin", async () => {
 });
 
 test("GET /admin/settings returns settings for admin", async () => {
-	const app = await buildTestApp(async (text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (text, _params) => {
+		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (text.includes("from app_settings")) {
@@ -132,9 +132,106 @@ test("GET /admin/settings returns settings for admin", async () => {
 	await app.close();
 });
 
+test("GET /admin/users returns paginated users for admin", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("count(*)::int as total from users")) {
+			return { rows: [{ total: 1 }] };
+		}
+		if (text.includes("from users u")) {
+			return {
+				rows: [{
+					id: "aaaaaaa1-1111-4111-8111-111111111111",
+					email: "laura@camerfirma.com",
+					first_name: "Laura",
+					last_name: "Fernandez",
+					second_last_name: null,
+					role: "admin",
+					status: "active",
+					created_at: "2026-04-18T10:00:00.000Z",
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/users?q=laura&role=admin&status=active&page=1&pageSize=10",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.total, 1);
+	assert.equal(body.items[0]?.email, "laura@camerfirma.com");
+	await app.close();
+});
+
+test("PATCH /admin/users/:id updates role/status", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update users set")) {
+			return {
+				rows: [{
+					id: "aaaaaaa1-1111-4111-8111-111111111111",
+					email: "ana@camerfirma.com",
+					first_name: "Ana",
+					last_name: "Lopez",
+					second_last_name: null,
+					role: "admin",
+					status: "suspended",
+					created_at: "2026-04-18T10:00:00.000Z",
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/users/aaaaaaa1-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: { role: "admin", status: "suspended" },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.status, "suspended");
+	assert.equal(body.role, "admin");
+	await app.close();
+});
+
+test("PATCH /admin/users/:id returns 404 when user does not exist", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update users set")) {
+			return { rows: [], rowCount: 0 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/users/bbbbbbb1-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: { status: "active" },
+	});
+
+	assert.equal(res.statusCode, 404);
+	await app.close();
+});
+
 test("POST /admin/reservations creates guest reservation", async () => {
 	const app = await buildTestApp(async (_text, params) => {
-		if (params?.[0] === "admin-1") {
+		if (_text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (Array.isArray(params) && params.length >= 11) {
@@ -165,8 +262,8 @@ test("POST /admin/reservations creates guest reservation", async () => {
 });
 
 test("PATCH /admin/reservations/:id returns 404 when reservation does not exist", async () => {
-	const app = await buildTestApp(async (_text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (_text, _params) => {
+		if (_text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		return { rows: [], rowCount: 0 };
@@ -184,8 +281,8 @@ test("PATCH /admin/reservations/:id returns 404 when reservation does not exist"
 });
 
 test("GET /admin/reports/summary returns aggregate counters", async () => {
-	const app = await buildTestApp(async (text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (text, _params) => {
+		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (text.includes("total_reservations")) {
@@ -215,8 +312,8 @@ test("GET /admin/reports/summary returns aggregate counters", async () => {
 });
 
 test("GET /admin/reports/cancellations returns grouped results", async () => {
-	const app = await buildTestApp(async (text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (text, _params) => {
+		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (text.includes("avg_cancellation_lead_minutes")) {
@@ -246,8 +343,8 @@ test("GET /admin/reports/cancellations returns grouped results", async () => {
 });
 
 test("GET /admin/reports/audit-log supports actor filter", async () => {
-	const app = await buildTestApp(async (text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (text, _params) => {
+		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (text.includes("from audit_events")) {
@@ -283,8 +380,8 @@ test("GET /admin/reports/audit-log supports actor filter", async () => {
 });
 
 test("GET /admin/reports/summary format=csv returns attachment", async () => {
-	const app = await buildTestApp(async (text, params) => {
-		if (params?.[0] === "admin-1") {
+	const app = await buildTestApp(async (text, _params) => {
+		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
 		if (text.includes("total_reservations")) {

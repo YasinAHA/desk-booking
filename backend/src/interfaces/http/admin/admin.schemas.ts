@@ -15,6 +15,21 @@ export const adminSettingsPatchSchema = z.object({
 	allowedEmailDomains: z.array(z.string().min(1)).optional(),
 });
 
+export const adminUsersQuerySchema = z.object({
+	q: z.string().trim().min(1).optional(),
+	role: z.enum(["user", "admin"]).optional(),
+	status: z.enum(["active", "suspended"]).optional(),
+	page: z.coerce.number().int().min(1).optional(),
+	pageSize: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const adminUserPatchSchema = z.object({
+	role: z.enum(["user", "admin"]).optional(),
+	status: z.enum(["active", "suspended"]).optional(),
+}).refine(value => value.role !== undefined || value.status !== undefined, {
+	message: "At least one of role or status must be provided",
+});
+
 export const adminReservationsQuerySchema = z.object({
 	start: z.iso.datetime().optional(),
 	end: z.iso.datetime().optional(),
@@ -68,6 +83,7 @@ export const createAdminReservationSchema = z.object({
 });
 
 export const reservationIdParamSchema = createUuidParamSchema("id");
+export const userIdParamSchema = createUuidParamSchema("id");
 
 export const adminReservationStatusPatchSchema = z.object({
 	status: z.enum(["reserved", "checked_in", "cancelled", "no_show"]),

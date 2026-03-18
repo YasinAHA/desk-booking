@@ -17,6 +17,8 @@ export type AdminSettingsPatch = Partial<Omit<AdminSettings, "id" | "allowedEmai
 };
 
 export type AdminReservationStatus = "reserved" | "checked_in" | "cancelled" | "no_show";
+export type AdminUserRole = "user" | "admin";
+export type AdminUserStatus = "active" | "suspended";
 
 export type AdminReservationRecord = {
 	id: string;
@@ -39,6 +41,37 @@ export type AdminReservationFilters = {
 	end?: string;
 	status?: AdminReservationStatus;
 	officeId?: string;
+};
+
+export type AdminUserRecord = {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	secondLastName: string | null;
+	role: AdminUserRole;
+	status: AdminUserStatus;
+	createdAt: string;
+};
+
+export type AdminUsersFilters = {
+	q?: string;
+	role?: AdminUserRole;
+	status?: AdminUserStatus;
+	page?: number;
+	pageSize?: number;
+};
+
+export type AdminUsersPage = {
+	items: AdminUserRecord[];
+	total: number;
+	page: number;
+	pageSize: number;
+};
+
+export type AdminUserPatch = {
+	role?: AdminUserRole;
+	status?: AdminUserStatus;
 };
 
 export type CreateAdminReservationInput = {
@@ -138,6 +171,8 @@ export type AdminAuditLogFilters = AdminReportFilters & {
 export interface AdminRepository {
 	getGlobalSettings(): Promise<AdminSettings>;
 	updateGlobalSettings(patch: AdminSettingsPatch): Promise<AdminSettings>;
+	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
+	updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null>;
 	listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]>;
 	createReservation(input: CreateAdminReservationInput): Promise<string>;
 	updateReservationStatus(

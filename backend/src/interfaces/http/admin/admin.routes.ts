@@ -9,20 +9,18 @@ export const adminRoutes: FastifyPluginAsync = async app => {
 	const controller = new AdminController(adminService);
 	const auth = withAuth(app);
 
-	app.get("/settings", auth, (req, reply) => controller.getSettings(req, reply));
-	app.patch("/settings", auth, (req, reply) => controller.patchSettings(req, reply));
+	app.get("/settings", auth, controller.getSettings.bind(controller));
+	app.patch("/settings", auth, controller.patchSettings.bind(controller));
+	app.get("/users", auth, controller.listUsers.bind(controller));
+	app.patch("/users/:id", auth, controller.patchUser.bind(controller));
 
-	app.get("/reservations", auth, (req, reply) => controller.listReservations(req, reply));
-	app.post("/reservations", auth, (req, reply) => controller.createReservation(req, reply));
-	app.patch("/reservations/:id", auth, (req, reply) =>
-		controller.patchReservationStatus(req, reply)
-	);
+	app.get("/reservations", auth, controller.listReservations.bind(controller));
+	app.post("/reservations", auth, controller.createReservation.bind(controller));
+	app.patch("/reservations/:id", auth, controller.patchReservationStatus.bind(controller));
 
-	app.get("/reports/occupancy", auth, (req, reply) => controller.getOccupancyReport(req, reply));
-	app.get("/reports/cancellations", auth, (req, reply) =>
-		controller.getCancellationsReport(req, reply)
-	);
-	app.get("/reports/no-shows", auth, (req, reply) => controller.getNoShowsReport(req, reply));
-	app.get("/reports/audit-log", auth, (req, reply) => controller.getAuditLogReport(req, reply));
-	app.get("/reports/summary", auth, (req, reply) => controller.getSummaryReport(req, reply));
+	app.get("/reports/occupancy", auth, controller.getOccupancyReport.bind(controller));
+	app.get("/reports/cancellations", auth, controller.getCancellationsReport.bind(controller));
+	app.get("/reports/no-shows", auth, controller.getNoShowsReport.bind(controller));
+	app.get("/reports/audit-log", auth, controller.getAuditLogReport.bind(controller));
+	app.get("/reports/summary", auth, controller.getSummaryReport.bind(controller));
 };
