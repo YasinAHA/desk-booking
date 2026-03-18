@@ -305,6 +305,67 @@ test("PATCH /admin/floorplan returns 404 when office does not exist", async () =
 	await app.close();
 });
 
+test("GET /admin/desks/qr returns qr listing", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from desks d") && text.includes("qr_public_id")) {
+			return {
+				rows: [{
+					desk_id: "a1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					desk_code: "P01",
+					desk_name: "Puesto 01",
+					zone_name: "Sala Abierta",
+					status: "active",
+					qr_public_id: "qr-public-001",
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/desks/qr?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.items.length, 1);
+	assert.equal(body.items[0]?.deskCode, "P01");
+	await app.close();
+});
+
+test("POST /admin/desks/qr/regenerate-bulk returns updated count", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.startsWith("update desks set qr_public_id")) {
+			return { rows: [], rowCount: 15 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/desks/qr/regenerate-bulk",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			officeId: "b1111111-1111-4111-8111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.ok, true);
+	assert.equal(body.updated, 15);
+	await app.close();
+});
+
 test("GET /admin/users returns paginated users for admin", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {

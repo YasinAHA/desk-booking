@@ -128,6 +128,16 @@ export type AdminFloorplanConfigPatch = {
 	canvasHeight?: number | null;
 };
 
+export type AdminDeskQrRecord = {
+	deskId: string;
+	officeId: string;
+	deskCode: string;
+	deskName: string | null;
+	zoneName: string | null;
+	status: AdminDeskStatus;
+	qrPublicId: string;
+};
+
 export type CreateAdminReservationInput = {
 	reservationType: "internal" | "guest";
 	userId?: string;
@@ -233,6 +243,8 @@ export interface AdminRepository {
 		officeId: string,
 		patch: AdminFloorplanConfigPatch
 	): Promise<AdminFloorplanConfig | null>;
+	listDeskQrs(officeId?: string): Promise<AdminDeskQrRecord[]>;
+	regenerateDeskQrsBulk(officeId?: string): Promise<number>;
 	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
 	updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null>;
 	listReservations(filters: AdminReservationFilters): Promise<AdminReservationRecord[]>;

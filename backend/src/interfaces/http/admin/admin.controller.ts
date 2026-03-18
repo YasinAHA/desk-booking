@@ -19,6 +19,8 @@ import type {
 import {
 	adminAuditLogQuerySchema,
 	adminDeskLayoutPatchSchema,
+	adminDeskQrsBulkPatchSchema,
+	adminDeskQrsQuerySchema,
 	adminDeskStatusPatchSchema,
 	adminDesksQuerySchema,
 	adminFloorplanPatchSchema,
@@ -180,6 +182,37 @@ export class AdminController {
 				throwHttpError(404, "NOT_FOUND", "Office not found");
 			}
 			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async listDeskQrs(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminDeskQrsQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const items = await this.adminService.listDeskQrs(req.user.id, parse.data.officeId);
+			return reply.send({ items });
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async regenerateDeskQrsBulk(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminDeskQrsBulkPatchSchema.safeParse(req.body);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.regenerateDeskQrsBulk(
+				req.user.id,
+				parse.data.officeId
+			);
+			return reply.send({ ok: true, updated });
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

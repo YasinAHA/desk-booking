@@ -1,5 +1,6 @@
 import type {
 	AdminDeskLayoutPatch,
+	AdminDeskQrRecord,
 	AdminFloorplanConfig,
 	AdminFloorplanConfigPatch,
 	AdminDeskRecord,
@@ -181,6 +182,18 @@ function mapAdminFloorplanConfig(row: Record<string, unknown>): AdminFloorplanCo
 	};
 }
 
+function mapAdminDeskQrRecord(row: Record<string, unknown>): AdminDeskQrRecord {
+	return {
+		deskId: toStringOrEmpty(row.desk_id),
+		officeId: toStringOrEmpty(row.office_id),
+		deskCode: toStringOrEmpty(row.desk_code),
+		deskName: toStringOrNull(row.desk_name),
+		zoneName: toStringOrNull(row.zone_name),
+		status: normalizeAdminDeskStatus(row.status),
+		qrPublicId: toStringOrEmpty(row.qr_public_id),
+	};
+}
+
 const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowedEmailDomains">, string> = {
 	allowSelfRegistration: "allow_self_registration",
 	guestModeEnabled: "guest_mode_enabled",
@@ -326,6 +339,28 @@ export class PgAdminRepository implements AdminRepository {
 			return null;
 		}
 		return mapAdminFloorplanConfig(row as Record<string, unknown>);
+	}
+
+	async listDeskQrs(officeId?: string): Promise<AdminDeskQrRecord[]> {
+		const result = await this.db.query(
+			"select d.id::text as desk_id, d.office_id::text as office_id, d.code as desk_code, d.name as desk_name, " +
+				"z.name as zone_name, d.status, d.qr_public_id " +
+			"from desks d " +
+			"left join zones z on z.id = d.zone_id " +
+			"where d.archived_at is null and ($1::uuid is null or d.office_id = $1::uuid) " +
+			"order by d.code asc",
+			[officeId ?? null]
+		);
+		return result.rows.map(row => mapAdminDeskQrRecord(row as Record<string, unknown>));
+	}
+
+	async regenerateDeskQrsBulk(officeId?: string): Promise<number> {
+		const result = await this.db.query(
+			"update desks set qr_public_id = gen_random_uuid()::text, updated_at = now() " +
+				"where archived_at is null and ($1::uuid is null or office_id = $1::uuid)",
+			[officeId ?? null]
+		);
+		return result.rowCount ?? 0;
 	}
 
 	async listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]> {

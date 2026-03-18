@@ -69,6 +69,14 @@ export const adminFloorplanPatchSchema = z.object({
 	{ message: "At least one floorplan field must be provided" }
 );
 
+export const adminDeskQrsQuerySchema = z.object({
+	officeId: uuidSchema.optional(),
+});
+
+export const adminDeskQrsBulkPatchSchema = z.object({
+	officeId: uuidSchema.optional(),
+});
+
 export const adminUserPatchSchema = z.object({
 	role: z.enum(["user", "admin"]).optional(),
 	status: z.enum(["active", "suspended"]).optional(),

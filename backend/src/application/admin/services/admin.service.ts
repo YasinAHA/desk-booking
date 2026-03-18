@@ -70,6 +70,16 @@ export class AdminService {
 		return this.deps.adminRepo.updateFloorplanConfig(officeId, patch);
 	}
 
+	async listDeskQrs(requestedByUserId: string, officeId?: string) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.listDeskQrs(officeId);
+	}
+
+	async regenerateDeskQrsBulk(requestedByUserId: string, officeId?: string) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.regenerateDeskQrsBulk(officeId);
+	}
+
 	async listUsers(requestedByUserId: string, filters: AdminUsersFilters) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.listUsers(filters);

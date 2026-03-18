@@ -235,6 +235,28 @@ const adminFloorplanPatchOpenApiSchema = z.object({
 	canvasHeight: z.number().int().positive().nullable().optional(),
 });
 
+const adminDeskQrSchema = z.object({
+	deskId: uuidSchema,
+	officeId: uuidSchema,
+	deskCode: z.string(),
+	deskName: z.string().nullable(),
+	zoneName: z.string().nullable(),
+	status: z.enum(["active", "maintenance", "disabled"]),
+	qrPublicId: z.string(),
+});
+
+const adminDeskQrsListResponseSchema = z.object({
+	items: z.array(adminDeskQrSchema),
+});
+
+const adminDeskQrsQueryOpenApiSchema = z.object({
+	officeId: uuidSchema.optional(),
+});
+
+const adminDeskQrsBulkRequestOpenApiSchema = z.object({
+	officeId: uuidSchema.optional(),
+});
+
 const adminUserSchema = z.object({
 	id: uuidSchema,
 	email: z.email(),
@@ -741,6 +763,39 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
 			404: err("Desk not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/admin/desks/qr",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminDeskQrsQueryOpenApiSchema },
+		responses: {
+			200: { description: "Desk QR listing", content: json(adminDeskQrsListResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/admin/desks/qr/regenerate-bulk",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { body: { required: true, content: json(adminDeskQrsBulkRequestOpenApiSchema) } },
+		responses: {
+			200: {
+				description: "Bulk QR regeneration result",
+				content: json(z.object({ ok: z.literal(true), updated: z.number().int().nonnegative() })),
+			},
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
 			500: err("Internal error"),
 		},
 	});
