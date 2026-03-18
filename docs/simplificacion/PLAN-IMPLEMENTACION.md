@@ -67,7 +67,7 @@
 #### 2.1 Autenticación & Autorización
 - [ ] Endpoint `POST /auth/register` → validar contra `allowed_email_domains`
 - [ ] Endpoint `POST /auth/login` → mantener sin cambios
-- [ ] Rol/permission check: usuario normal vs admin
+- [x] Rol/permission check: usuario normal vs admin
 - [ ] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`
 
 #### 2.2 Desks & Layout
@@ -79,8 +79,8 @@
 - [x] Refactorizar modelo: `reservation_date` → `starts_at`, `ends_at`
 - [ ] Validación de solapamientos con constraint de exclusión (PostgreSQL)
 - [ ] `POST /reservations` (usuario) → crear reservas por rango
-- [ ] `POST /admin/reservations` → soportar tipo `guest` con `guest_name`, `guest_email`, `guest_company`, `host_user_id`
-- [ ] `PATCH /admin/reservations/{id}` → cambio de status
+- [x] `POST /admin/reservations` → soportar tipo `guest` con `guest_name`, `guest_email`, `guest_company`, `host_user_id`
+- [x] `PATCH /admin/reservations/{id}` → cambio de status
 - [x] Estados: `reserved`, `checked_in`, `cancelled`, `no_show`
 
 #### 2.4 Check-in
@@ -96,7 +96,7 @@
 
 #### 2.5 Settings & Configuración
 - [ ] Cargar `app_settings` en startup (cache en memoria)
-- [ ] Endpoints `GET/PATCH /admin/settings`
+- [x] Endpoints `GET/PATCH /admin/settings`
 - [ ] Valores por defecto:
   - `allow_self_registration = false`
   - `guest_mode_enabled = true`
@@ -119,7 +119,7 @@
 **Responsable:** Backend  
 
 #### 3.1 Endpoints de Reportes
-- [ ] `GET /admin/reports/occupancy?start=YYYY-MM-DD&end=YYYY-MM-DD`
+- [x] `GET /admin/reports/occupancy?start=YYYY-MM-DD&end=YYYY-MM-DD`
   - Query sobre reservations + desks
   - Retornar: `desk_id`, `zone_name`, `total_slots`, `occupied_slots`, `occupancy_rate`
 
@@ -127,14 +127,14 @@
   - Agrupar por usuario, fecha de cancelación
   - Incluir `avg_cancellation_lead_time`
 
-- [ ] `GET /admin/reports/no-shows?start=YYYY-MM-DD&end=YYYY-MM-DD`
+- [x] `GET /admin/reports/no-shows?start=YYYY-MM-DD&end=YYYY-MM-DD`
   - Contar por usuario, filtrar status = `no_show`
   - Calcular `incidence_rate` (%)
 
 - [ ] `GET /admin/reports/audit-log?start=YYYY-MM-DD&end=YYYY-MM-DD&actor_id=uuid`
   - Retornar respuesta filtrada de `audit_events` (compliance)
 
-- [ ] `GET /admin/reports/summary?period=today|this_week|this_month`
+- [x] `GET /admin/reports/summary?period=today|this_week|this_month`
   - Dashboard rápido
 
 #### 3.2 Exportación CSV
