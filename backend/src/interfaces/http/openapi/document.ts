@@ -3,6 +3,7 @@ import {
 	OpenAPIRegistry,
 	OpenApiGeneratorV31,
 } from "@asteasolutions/zod-to-openapi";
+import { API_V1_PREFIX } from "@config/api-prefix.js";
 import { env } from "@config/env.js";
 import {
 	changePasswordSchema,
@@ -466,6 +467,6 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			version,
 			description: "Backend API for desk booking, auth and QR check-in.",
 		},
-		servers: [{ url: env.APP_BASE_URL }],
+		servers: [{ url: `${env.APP_BASE_URL}${API_V1_PREFIX}` }],
 	});
 }

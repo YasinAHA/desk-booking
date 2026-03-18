@@ -1,5 +1,6 @@
 ﻿import type { EmailConfirmationService } from "@application/common/ports/email-confirmation-service.js";
 import type { Notifier } from "@application/common/ports/notifier.js";
+import { API_V1_PREFIX } from "@config/api-prefix.js";
 
 export class EmailConfirmationServiceImpl implements EmailConfirmationService {
 	constructor(
@@ -8,7 +9,7 @@ export class EmailConfirmationServiceImpl implements EmailConfirmationService {
 	) {}
 
 	async sendConfirmation(email: string, token: string): Promise<void> {
-		const confirmUrl = `${this.appBaseUrl}/auth/confirm?token=${token}`;
+		const confirmUrl = `${this.appBaseUrl}${API_V1_PREFIX}/auth/confirm?token=${token}`;
 		await this.notifier.send({
 			to: email,
 			subject: "Confirm your Desk Booking account",

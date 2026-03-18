@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { SignJWT } from "jose";
+import { API_V1_PREFIX } from "@config/api-prefix.js";
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? "test";
 
@@ -189,7 +190,7 @@ test("E2E temporal: check-in QR applies office timezone (non-UTC date)", async (
 
 		const response = await app.inject({
 			method: "POST",
-			url: "/reservations/check-in/qr",
+			url: `${API_V1_PREFIX}/reservations/check-in/qr`,
 			headers: { authorization: `Bearer ${accessToken}` },
 			payload: {
 				date: localDate,
@@ -230,7 +231,7 @@ test("E2E temporal: check-in QR enforces allowed window", async () => {
 
 		const response = await app.inject({
 			method: "POST",
-			url: "/reservations/check-in/qr",
+			url: `${API_V1_PREFIX}/reservations/check-in/qr`,
 			headers: { authorization: `Bearer ${accessToken}` },
 			payload: {
 				date: reservationDate,
@@ -271,7 +272,7 @@ test("E2E temporal: no_show transition is applied before listing desks", async (
 
 		const response = await app.inject({
 			method: "GET",
-			url: `/desks?date=${reservationDate}`,
+			url: `${API_V1_PREFIX}/desks?date=${reservationDate}`,
 			headers: { authorization: `Bearer ${accessToken}` },
 		});
 

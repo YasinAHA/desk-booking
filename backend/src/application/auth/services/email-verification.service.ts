@@ -6,6 +6,7 @@ import type {
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
 import { EmailTemplateProvider } from "@application/auth/services/email-template-provider.js";
+import { API_V1_PREFIX } from "@config/api-prefix.js";
 import { userIdToString, type UserId } from "@domain/auth/value-objects/user-id.js";
 
 /**
@@ -36,7 +37,7 @@ export class EmailVerificationService {
 			ttlMs
 		);
 
-		const confirmUrl = `${this.confirmationBaseUrl}/auth/confirm?token=${token}`;
+		const confirmUrl = `${this.confirmationBaseUrl}${API_V1_PREFIX}/auth/confirm?token=${token}`;
 		const template = this.emailTemplateProvider.buildVerificationTemplate(confirmUrl);
 
 		await this.emailOutbox.enqueue({

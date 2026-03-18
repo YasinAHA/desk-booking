@@ -5,7 +5,7 @@
 
   encode gzip
 
-  @api path /auth* /desks* /reservations* /metrics* /health /docs* /openapi.json
+  @api path /api/internal/desk-booking/v1/* /health /docs* /openapi.json
   handle @api {
     reverse_proxy backend:3001
   }
