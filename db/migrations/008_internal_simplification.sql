@@ -156,6 +156,9 @@ END $$;
 -- ------------------------------------------------------------
 -- 3) LAYOUT / ADMIN CUSTOMIZATION
 -- ------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_validate_desk_location_consistency ON desks;
+DROP FUNCTION IF EXISTS validate_desk_location_consistency();
+
 ALTER TABLE offices
   ADD COLUMN IF NOT EXISTS floorplan_image_url text,
   ADD COLUMN IF NOT EXISTS canvas_width integer,

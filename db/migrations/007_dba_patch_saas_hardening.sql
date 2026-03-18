@@ -80,7 +80,7 @@ BEGIN
       AND x.indisunique = true
       AND x.indisprimary = false
       AND (
-        SELECT array_agg(a.attname ORDER BY k.ord)
+        SELECT array_agg(a.attname::text ORDER BY k.ord)
         FROM unnest(x.indkey) WITH ORDINALITY AS k(attnum, ord)
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum
       ) = ARRAY['code']
