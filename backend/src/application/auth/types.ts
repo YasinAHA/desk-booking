@@ -10,6 +10,7 @@ import type {
 	TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
+import type { AuthUserPreferencesRepository } from "@application/auth/ports/user-preferences-repository.js";
 
 export type AuthUser = {
 	id: string;
@@ -49,6 +50,9 @@ export type EmailVerificationRepoFactory = (
 export type PasswordResetRepoFactory = (
 	tx: TransactionalContext
 ) => PasswordResetRepository;
+export type UserPreferencesRepoFactory = (
+	tx: TransactionalContext
+) => AuthUserPreferencesRepository;
 
 export type AuthDependencies = {
 	authPolicy: AuthPolicy;
@@ -57,6 +61,7 @@ export type AuthDependencies = {
 	txManager: TransactionManager;
 	userRepo: UserRepository;
 	userRepoFactory: UserRepoFactory;
+	userPreferencesRepoFactory: UserPreferencesRepoFactory;
 	emailVerificationRepoFactory: EmailVerificationRepoFactory;
 	passwordResetRepoFactory: PasswordResetRepoFactory;
 	recoveryAttemptPolicyService: RecoveryAttemptPolicyService;

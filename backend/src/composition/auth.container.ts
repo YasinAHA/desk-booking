@@ -26,6 +26,7 @@ import { DomainAuthPolicy } from "@infrastructure/auth/policies/domain-auth-poli
 import { PgEmailOutbox } from "@infrastructure/auth/repositories/pg-email-outbox.js";
 import { PgEmailVerificationRepository } from "@infrastructure/auth/repositories/pg-email-verification-repository.js";
 import { PgPasswordResetRepository } from "@infrastructure/auth/repositories/pg-password-reset-repository.js";
+import { PgAuthUserPreferencesRepository } from "@infrastructure/auth/repositories/pg-auth-user-preferences-repository.js";
 import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/pg-token-revocation-repository.js";
 import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
 import { PgUserSessionRepository } from "@infrastructure/auth/repositories/pg-user-session-repository.js";
@@ -78,6 +79,8 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		new PgEmailVerificationRepository(getTransactionalDbClient(tx));
 	const passwordResetRepoFactory = (tx: TransactionalContext) =>
 		new PgPasswordResetRepository(getTransactionalDbClient(tx));
+	const userPreferencesRepoFactory = (tx: TransactionalContext) =>
+		new PgAuthUserPreferencesRepository(getTransactionalDbClient(tx));
 
 	const deps = {
 		authPolicy,
@@ -86,6 +89,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		txManager,
 		userRepo,
 		userRepoFactory,
+		userPreferencesRepoFactory,
 		emailVerificationRepoFactory,
 		passwordResetRepoFactory,
 		recoveryAttemptPolicyService,

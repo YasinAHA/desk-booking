@@ -1,18 +1,20 @@
 # Plan de Implementación - Desk Booking v1 (Simplificación Camerfirma)
 
-**Fecha:** 2026-03-18  
+**Fecha:** 2026-03-19  
 **Versión:** 1.0.0  
 **Prefijo API:** `/api/internal/desk-booking/v1`  
 **Escenario:** Simplificación SaaS → Single-tenant internal para Camerfirma
 
 ---
 
-## 0. Estado actual (2026-03-18)
+## 0. Estado actual (2026-03-19)
 
 ### 0.1 OpenAPI / contratos
 - [x] Prefijo v1 adoptado: `/api/internal/desk-booking/v1`
 - [x] OpenAPI regenerado desde backend (`docs/openapi.json`)
 - [x] Contrato con `POST /reservations/{id}/check-in` actualizado
+- [x] Endpoints admin v1 alineados para front: users, desks, floorplan, qr, reports
+- [x] Reportes con `format=csv` en contrato y tests
 
 ### 0.2 Backend/DB ya ejecutado
 - [x] Migración de simplificación aplicada y estabilizada (`008_internal_simplification.sql`)
@@ -73,6 +75,7 @@
 #### 2.2 Desks & Layout
 - [x] `GET /admin/desks` → agregar filtros por zona/estado
 - [x] `PATCH /admin/desks/{id}/layout` → guardar `layout_x`, `layout_y`, `layout_w`, `layout_h`, `rotation_deg`
+- [x] `GET/PATCH /admin/floorplan` → configuración de canvas/plano por `officeId`
 - [ ] `GET /desks` (usuario) → retornar datos de layout para plano
 
 #### 2.3 Reservations
@@ -105,9 +108,9 @@
   - `max_reservations_per_user = 1`
 
 #### 2.6 User Preferences
-- [ ] Crear endpoint `GET /me/preferences`
-- [ ] Crear endpoint `PATCH /me/preferences` (theme, language, timezone)
-- [ ] Insertar automáticamente para nuevos usuarios
+- [x] Crear endpoint `GET /me/preferences`
+- [x] Crear endpoint `PATCH /me/preferences` (theme, language, timezone)
+- [x] Insertar automáticamente para nuevos usuarios
 
 #### 2.7 Auditoría
 - [ ] Registrar eventos clave en `audit_events`
@@ -325,5 +328,5 @@
 ---
 
 **Versión:** 1.0  
-**Última actualización:** 2026-03-18  
-**Próxima revisión:** Después Fase 2 completada
+**Última actualización:** 2026-03-19  
+**Próxima revisión:** Después de cerrar User Preferences + frontend admin

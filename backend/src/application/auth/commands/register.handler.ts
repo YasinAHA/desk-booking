@@ -14,6 +14,7 @@ type RegisterDependencies = Pick<
 	| "tokenService"
 	| "txManager"
 	| "userRepoFactory"
+	| "userPreferencesRepoFactory"
 	| "emailVerificationRepoFactory"
 	| "emailOutbox"
 	| "confirmationBaseUrl"
@@ -55,6 +56,7 @@ export class RegisterHandler {
 
 		return this.deps.txManager.runInTransaction<RegisterResult>(async tx => {
 			const userRepo = this.deps.userRepoFactory(tx);
+			const userPreferencesRepo = this.deps.userPreferencesRepoFactory(tx);
 			const emailVerificationRepo = this.deps.emailVerificationRepoFactory(tx);
 
 			const existing = await userRepo.findByEmail(emailVO);
@@ -88,6 +90,7 @@ export class RegisterHandler {
 				lastName: profile.lastName,
 				secondLastName: profile.secondLastName,
 			});
+			await userPreferencesRepo.ensureForUser(created.id);
 
 			await this.sendVerificationEmail(created.id, command.email, emailVerificationRepo);
 			return { status: "OK" };

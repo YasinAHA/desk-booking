@@ -9,6 +9,7 @@ import type { EmailVerificationRepository } from "@application/auth/ports/email-
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
 import type { TokenService } from "@application/auth/ports/token-service.js";
 import type { UserRepository } from "@application/auth/ports/user-repository.js";
+import type { AuthUserPreferencesRepository } from "@application/auth/ports/user-preferences-repository.js";
 import {
 	createTransactionalContext,
 	type TransactionManager,
@@ -53,6 +54,15 @@ function mockEmailOutbox(overrides: Partial<EmailOutbox> = {}): EmailOutbox {
 	};
 }
 
+function mockUserPreferencesRepo(
+	overrides: Partial<AuthUserPreferencesRepository> = {}
+): AuthUserPreferencesRepository {
+	return {
+		ensureForUser: async () => {},
+		...overrides,
+	};
+}
+
 function buildPasswordHasher(): PasswordHasher {
 	return {
 		hash: async plain => createPasswordHash(`hash:${plain}`),
@@ -83,6 +93,7 @@ function buildRegisterHandler(
 	userRepo: UserRepository,
 	emailVerificationRepo: EmailVerificationRepository,
 	emailOutbox: EmailOutbox,
+	userPreferencesRepo: AuthUserPreferencesRepository = mockUserPreferencesRepo(),
 	overrides?: {
 		passwordHasher?: PasswordHasher;
 		tokenService?: TokenService;
@@ -111,6 +122,7 @@ function buildRegisterHandler(
 		tokenService,
 		txManager: overrides?.txManager ?? txManager,
 		userRepoFactory: () => userRepo,
+		userPreferencesRepoFactory: () => userPreferencesRepo,
 		emailVerificationRepoFactory: () => emailVerificationRepo,
 		emailOutbox,
 		confirmationBaseUrl,
@@ -224,6 +236,7 @@ test("RegisterHandler.execute updates unconfirmed user and sends email", async (
 
 test("RegisterHandler.execute inserts new user and sends email", async () => {
 	let createCalled = false;
+	let ensurePreferencesCalled = false;
 	let verificationCalled = false;
 	let emailEnqueued = false;
 	const userRepo = mockUserRepo({
@@ -252,7 +265,17 @@ test("RegisterHandler.execute inserts new user and sends email", async () => {
 			emailEnqueued = true;
 		},
 	});
-	const handler = buildRegisterHandler(userRepo, emailVerificationRepo, emailOutbox);
+	const userPreferencesRepo = mockUserPreferencesRepo({
+		ensureForUser: async () => {
+			ensurePreferencesCalled = true;
+		},
+	});
+	const handler = buildRegisterHandler(
+		userRepo,
+		emailVerificationRepo,
+		emailOutbox,
+		userPreferencesRepo
+	);
 
 	const result = await handler.execute({
 		email: "admin@camerfirma.com",
@@ -262,6 +285,7 @@ test("RegisterHandler.execute inserts new user and sends email", async () => {
 	});
 	assert.deepEqual(result, { status: "OK" });
 	assert.equal(createCalled, true);
+	assert.equal(ensurePreferencesCalled, true);
 	assert.equal(verificationCalled, true);
 	assert.equal(emailEnqueued, true);
 });

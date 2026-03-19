@@ -35,6 +35,11 @@ import {
 	tokenSchema,
 	uuidSchema,
 } from "@interfaces/http/schemas/common-schemas.js";
+import {
+	userPreferencesLanguageSchema,
+	userPreferencesPatchSchema,
+	userPreferencesThemeSchema,
+} from "@interfaces/http/me/me.schemas.js";
 import { z } from "zod";
 
 extendZodWithOpenApi(z);
@@ -154,6 +159,16 @@ const metricsResponseSchema = z.object({
 			p95Ms: z.number().nonnegative(),
 		})
 	),
+});
+
+const userPreferencesResponseSchema = z.object({
+	userId: uuidSchema,
+	theme: userPreferencesThemeSchema,
+	language: userPreferencesLanguageSchema,
+	timezone: z.string(),
+	emailNotificationsEnabled: z.boolean(),
+	createdAt: z.iso.datetime(),
+	updatedAt: z.iso.datetime(),
 });
 
 const adminSettingsResponseSchema = z.object({
@@ -654,6 +669,32 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			404: err("Reservation not found"),
 			409: err("Reservation not active"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
+		path: "/me/preferences",
+		tags: ["me"],
+		security: [{ bearerAuth: [] }],
+		responses: {
+			200: { description: "Authenticated user preferences", content: json(userPreferencesResponseSchema) },
+			401: err("Unauthorized"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/me/preferences",
+		tags: ["me"],
+		security: [{ bearerAuth: [] }],
+		request: { body: { required: true, content: json(userPreferencesPatchSchema) } },
+		responses: {
+			200: { description: "Updated user preferences", content: json(userPreferencesResponseSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
 			500: err("Internal error"),
 		},
 	});

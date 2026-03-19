@@ -20,6 +20,7 @@ import { registerAuthPlugin } from "@interfaces/http/plugins/auth.js";
 import { registerDbPlugin } from "@interfaces/http/plugins/db.js";
 import { registerSwaggerPlugin } from "@interfaces/http/plugins/swagger.js";
 import { GLOBAL_RATE_LIMIT } from "@interfaces/http/policies/rate-limit-policies.js";
+import { meRoutes } from "@interfaces/http/me/me.routes.js";
 import { reservationsRoutes } from "@interfaces/http/reservations/reservations.routes.js";
 import { RuntimeAppSettingsStore } from "@infrastructure/settings/runtime-app-settings-store.js";
 
@@ -192,6 +193,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     // --- Routes ---
     await app.register(authRoutes, { prefix: `${API_V1_PREFIX}/auth` });
     await app.register(adminRoutes, { prefix: `${API_V1_PREFIX}/admin` });
+    await app.register(meRoutes, { prefix: `${API_V1_PREFIX}/me` });
     await app.register(desksRoutes, { prefix: `${API_V1_PREFIX}/desks` });
     await app.register(reservationsRoutes, { prefix: `${API_V1_PREFIX}/reservations` });
     await app.register(metricsRoutes, { prefix: `${API_V1_PREFIX}/metrics` });
