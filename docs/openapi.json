@@ -1621,6 +1621,37 @@
             "description": "Date in YYYY-MM-DD format",
             "name": "date",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "officeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "zoneId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "maintenance",
+                "disabled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1648,6 +1679,13 @@
                             "type": "string",
                             "format": "uuid"
                           },
+                          "zoneId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
                           "code": {
                             "type": "string"
                           },
@@ -1670,6 +1708,36 @@
                               "maintenance",
                               "disabled"
                             ]
+                          },
+                          "layoutX": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutY": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutW": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "layoutH": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "rotationDeg": {
+                            "type": "number"
+                          },
+                          "displayOrder": {
+                            "type": "integer"
                           },
                           "isReserved": {
                             "type": "boolean"
@@ -1694,10 +1762,17 @@
                         "required": [
                           "id",
                           "officeId",
+                          "zoneId",
                           "code",
                           "name",
                           "zone",
                           "status",
+                          "layoutX",
+                          "layoutY",
+                          "layoutW",
+                          "layoutH",
+                          "rotationDeg",
+                          "displayOrder",
                           "isReserved",
                           "isMine",
                           "reservationId",

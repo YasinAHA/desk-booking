@@ -7,14 +7,27 @@ import type { UserId } from "@domain/auth/value-objects/user-id.js";
 export type DeskAvailability = {
 	id: DeskId;
 	officeId: OfficeId;
+	zoneId: string | null;
 	code: string;
 	name: string | null;
 	zone: string | null;
 	status: DeskStatus;
+	layoutX: number | null;
+	layoutY: number | null;
+	layoutW: number | null;
+	layoutH: number | null;
+	rotationDeg: number;
+	displayOrder: number;
 	isReserved: boolean;
 	isMine: boolean;
 	reservationId: ReservationId | null;
 	occupantName: string | null;
+};
+
+export type ListDesksFilters = {
+	officeId?: string;
+	zoneId?: string;
+	status?: DeskStatus;
 };
 
 export type AdminDeskRecord = {
@@ -28,7 +41,7 @@ export type AdminDeskRecord = {
 };
 
 export interface DeskRepository {
-	listForDate(date: string, userId: UserId): Promise<DeskAvailability[]>;
+	listForDate(date: string, userId: UserId, filters: ListDesksFilters): Promise<DeskAvailability[]>;
 	listForAdmin(): Promise<AdminDeskRecord[]>;
 	regenerateQrPublicId(deskId: DeskId): Promise<string | null>;
 	regenerateAllQrPublicIds(): Promise<number>;

@@ -1,4 +1,9 @@
-﻿import type { AdminDeskRecord, DeskAvailability, DeskRepository } from "@application/desks/ports/desk-repository.js";
+import type {
+	AdminDeskRecord,
+	DeskAvailability,
+	DeskRepository,
+	ListDesksFilters,
+} from "@application/desks/ports/desk-repository.js";
 import {
 	createDeskId,
 	deskIdToString,
@@ -22,10 +27,17 @@ type DbClient = {
 type DeskRow = {
 	id: string;
 	office_id: string;
+	zone_id: string | null;
 	code: string;
 	name: string | null;
 	zone_name: string | null;
 	status: DeskAvailability["status"];
+	layout_x: number | string | null;
+	layout_y: number | string | null;
+	layout_w: number | string | null;
+	layout_h: number | string | null;
+	rotation_deg: number | string;
+	display_order: number | string;
 	is_reserved: boolean;
 	is_mine: boolean;
 	reservation_id: string | null;
@@ -51,15 +63,41 @@ function isDeskRow(value: unknown): value is DeskRow {
 	return (
 		typeof row.id === "string" &&
 		typeof row.office_id === "string" &&
+		(typeof row.zone_id === "string" || row.zone_id === null) &&
 		typeof row.code === "string" &&
 		(typeof row.name === "string" || row.name === null) &&
 		(typeof row.zone_name === "string" || row.zone_name === null) &&
 		(row.status === "active" || row.status === "maintenance" || row.status === "disabled") &&
+		(typeof row.layout_x === "number" || typeof row.layout_x === "string" || row.layout_x === null) &&
+		(typeof row.layout_y === "number" || typeof row.layout_y === "string" || row.layout_y === null) &&
+		(typeof row.layout_w === "number" || typeof row.layout_w === "string" || row.layout_w === null) &&
+		(typeof row.layout_h === "number" || typeof row.layout_h === "string" || row.layout_h === null) &&
+		(typeof row.rotation_deg === "number" || typeof row.rotation_deg === "string") &&
+		(typeof row.display_order === "number" || typeof row.display_order === "string") &&
 		typeof row.is_reserved === "boolean" &&
 		typeof row.is_mine === "boolean" &&
 		(typeof row.reservation_id === "string" || row.reservation_id === null) &&
 		(typeof row.occupant_name === "string" || row.occupant_name === null)
 	);
+}
+
+function toNullableNumber(value: number | string | null): number | null {
+	if (value === null) {
+		return null;
+	}
+	if (typeof value === "number") {
+		return Number.isFinite(value) ? value : null;
+	}
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toNumber(value: number | string): number {
+	if (typeof value === "number") {
+		return Number.isFinite(value) ? value : 0;
+	}
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function toDeskRow(value: unknown): DeskRow {
@@ -96,9 +134,35 @@ function toAdminDeskRow(value: unknown): AdminDeskRow {
 export class PgDeskRepository implements DeskRepository {
 	constructor(private readonly db: DbClient) {}
 
-	async listForDate(date: string, userId: UserId): Promise<DeskAvailability[]> {
+	async listForDate(
+		date: string,
+		userId: UserId,
+		filters: ListDesksFilters
+	): Promise<DeskAvailability[]> {
+		const where: string[] = ["d.archived_at is null"];
+		const params: unknown[] = [date, userIdToString(userId)];
+		let index = 3;
+
+		if (filters.officeId) {
+			where.push(`d.office_id = $${index}::uuid`);
+			params.push(filters.officeId);
+			index += 1;
+		}
+		if (filters.zoneId) {
+			where.push(`d.zone_id = $${index}::uuid`);
+			params.push(filters.zoneId);
+			index += 1;
+		}
+		if (filters.status) {
+			where.push(`d.status = $${index}`);
+			params.push(filters.status);
+		}
+
+		const whereSql = `where ${where.join(" and ")}`;
+
 		const result = await this.db.query(
-			"select d.id, d.office_id, d.code, d.name, z.name as zone_name, d.status, " +
+			"select d.id, d.office_id, d.zone_id, d.code, d.name, z.name as zone_name, d.status, " +
+				"d.layout_x, d.layout_y, d.layout_w, d.layout_h, d.rotation_deg, d.display_order, " +
 				"(r.id is not null) as is_reserved, " +
 				"coalesce((r.user_id = $2), false) as is_mine, " +
 				"r.id as reservation_id, " +
@@ -111,8 +175,9 @@ export class PgDeskRepository implements DeskRepository {
 				"and (r.starts_at at time zone coalesce(o.timezone, 'Europe/Madrid'))::date = $1::date " +
 				"and r.status in ('reserved', 'checked_in') " +
 				"left join users u on u.id = r.user_id " +
-				"order by d.code asc",
-			[date, userIdToString(userId)]
+				`${whereSql} ` +
+				"order by d.display_order asc, d.code asc",
+			params
 		);
 
 		return result.rows.map(raw => {
@@ -120,10 +185,17 @@ export class PgDeskRepository implements DeskRepository {
 			return {
 				id: createDeskId(row.id),
 				officeId: createOfficeId(row.office_id),
+				zoneId: row.zone_id,
 				code: row.code,
 				name: row.name,
 				zone: row.zone_name,
 				status: row.status,
+				layoutX: toNullableNumber(row.layout_x),
+				layoutY: toNullableNumber(row.layout_y),
+				layoutW: toNullableNumber(row.layout_w),
+				layoutH: toNullableNumber(row.layout_h),
+				rotationDeg: toNumber(row.rotation_deg),
+				displayOrder: toNumber(row.display_order),
 				isReserved: row.is_reserved,
 				isMine: row.is_mine,
 				reservationId: row.reservation_id ? createReservationId(row.reservation_id) : null,

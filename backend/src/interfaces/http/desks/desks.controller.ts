@@ -40,6 +40,15 @@ export class DeskController {
 
 		const userId = req.user.id;
 		const query: ListDesksQuery = { date: parse.data.date, userId };
+		if (parse.data.officeId !== undefined) {
+			query.officeId = parse.data.officeId;
+		}
+		if (parse.data.zoneId !== undefined) {
+			query.zoneId = parse.data.zoneId;
+		}
+		if (parse.data.status !== undefined) {
+			query.status = parse.data.status;
+		}
 		const desks = await this.listDesksHandler.execute(query);
 
 		return reply.send(mapListDesksResponse(parse.data.date, desks));

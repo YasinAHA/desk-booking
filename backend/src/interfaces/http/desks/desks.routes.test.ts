@@ -81,10 +81,17 @@ test("GET /desks returns desks for valid token", async () => {
 					{
 						id: "11111111-1111-1111-8111-111111111111",
 						office_id: "22222222-2222-2222-8222-222222222222",
+						zone_id: "33333333-3333-4333-8333-333333333333",
 						code: "D01",
 						name: "Puesto 01",
 						zone_name: "Zona A",
 						status: "active",
+						layout_x: 10,
+						layout_y: 20,
+						layout_w: 160,
+						layout_h: 80,
+						rotation_deg: 0,
+						display_order: 1,
 						is_reserved: false,
 						is_mine: false,
 						reservation_id: null,
@@ -113,6 +120,41 @@ test("GET /desks returns desks for valid token", async () => {
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
 	assert.equal(body.items.length, 1);
+	assert.equal(body.items[0]?.zoneId, "33333333-3333-4333-8333-333333333333");
+	assert.equal(body.items[0]?.layoutX, 10);
+	assert.equal(body.items[0]?.displayOrder, 1);
+	await app.close();
+});
+
+test("GET /desks forwards office/zone/status filters", async () => {
+	let receivedParams: unknown[] | undefined;
+	const app = await buildTestApp(async (_text, params) => {
+		receivedParams = params;
+		return { rows: [] };
+	});
+
+	const token = await signAccessToken({
+		id: "user-1",
+		email: "admin@camerfirma.com",
+		firstName: "Admin",
+		lastName: "User",
+		secondLastName: null,
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/desks?date=2026-02-20&officeId=22222222-2222-4222-8222-222222222222&zoneId=33333333-3333-4333-8333-333333333333&status=active",
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.deepEqual(receivedParams, [
+		"2026-02-20",
+		"user-1",
+		"22222222-2222-4222-8222-222222222222",
+		"33333333-3333-4333-8333-333333333333",
+		"active",
+	]);
 	await app.close();
 });
 

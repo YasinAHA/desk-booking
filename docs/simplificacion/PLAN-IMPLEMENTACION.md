@@ -76,7 +76,7 @@
 - [x] `GET /admin/desks` → agregar filtros por zona/estado
 - [x] `PATCH /admin/desks/{id}/layout` → guardar `layout_x`, `layout_y`, `layout_w`, `layout_h`, `rotation_deg`
 - [x] `GET/PATCH /admin/floorplan` → configuración de canvas/plano por `officeId`
-- [ ] `GET /desks` (usuario) → retornar datos de layout para plano
+- [x] `GET /desks` (usuario) → retornar datos de layout para plano
 
 #### 2.3 Reservations
 - [x] Refactorizar modelo: `reservation_date` → `starts_at`, `ends_at`

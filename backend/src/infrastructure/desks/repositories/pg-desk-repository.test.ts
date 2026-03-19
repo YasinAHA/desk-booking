@@ -9,16 +9,23 @@ import { PgDeskRepository } from "@infrastructure/desks/repositories/pg-desk-rep
 test("PgDeskRepository.listForDate maps rows", async () => {
 	const repo = new PgDeskRepository({
 		query: async (_text, params) => {
-			assert.deepEqual(params, ["2026-02-20", "user-1"]);
+			assert.deepEqual(params, ["2026-02-20", "user-1", "office-1", "zone-1", "active"]);
 			return {
 				rows: [
 					{
 						id: "desk-1",
 						office_id: "office-1",
+						zone_id: "zone-1",
 						code: "D01",
 						name: "Puesto 01",
 						zone_name: "Zona A",
 						status: "active",
+						layout_x: 10,
+						layout_y: 20,
+						layout_w: 160,
+						layout_h: 80,
+						rotation_deg: 0,
+						display_order: 1,
 						is_reserved: false,
 						is_mine: false,
 						reservation_id: null,
@@ -29,15 +36,26 @@ test("PgDeskRepository.listForDate maps rows", async () => {
 		},
 	});
 
-	const result = await repo.listForDate("2026-02-20", createUserId("user-1"));
+	const result = await repo.listForDate("2026-02-20", createUserId("user-1"), {
+		officeId: "office-1",
+		zoneId: "zone-1",
+		status: "active",
+	});
 	assert.deepEqual(result, [
 		{
 			id: "desk-1",
 			officeId: createOfficeId("office-1"),
+			zoneId: "zone-1",
 			code: "D01",
 			name: "Puesto 01",
 			zone: "Zona A",
 			status: "active",
+			layoutX: 10,
+			layoutY: 20,
+			layoutW: 160,
+			layoutH: 80,
+			rotationDeg: 0,
+			displayOrder: 1,
 			isReserved: false,
 			isMine: false,
 			reservationId: null,
