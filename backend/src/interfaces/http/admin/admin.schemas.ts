@@ -71,6 +71,13 @@ export const adminFloorplanPatchSchema = z.object({
 
 export const adminDeskQrsQuerySchema = z.object({
 	officeId: uuidSchema.optional(),
+	zoneId: uuidSchema.optional(),
+	status: z.enum(["active", "maintenance", "disabled"]).optional(),
+	q: z.string().trim().min(1).optional(),
+	page: z.coerce.number().int().min(1).optional(),
+	pageSize: z.coerce.number().int().min(1).max(100).optional(),
+	sortBy: z.enum(["deskCode", "zoneName", "status"]).optional(),
+	sortDir: z.enum(["asc", "desc"]).optional(),
 });
 
 export const adminDeskQrsBulkPatchSchema = z.object({

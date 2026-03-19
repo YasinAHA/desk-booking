@@ -1,6 +1,9 @@
 import type {
 	AdminDeskLayoutPatch,
 	AdminDeskQrRecord,
+	AdminDeskQrsFilters,
+	AdminDeskQrsPage,
+	AdminDeskQrsSortBy,
 	AdminFloorplanConfig,
 	AdminFloorplanConfigPatch,
 	AdminDeskRecord,
@@ -341,17 +344,71 @@ export class PgAdminRepository implements AdminRepository {
 		return mapAdminFloorplanConfig(row as Record<string, unknown>);
 	}
 
-	async listDeskQrs(officeId?: string): Promise<AdminDeskQrRecord[]> {
+	async listDeskQrs(filters: AdminDeskQrsFilters): Promise<AdminDeskQrsPage> {
+		const where: string[] = ["d.archived_at is null"];
+		const params: unknown[] = [];
+		let index = 1;
+
+		if (filters.officeId) {
+			where.push(`d.office_id = $${index}::uuid`);
+			params.push(filters.officeId);
+			index += 1;
+		}
+		if (filters.zoneId) {
+			where.push(`d.zone_id = $${index}::uuid`);
+			params.push(filters.zoneId);
+			index += 1;
+		}
+		if (filters.status) {
+			where.push(`d.status = $${index}`);
+			params.push(filters.status);
+			index += 1;
+		}
+		if (filters.q) {
+			where.push(`(d.code ilike $${index} or coalesce(d.name, '') ilike $${index})`);
+			params.push(`%${filters.q.trim()}%`);
+		}
+
+		const whereSql = `where ${where.join(" and ")}`;
+		const page = filters.page ?? 1;
+		const pageSize = filters.pageSize ?? 20;
+		const offset = (page - 1) * pageSize;
+
+		const countResult = await this.db.query(
+			`select count(*)::int as total from desks d left join zones z on z.id = d.zone_id ${whereSql}`,
+			params
+		);
+		const total = toNumberOrZero((countResult.rows[0] as Record<string, unknown> | undefined)?.total);
+
+		const sortBy: AdminDeskQrsSortBy = filters.sortBy ?? "deskCode";
+		const sortDir = filters.sortDir === "desc" ? "desc" : "asc";
+		const sortColumnByField: Record<AdminDeskQrsSortBy, string> = {
+			deskCode: "d.code",
+			zoneName: "z.name",
+			status: "d.status",
+		};
+		const sortColumn = sortColumnByField[sortBy];
+		const orderSql = `order by ${sortColumn} ${sortDir}, d.code asc`;
+
+		const limitPlaceholder = `$${params.length + 1}`;
+		const offsetPlaceholder = `$${params.length + 2}`;
+		const listParams = [...params, pageSize, offset];
 		const result = await this.db.query(
 			"select d.id::text as desk_id, d.office_id::text as office_id, d.code as desk_code, d.name as desk_name, " +
 				"z.name as zone_name, d.status, d.qr_public_id " +
 			"from desks d " +
 			"left join zones z on z.id = d.zone_id " +
-			"where d.archived_at is null and ($1::uuid is null or d.office_id = $1::uuid) " +
-			"order by d.code asc",
-			[officeId ?? null]
+			`${whereSql} ` +
+			`${orderSql} ` +
+			`limit ${limitPlaceholder} offset ${offsetPlaceholder}`,
+			listParams
 		);
-		return result.rows.map(row => mapAdminDeskQrRecord(row as Record<string, unknown>));
+		return {
+			items: result.rows.map(row => mapAdminDeskQrRecord(row as Record<string, unknown>)),
+			total,
+			page,
+			pageSize,
+		};
 	}
 
 	async regenerateDeskQrsBulk(officeId?: string): Promise<number> {

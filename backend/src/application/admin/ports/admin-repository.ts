@@ -138,6 +138,27 @@ export type AdminDeskQrRecord = {
 	qrPublicId: string;
 };
 
+export type AdminDeskQrsSortBy = "deskCode" | "zoneName" | "status";
+export type AdminDeskQrsSortDir = "asc" | "desc";
+
+export type AdminDeskQrsFilters = {
+	officeId?: string;
+	zoneId?: string;
+	status?: AdminDeskStatus;
+	q?: string;
+	page?: number;
+	pageSize?: number;
+	sortBy?: AdminDeskQrsSortBy;
+	sortDir?: AdminDeskQrsSortDir;
+};
+
+export type AdminDeskQrsPage = {
+	items: AdminDeskQrRecord[];
+	total: number;
+	page: number;
+	pageSize: number;
+};
+
 export type CreateAdminReservationInput = {
 	reservationType: "internal" | "guest";
 	userId?: string;
@@ -243,7 +264,7 @@ export interface AdminRepository {
 		officeId: string,
 		patch: AdminFloorplanConfigPatch
 	): Promise<AdminFloorplanConfig | null>;
-	listDeskQrs(officeId?: string): Promise<AdminDeskQrRecord[]>;
+	listDeskQrs(filters: AdminDeskQrsFilters): Promise<AdminDeskQrsPage>;
 	regenerateDeskQrsBulk(officeId?: string): Promise<number>;
 	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
 	updateUser(userId: string, patch: AdminUserPatch): Promise<AdminUserRecord | null>;

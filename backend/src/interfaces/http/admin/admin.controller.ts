@@ -5,6 +5,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
 	AdminDeskLayoutPatch,
 	AdminDeskStatusPatch,
+	AdminDeskQrsFilters,
 	AdminDesksFilters,
 	AdminFloorplanConfigPatch,
 	AdminUserPatch,
@@ -194,8 +195,11 @@ export class AdminController {
 			throwHttpError(400, "BAD_REQUEST", "Invalid query");
 		}
 		try {
-			const items = await this.adminService.listDeskQrs(req.user.id, parse.data.officeId);
-			return reply.send({ items });
+			const page = await this.adminService.listDeskQrs(
+				req.user.id,
+				removeUndefined(parse.data) as AdminDeskQrsFilters
+			);
+			return reply.send(page);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

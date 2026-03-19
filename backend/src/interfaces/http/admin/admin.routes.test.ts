@@ -391,6 +391,9 @@ test("GET /admin/desks/qr returns qr listing", async () => {
 		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
 		}
+		if (text.includes("count(*)::int as total from desks d")) {
+			return { rows: [{ total: 1 }] };
+		}
 		if (text.includes("from desks d") && text.includes("qr_public_id")) {
 			return {
 				rows: [{
@@ -409,14 +412,30 @@ test("GET /admin/desks/qr returns qr listing", async () => {
 
 	const res = await app.inject({
 		method: "GET",
-		url: "/admin/desks/qr?officeId=b1111111-1111-4111-8111-111111111111",
+		url: "/admin/desks/qr?officeId=b1111111-1111-4111-8111-111111111111&page=1&pageSize=10&sortBy=deskCode&sortDir=asc",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
+	assert.equal(body.total, 1);
+	assert.equal(body.page, 1);
+	assert.equal(body.pageSize, 10);
 	assert.equal(body.items.length, 1);
 	assert.equal(body.items[0]?.deskCode, "P01");
+	await app.close();
+});
+
+test("GET /admin/desks/qr returns 400 for invalid pagination query", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/desks/qr?page=0",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 400);
 	await app.close();
 });
 

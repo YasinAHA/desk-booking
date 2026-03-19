@@ -262,10 +262,20 @@ const adminDeskQrSchema = z.object({
 
 const adminDeskQrsListResponseSchema = z.object({
 	items: z.array(adminDeskQrSchema),
+	total: z.number().int().nonnegative(),
+	page: z.number().int().positive(),
+	pageSize: z.number().int().positive(),
 });
 
 const adminDeskQrsQueryOpenApiSchema = z.object({
 	officeId: uuidSchema.optional(),
+	zoneId: uuidSchema.optional(),
+	status: z.enum(["active", "maintenance", "disabled"]).optional(),
+	q: z.string().trim().min(1).optional(),
+	page: z.coerce.number().int().min(1).optional(),
+	pageSize: z.coerce.number().int().min(1).max(100).optional(),
+	sortBy: z.enum(["deskCode", "zoneName", "status"]).optional(),
+	sortDir: z.enum(["asc", "desc"]).optional(),
 });
 
 const adminDeskQrsBulkRequestOpenApiSchema = z.object({

@@ -4,6 +4,7 @@ import type {
 	AdminDeskLayoutPatch,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
+	AdminDeskQrsFilters,
 	AdminFloorplanConfigPatch,
 	AdminUserPatch,
 	AdminUsersFilters,
@@ -70,9 +71,9 @@ export class AdminService {
 		return this.deps.adminRepo.updateFloorplanConfig(officeId, patch);
 	}
 
-	async listDeskQrs(requestedByUserId: string, officeId?: string) {
+	async listDeskQrs(requestedByUserId: string, filters: AdminDeskQrsFilters) {
 		await this.ensureAdmin(requestedByUserId);
-		return this.deps.adminRepo.listDeskQrs(officeId);
+		return this.deps.adminRepo.listDeskQrs(filters);
 	}
 
 	async regenerateDeskQrsBulk(requestedByUserId: string, officeId?: string) {
