@@ -3,6 +3,7 @@ import { AdminAuthorizationError } from "@application/desks/errors/admin-authori
 import type {
 	AdminDeskLayoutPatch,
 	AdminDeskLayoutBulkItem,
+	AdminDeskLayoutRestoreInput,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
 	AdminDeskQrsFilters,
@@ -58,6 +59,11 @@ export class AdminService {
 	async updateDeskLayoutsBulk(requestedByUserId: string, items: AdminDeskLayoutBulkItem[]) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.updateDeskLayoutsBulk(items);
+	}
+
+	async restoreDeskLayouts(requestedByUserId: string, input: AdminDeskLayoutRestoreInput) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.restoreDeskLayouts(input);
 	}
 
 	async updateDeskStatus(requestedByUserId: string, deskId: string, patch: AdminDeskStatusPatch) {

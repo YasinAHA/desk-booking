@@ -317,6 +317,69 @@ test("PATCH /admin/desks/layout/bulk returns 400 for invalid payload", async () 
 	await app.close();
 });
 
+test("POST /admin/desks/layout/restore restores desks layout by office", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update desks d set") && text.includes("layout_x = null")) {
+			return {
+				rows: [{
+					id: "a1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					zone_id: "c1111111-1111-4111-8111-111111111111",
+					zone_name: "Zona A",
+					code: "D-01",
+					name: "Desk 01",
+					status: "active",
+					status_reason: null,
+					qr_public_id: "qr-111",
+					layout_x: null,
+					layout_y: null,
+					layout_w: null,
+					layout_h: null,
+					rotation_deg: 0,
+					display_order: 0,
+					archived_at: null,
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/desks/layout/restore",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			officeId: "b1111111-1111-4111-8111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.ok, true);
+	assert.equal(body.updated, 1);
+	assert.equal(body.items[0]?.layoutX, null);
+	assert.equal(body.items[0]?.displayOrder, 0);
+	await app.close();
+});
+
+test("POST /admin/desks/layout/restore returns 400 for invalid payload", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/desks/layout/restore",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
 test("PATCH /admin/desks/:id/status returns 404 for unknown desk", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {

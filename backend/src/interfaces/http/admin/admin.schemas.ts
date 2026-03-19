@@ -76,6 +76,11 @@ export const adminDeskLayoutBulkPatchSchema = z.object({
 	items: z.array(adminDeskLayoutBulkItemSchema).min(1).max(500),
 });
 
+export const adminDeskLayoutRestoreSchema = z.object({
+	officeId: uuidSchema,
+	zoneId: uuidSchema.optional(),
+});
+
 export const adminDeskStatusPatchSchema = z.object({
 	status: z.enum(["active", "maintenance", "disabled"]),
 	statusReason: z.string().trim().min(1).nullable().optional(),

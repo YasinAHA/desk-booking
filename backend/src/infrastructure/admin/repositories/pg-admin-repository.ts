@@ -1,6 +1,7 @@
 import type {
 	AdminDeskLayoutPatch,
 	AdminDeskLayoutBulkItem,
+	AdminDeskLayoutRestoreInput,
 	AdminDeskQrRecord,
 	AdminDeskQrsFilters,
 	AdminDeskQrsPage,
@@ -733,6 +734,33 @@ export class PgAdminRepository implements AdminRepository {
 			[payload]
 		);
 
+		return result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>));
+	}
+
+	async restoreDeskLayouts(input: AdminDeskLayoutRestoreInput): Promise<AdminDeskRecord[]> {
+		const result = await this.db.query(
+			"with updated as (" +
+				"update desks d set " +
+					"layout_x = null, " +
+					"layout_y = null, " +
+					"layout_w = null, " +
+					"layout_h = null, " +
+					"rotation_deg = 0, " +
+					"display_order = 0, " +
+					"updated_at = now() " +
+				"where d.office_id = $1::uuid " +
+					"and ($2::uuid is null or d.zone_id = $2::uuid) " +
+					"and d.archived_at is null " +
+				"returning d.*" +
+			") " +
+			"select u.id::text as id, u.office_id::text as office_id, u.zone_id::text as zone_id, z.name as zone_name, " +
+				"u.code, u.name, u.status, u.status_reason, u.qr_public_id, u.layout_x, u.layout_y, u.layout_w, u.layout_h, " +
+				"u.rotation_deg, u.display_order, u.archived_at::text as archived_at " +
+			"from updated u " +
+			"left join zones z on z.id = u.zone_id " +
+			"order by u.code asc",
+			[input.officeId, input.zoneId ?? null]
+		);
 		return result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>));
 	}
 

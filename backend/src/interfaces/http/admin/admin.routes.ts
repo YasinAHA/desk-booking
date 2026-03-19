@@ -14,6 +14,7 @@ export const adminRoutes: FastifyPluginAsync = async app => {
 	app.get("/desks", auth, controller.listDesks.bind(controller));
 	app.patch("/desks/:id/layout", auth, controller.patchDeskLayout.bind(controller));
 	app.patch("/desks/layout/bulk", auth, controller.patchDeskLayoutsBulk.bind(controller));
+	app.post("/desks/layout/restore", auth, controller.restoreDeskLayouts.bind(controller));
 	app.patch("/desks/:id/status", auth, controller.patchDeskStatus.bind(controller));
 	app.get("/desks/qr", auth, controller.listDeskQrs.bind(controller));
 	app.post("/desks/qr/regenerate-bulk", auth, controller.regenerateDeskQrsBulk.bind(controller));

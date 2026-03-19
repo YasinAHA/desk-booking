@@ -5,6 +5,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
 	AdminDeskLayoutPatch,
 	AdminDeskLayoutBulkItem,
+	AdminDeskLayoutRestoreInput,
 	AdminDeskStatusPatch,
 	AdminDeskQrsFilters,
 	AdminDesksFilters,
@@ -24,6 +25,7 @@ import {
 	adminAuditLogQuerySchema,
 	adminDeskLayoutPatchSchema,
 	adminDeskLayoutBulkPatchSchema,
+	adminDeskLayoutRestoreSchema,
 	adminDeskQrsBulkPatchSchema,
 	adminDeskQrsQuerySchema,
 	adminDeskStatusPatchSchema,
@@ -144,6 +146,23 @@ export class AdminController {
 			const items = await this.adminService.updateDeskLayoutsBulk(
 				req.user.id,
 				body.data.items as AdminDeskLayoutBulkItem[]
+			);
+			return reply.send({ ok: true, updated: items.length, items });
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async restoreDeskLayouts(req: FastifyRequest, reply: FastifyReply) {
+		const body = adminDeskLayoutRestoreSchema.safeParse(req.body);
+		if (!body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const items = await this.adminService.restoreDeskLayouts(
+				req.user.id,
+				body.data as AdminDeskLayoutRestoreInput
 			);
 			return reply.send({ ok: true, updated: items.length, items });
 		} catch (err) {

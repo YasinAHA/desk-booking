@@ -249,6 +249,11 @@ const adminDeskLayoutBulkResponseOpenApiSchema = z.object({
 	items: z.array(adminDeskSchema),
 });
 
+const adminDeskLayoutRestoreRequestOpenApiSchema = z.object({
+	officeId: uuidSchema,
+	zoneId: uuidSchema.optional(),
+});
+
 const adminDeskStatusPatchOpenApiSchema = z.object({
 	status: z.enum(["active", "maintenance", "disabled"]),
 	statusReason: z.string().nullable().optional(),
@@ -831,6 +836,26 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		responses: {
 			200: {
 				description: "Bulk admin desk layout update",
+				content: json(adminDeskLayoutBulkResponseOpenApiSchema),
+			},
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/admin/desks/layout/restore",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			body: { required: true, content: json(adminDeskLayoutRestoreRequestOpenApiSchema) },
+		},
+		responses: {
+			200: {
+				description: "Restore desks layout to default empty positions",
 				content: json(adminDeskLayoutBulkResponseOpenApiSchema),
 			},
 			400: err("Invalid payload"),
