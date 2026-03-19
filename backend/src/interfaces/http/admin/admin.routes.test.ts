@@ -280,6 +280,87 @@ test("GET /admin/floorplan returns office config", async () => {
 	await app.close();
 });
 
+test("GET /admin/floorplan returns 400 when officeId is missing", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/floorplan",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
+test("PATCH /admin/floorplan updates config for existing office", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update offices set")) {
+			return {
+				rows: [{
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					floorplan_image_url: "https://cdn.example/new-floorplan.png",
+					canvas_width: 1600,
+					canvas_height: 900,
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/floorplan?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			floorplanImageUrl: "https://cdn.example/new-floorplan.png",
+			canvasWidth: 1600,
+			canvasHeight: 900,
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.floorplanImageUrl, "https://cdn.example/new-floorplan.png");
+	assert.equal(body.canvasWidth, 1600);
+	assert.equal(body.canvasHeight, 900);
+	await app.close();
+});
+
+test("PATCH /admin/floorplan returns 400 for empty payload", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/floorplan?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
+test("PATCH /admin/floorplan returns 400 for invalid canvas size", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/floorplan?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			canvasWidth: 0,
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
 test("PATCH /admin/floorplan returns 404 when office does not exist", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {
