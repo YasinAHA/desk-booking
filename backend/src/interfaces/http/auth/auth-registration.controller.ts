@@ -7,7 +7,7 @@ import type { RegisterResult } from "@application/auth/types.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
-import { registerSchema } from "./auth.schemas.js";
+import { confirmEmailSchema, registerSchema } from "./auth.schemas.js";
 
 type StatusHttpError = {
 	statusCode: number;
@@ -101,12 +101,12 @@ export class AuthRegistrationController {
 	}
 
 	async confirmEmail(req: FastifyRequest, reply: FastifyReply) {
-		const token = (req.query as { token?: string }).token;
-		if (!token) {
-			throwHttpError(400, "BAD_REQUEST", "Missing token");
+		const parse = confirmEmailSchema.safeParse(req.body);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
-		const command: ConfirmEmailCommand = { token };
+		const command: ConfirmEmailCommand = { token: parse.data.token };
 		const result = await this.confirmEmailHandler.execute(command);
 		if (result !== "confirmed") {
 			const error = CONFIRM_EMAIL_STATUS_HTTP_ERRORS[result];

@@ -14,6 +14,10 @@ export const verifySchema = z.object({
 	token: tokenSchema,
 });
 
+export const confirmEmailSchema = z.object({
+	token: tokenSchema,
+});
+
 export const forgotPasswordSchema = z.object({
 	email: emailSchema,
 });

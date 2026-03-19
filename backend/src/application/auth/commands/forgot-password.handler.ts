@@ -62,7 +62,8 @@ export class ForgotPasswordHandler {
 			});
 
 			const resetUrl = new URL(this.deps.passwordResetBaseUrl);
-			resetUrl.hash = `token=${encodeURIComponent(token)}`;
+			resetUrl.pathname = "/auth/reset-password";
+			resetUrl.searchParams.set("token", token);
 			const template = this.emailTemplateProvider.buildPasswordResetTemplate(
 				resetUrl.toString()
 			);

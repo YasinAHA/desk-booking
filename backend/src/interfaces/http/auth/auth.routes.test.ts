@@ -227,6 +227,54 @@ test("POST /auth/register returns 200 when already confirmed", async () => {
 	await app.close();
 });
 
+test("POST /auth/confirm returns 400 for invalid payload", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/confirm",
+		payload: {},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
+test("POST /auth/confirm returns 200 for valid token", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("from email_verifications ev")) {
+			return {
+				rows: [{
+					id: "verif-1",
+					user_id: "user-1",
+					expires_at: "2099-01-01T00:00:00.000Z",
+					consumed_at: null,
+					confirmed_at: null,
+				}],
+				rowCount: 1,
+			};
+		}
+		if (text.includes("update email_verifications set consumed_at = now()")) {
+			return { rows: [{ user_id: "user-1" }], rowCount: 1 };
+		}
+		if (text.includes("update users set confirmed_at = now()")) {
+			return { rows: [{ id: "user-1" }], rowCount: 1 };
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/confirm",
+		payload: { token: "token-123" },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = getJsonRecord(res);
+	assert.equal(body.ok, true);
+	await app.close();
+});
+
 test("POST /auth/login returns 401 when not confirmed", async () => {
 	const hash = await argon2.hash("123456");
 	const app = await buildTestApp(async () => {

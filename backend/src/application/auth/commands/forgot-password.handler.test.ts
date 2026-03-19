@@ -129,8 +129,8 @@ test("ForgotPasswordHandler.execute creates reset and enqueues email for existin
 	assert.deepEqual(result, { status: "OK", emailHash: "hash:user@camerfirma.com" });
 	assert.equal(created, true);
 	assert.equal(enqueued, true);
-	assert.match(emailBody, /#token=raw-token/);
-	assert.doesNotMatch(emailBody, /\?token=/);
+	assert.match(emailBody, /\/auth\/reset-password\?token=raw-token/);
+	assert.doesNotMatch(emailBody, /#token=/);
 });
 
 test("ForgotPasswordHandler.execute returns RATE_LIMITED when identifier limit is reached", async () => {

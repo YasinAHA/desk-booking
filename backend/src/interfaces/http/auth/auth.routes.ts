@@ -63,6 +63,12 @@ export const authRoutes: FastifyPluginAsync = async app => {
 		)
 	);
 	app.post(
+		"/confirm",
+		withRateLimit(AUTH_VERIFY_RATE_LIMIT, (req, reply) =>
+			registrationController.confirmEmail(req, reply)
+		)
+	);
+	app.post(
 		"/forgot-password",
 		withRateLimit(AUTH_FORGOT_PASSWORD_RATE_LIMIT, (req, reply) =>
 			passwordController.forgotPassword(req, reply)
@@ -85,6 +91,5 @@ export const authRoutes: FastifyPluginAsync = async app => {
 		"/refresh",
 		withRateLimit(AUTH_REFRESH_RATE_LIMIT, (req, reply) => loginController.refresh(req, reply))
 	);
-	app.get("/confirm", async (req, reply) => registrationController.confirmEmail(req, reply));
 	app.post("/logout", auth, async (req, reply) => loginController.logout(req, reply));
 };

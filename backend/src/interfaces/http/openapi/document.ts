@@ -7,6 +7,7 @@ import { API_V1_PREFIX } from "@config/api-prefix.js";
 import { env } from "@config/env.js";
 import {
 	changePasswordSchema,
+	confirmEmailSchema,
 	forgotPasswordSchema,
 	loginSchema,
 	registerSchema,
@@ -74,10 +75,6 @@ const loginResponseSchema = z.object({
 const verifyResponseSchema = z.object({
 	valid: z.literal(true),
 	user: authUserSchema,
-});
-
-const tokenQuerySchema = z.object({
-	token: tokenSchema,
 });
 
 const listDesksResponseSchema = z.object({
@@ -593,10 +590,10 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 	});
 
 	registry.registerPath({
-		method: "get",
+		method: "post",
 		path: "/auth/confirm",
 		tags: ["auth"],
-		request: { query: tokenQuerySchema },
+		request: { body: { required: true, content: json(confirmEmailSchema) } },
 		responses: {
 			200: { description: "Email confirmed", content: json(okSchema) },
 			400: err("Invalid or expired token"),
