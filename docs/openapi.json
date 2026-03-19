@@ -5641,13 +5641,27 @@
                         "integer",
                         "null"
                       ]
+                    },
+                    "effectiveCanvasWidth": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "effectiveCanvasHeight": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "hasBackgroundImage": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "officeId",
                     "floorplanImageUrl",
                     "canvasWidth",
-                    "canvasHeight"
+                    "canvasHeight",
+                    "effectiveCanvasWidth",
+                    "effectiveCanvasHeight",
+                    "hasBackgroundImage"
                   ]
                 }
               }
@@ -5891,13 +5905,27 @@
                         "integer",
                         "null"
                       ]
+                    },
+                    "effectiveCanvasWidth": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "effectiveCanvasHeight": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "hasBackgroundImage": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "officeId",
                     "floorplanImageUrl",
                     "canvasWidth",
-                    "canvasHeight"
+                    "canvasHeight",
+                    "effectiveCanvasWidth",
+                    "effectiveCanvasHeight",
+                    "hasBackgroundImage"
                   ]
                 }
               }

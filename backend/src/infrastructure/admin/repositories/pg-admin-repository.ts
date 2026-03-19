@@ -177,11 +177,18 @@ function mapAdminDeskRecord(row: Record<string, unknown>): AdminDeskRecord {
 }
 
 function mapAdminFloorplanConfig(row: Record<string, unknown>): AdminFloorplanConfig {
+	const canvasWidth = toNumberOrNull(row.canvas_width);
+	const canvasHeight = toNumberOrNull(row.canvas_height);
+	const floorplanImageUrl = toStringOrNull(row.floorplan_image_url);
+
 	return {
 		officeId: toStringOrEmpty(row.office_id),
-		floorplanImageUrl: toStringOrNull(row.floorplan_image_url),
-		canvasWidth: toNumberOrNull(row.canvas_width),
-		canvasHeight: toNumberOrNull(row.canvas_height),
+		floorplanImageUrl,
+		canvasWidth,
+		canvasHeight,
+		effectiveCanvasWidth: canvasWidth ?? 1600,
+		effectiveCanvasHeight: canvasHeight ?? 900,
+		hasBackgroundImage: floorplanImageUrl !== null,
 	};
 }
 

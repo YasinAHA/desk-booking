@@ -120,6 +120,9 @@ export type AdminFloorplanConfig = {
 	floorplanImageUrl: string | null;
 	canvasWidth: number | null;
 	canvasHeight: number | null;
+	effectiveCanvasWidth: number;
+	effectiveCanvasHeight: number;
+	hasBackgroundImage: boolean;
 };
 
 export type AdminFloorplanConfigPatch = {

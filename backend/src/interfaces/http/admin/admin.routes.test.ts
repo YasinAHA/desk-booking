@@ -276,7 +276,44 @@ test("GET /admin/floorplan returns office config", async () => {
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
 	assert.equal(body.canvasWidth, 1200);
+	assert.equal(body.effectiveCanvasWidth, 1200);
+	assert.equal(body.effectiveCanvasHeight, 800);
+	assert.equal(body.hasBackgroundImage, true);
 	assert.equal(body.floorplanImageUrl, "https://cdn.example/floorplan.png");
+	await app.close();
+});
+
+test("GET /admin/floorplan returns effective fallback canvas when values are null", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from offices where id =")) {
+			return {
+				rows: [{
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					floorplan_image_url: null,
+					canvas_width: null,
+					canvas_height: null,
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/floorplan?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.canvasWidth, null);
+	assert.equal(body.canvasHeight, null);
+	assert.equal(body.effectiveCanvasWidth, 1600);
+	assert.equal(body.effectiveCanvasHeight, 900);
+	assert.equal(body.hasBackgroundImage, false);
 	await app.close();
 });
 
@@ -328,6 +365,9 @@ test("PATCH /admin/floorplan updates config for existing office", async () => {
 	assert.equal(body.floorplanImageUrl, "https://cdn.example/new-floorplan.png");
 	assert.equal(body.canvasWidth, 1600);
 	assert.equal(body.canvasHeight, 900);
+	assert.equal(body.effectiveCanvasWidth, 1600);
+	assert.equal(body.effectiveCanvasHeight, 900);
+	assert.equal(body.hasBackgroundImage, true);
 	await app.close();
 });
 

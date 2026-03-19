@@ -249,6 +249,9 @@ const adminFloorplanConfigSchema = z.object({
 	floorplanImageUrl: z.string().nullable(),
 	canvasWidth: z.number().int().nullable(),
 	canvasHeight: z.number().int().nullable(),
+	effectiveCanvasWidth: z.number().int().positive(),
+	effectiveCanvasHeight: z.number().int().positive(),
+	hasBackgroundImage: z.boolean(),
 });
 
 const adminFloorplanPatchOpenApiSchema = z.object({
