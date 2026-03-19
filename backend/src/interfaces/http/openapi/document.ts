@@ -221,6 +221,9 @@ const adminDeskSchema = z.object({
 
 const adminDesksListResponseSchema = z.object({
 	items: z.array(adminDeskSchema),
+	total: z.number().int().nonnegative(),
+	page: z.number().int().positive(),
+	pageSize: z.number().int().positive(),
 });
 
 const adminDeskLayoutPatchOpenApiSchema = z.object({

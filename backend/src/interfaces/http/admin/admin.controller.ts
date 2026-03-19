@@ -100,11 +100,11 @@ export class AdminController {
 			throwHttpError(400, "BAD_REQUEST", "Invalid query");
 		}
 		try {
-			const items = await this.adminService.listDesks(
+			const page = await this.adminService.listDesks(
 				req.user.id,
 				removeUndefined(parse.data) as AdminDesksFilters
 			);
-			return reply.send({ items });
+			return reply.send(page);
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

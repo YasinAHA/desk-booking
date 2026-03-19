@@ -99,6 +99,21 @@ export type AdminDesksFilters = {
 	zoneId?: string;
 	status?: AdminDeskStatus;
 	includeArchived?: boolean;
+	q?: string;
+	page?: number;
+	pageSize?: number;
+	sortBy?: AdminDesksSortBy;
+	sortDir?: AdminDesksSortDir;
+};
+
+export type AdminDesksSortBy = "deskCode" | "zoneName" | "status" | "displayOrder";
+export type AdminDesksSortDir = "asc" | "desc";
+
+export type AdminDesksPage = {
+	items: AdminDeskRecord[];
+	total: number;
+	page: number;
+	pageSize: number;
 };
 
 export type AdminDeskLayoutPatch = {
@@ -293,7 +308,7 @@ export type AdminAuditLogFilters = AdminReportFilters & {
 export interface AdminRepository {
 	getGlobalSettings(): Promise<AdminSettings>;
 	updateGlobalSettings(patch: AdminSettingsPatch): Promise<AdminSettings>;
-	listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]>;
+	listDesks(filters: AdminDesksFilters): Promise<AdminDesksPage>;
 	updateDeskLayout(deskId: string, patch: AdminDeskLayoutPatch): Promise<AdminDeskRecord | null>;
 	updateDeskStatus(deskId: string, patch: AdminDeskStatusPatch): Promise<AdminDeskRecord | null>;
 	getFloorplanConfig(officeId: string): Promise<AdminFloorplanConfig | null>;

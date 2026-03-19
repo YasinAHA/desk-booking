@@ -132,10 +132,13 @@ test("GET /admin/settings returns settings for admin", async () => {
 	await app.close();
 });
 
-test("GET /admin/desks returns filtered desks for admin", async () => {
+test("GET /admin/desks returns filtered paginated desks for admin", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {
 			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("count(*)::int as total from desks d")) {
+			return { rows: [{ total: 1 }] };
 		}
 		if (text.includes("from desks d")) {
 			return {
@@ -164,14 +167,30 @@ test("GET /admin/desks returns filtered desks for admin", async () => {
 
 	const res = await app.inject({
 		method: "GET",
-		url: "/admin/desks?status=active",
+		url: "/admin/desks?status=active&q=D-01&page=1&pageSize=10&sortBy=deskCode&sortDir=asc",
 		headers: { Authorization: `Bearer ${await buildToken()}` },
 	});
 
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
+	assert.equal(body.total, 1);
+	assert.equal(body.page, 1);
+	assert.equal(body.pageSize, 10);
 	assert.equal(body.items.length, 1);
 	assert.equal(body.items[0]?.code, "D-01");
+	await app.close();
+});
+
+test("GET /admin/desks returns 400 for invalid pagination query", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/desks?page=0",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 400);
 	await app.close();
 });
 

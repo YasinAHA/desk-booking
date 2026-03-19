@@ -14,6 +14,8 @@ import type {
 	AdminDeskStatus,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
+	AdminDesksPage,
+	AdminDesksSortBy,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminUsersPage,
@@ -560,7 +562,7 @@ export class PgAdminRepository implements AdminRepository {
 		return result.rowCount ?? 0;
 	}
 
-	async listDesks(filters: AdminDesksFilters): Promise<AdminDeskRecord[]> {
+	async listDesks(filters: AdminDesksFilters): Promise<AdminDesksPage> {
 		const where: string[] = [];
 		const params: unknown[] = [];
 		let index = 1;
@@ -578,12 +580,41 @@ export class PgAdminRepository implements AdminRepository {
 		if (filters.status) {
 			where.push(`d.status = $${index}`);
 			params.push(filters.status);
+			index += 1;
+		}
+		if (filters.q) {
+			where.push(`(d.code ilike $${index} or coalesce(d.name, '') ilike $${index})`);
+			params.push(`%${filters.q.trim()}%`);
 		}
 		if (!filters.includeArchived) {
 			where.push("d.archived_at is null");
 		}
 
 		const whereSql = where.length > 0 ? `where ${where.join(" and ")}` : "";
+		const page = filters.page ?? 1;
+		const pageSize = filters.pageSize ?? 20;
+		const offset = (page - 1) * pageSize;
+
+		const countResult = await this.db.query(
+			`select count(*)::int as total from desks d left join zones z on z.id = d.zone_id ${whereSql}`,
+			params
+		);
+		const total = toNumberOrZero((countResult.rows[0] as Record<string, unknown> | undefined)?.total);
+
+		const sortBy: AdminDesksSortBy = filters.sortBy ?? "displayOrder";
+		const sortDir = filters.sortDir === "desc" ? "desc" : "asc";
+		const sortColumnByField: Record<AdminDesksSortBy, string> = {
+			deskCode: "d.code",
+			zoneName: "z.name",
+			status: "d.status",
+			displayOrder: "d.display_order",
+		};
+		const sortColumn = sortColumnByField[sortBy];
+		const orderSql = `order by ${sortColumn} ${sortDir}, d.display_order asc, d.code asc`;
+
+		const limitPlaceholder = `$${params.length + 1}`;
+		const offsetPlaceholder = `$${params.length + 2}`;
+		const listParams = [...params, pageSize, offset];
 		const result = await this.db.query(
 			"select d.id::text as id, d.office_id::text as office_id, d.zone_id::text as zone_id, z.name as zone_name, " +
 				"d.code, d.name, d.status, d.status_reason, d.qr_public_id, d.layout_x, d.layout_y, d.layout_w, d.layout_h, " +
@@ -591,11 +622,17 @@ export class PgAdminRepository implements AdminRepository {
 			"from desks d " +
 			"left join zones z on z.id = d.zone_id " +
 			`${whereSql} ` +
-			"order by d.display_order asc, d.code asc",
-			params
+			`${orderSql} ` +
+			`limit ${limitPlaceholder} offset ${offsetPlaceholder}`,
+			listParams
 		);
 
-		return result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>));
+		return {
+			items: result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>)),
+			total,
+			page,
+			pageSize,
+		};
 	}
 
 	async updateDeskLayout(

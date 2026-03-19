@@ -28,6 +28,11 @@ export const adminDesksQuerySchema = z.object({
 	zoneId: uuidSchema.optional(),
 	status: z.enum(["active", "maintenance", "disabled"]).optional(),
 	includeArchived: z.coerce.boolean().optional(),
+	q: z.string().trim().min(1).optional(),
+	page: z.coerce.number().int().min(1).optional(),
+	pageSize: z.coerce.number().int().min(1).max(100).optional(),
+	sortBy: z.enum(["deskCode", "zoneName", "status", "displayOrder"]).optional(),
+	sortDir: z.enum(["asc", "desc"]).optional(),
 });
 
 export const adminDeskLayoutPatchSchema = z.object({
