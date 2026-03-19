@@ -40,6 +40,7 @@ function buildAdminRepo(overrides: Partial<AdminRepository> = {}): AdminReposito
 		updateDeskLayoutsBulk: async () => [],
 		restoreDeskLayouts: async () => [],
 		updateDeskStatus: async () => null,
+		createDeskBlock: async () => null,
 		getFloorplanConfig: async () => null,
 		updateFloorplanConfig: async () => null,
 		listFloorplanOverlays: async () => [],
@@ -174,6 +175,58 @@ test("AdminService.createReservation writes admin_action", async () => {
 		metadata: {
 			action: "create_admin_reservation",
 			reservationType: "guest",
+		},
+	});
+});
+
+test("AdminService.createDeskBlock writes desk_block_created and admin_action", async () => {
+	const auditCalls: unknown[] = [];
+	const adminService = new AdminService({
+		adminRepo: buildAdminRepo({
+			createDeskBlock: async () => ({
+				id: "block-1",
+				deskId: "desk-1",
+				officeId: "office-1",
+				startAt: "2026-04-01T09:00:00.000Z",
+				endAt: "2026-04-01T18:00:00.000Z",
+				reason: "maintenance",
+				createdBy: "admin-1",
+				createdAt: "2026-03-20T08:00:00.000Z",
+			}),
+		}),
+		userAuthorizationRepo: buildUserAuthorizationRepo(true),
+		auditWriter: buildAuditWriter(auditCalls),
+	});
+
+	await adminService.createDeskBlock("admin-1", {
+		deskId: "desk-1",
+		startAt: "2026-04-01T09:00:00.000Z",
+		endAt: "2026-04-01T18:00:00.000Z",
+		reason: "maintenance",
+	});
+
+	assert.equal(auditCalls.length, 2);
+	assert.deepEqual(auditCalls[0], {
+		eventType: "desk_block_created",
+		actorType: "admin",
+		actorUserId: "admin-1",
+		deskId: "desk-1",
+		officeId: "office-1",
+		reason: "maintenance",
+		metadata: {
+			startAt: "2026-04-01T09:00:00.000Z",
+			endAt: "2026-04-01T18:00:00.000Z",
+		},
+	});
+	assert.deepEqual(auditCalls[1], {
+		eventType: "admin_action",
+		actorType: "admin",
+		actorUserId: "admin-1",
+		deskId: "desk-1",
+		officeId: "office-1",
+		metadata: {
+			action: "create_desk_block",
+			deskBlockId: "block-1",
 		},
 	});
 });

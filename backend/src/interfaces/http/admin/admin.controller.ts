@@ -7,6 +7,7 @@ import type {
 	AdminDeskLayoutBulkItem,
 	AdminDeskLayoutRestoreInput,
 	AdminDeskStatusPatch,
+	AdminDeskBlockCreateInput,
 	AdminDeskQrsFilters,
 	AdminDesksFilters,
 	AdminFloorplanConfigPatch,
@@ -29,6 +30,7 @@ import {
 	adminDeskQrsBulkPatchSchema,
 	adminDeskQrsQuerySchema,
 	adminDeskStatusPatchSchema,
+	adminDeskBlockCreateSchema,
 	adminDesksQuerySchema,
 	adminFloorplanOverlayCreateSchema,
 	adminFloorplanOverlayIdParamSchema,
@@ -190,6 +192,26 @@ export class AdminController {
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;
+		}
+	}
+
+	async createDeskBlock(req: FastifyRequest, reply: FastifyReply) {
+		const body = adminDeskBlockCreateSchema.safeParse(req.body);
+		if (!body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const created = await this.adminService.createDeskBlock(
+				req.user.id,
+				removeUndefined(body.data) as AdminDeskBlockCreateInput
+			);
+			if (!created) {
+				throwHttpError(404, "NOT_FOUND", "Desk not found");
+			}
+			return reply.status(201).send(created);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throwHttpError(409, "CONFLICT", "Desk block conflict");
 		}
 	}
 

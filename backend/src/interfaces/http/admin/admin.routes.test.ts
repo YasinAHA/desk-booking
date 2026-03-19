@@ -402,6 +402,66 @@ test("PATCH /admin/desks/:id/status returns 404 for unknown desk", async () => {
 	await app.close();
 });
 
+test("POST /admin/desk-blocks creates desk block", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("insert into desk_blocks")) {
+			return {
+				rows: [{
+					id: "d1111111-1111-4111-8111-111111111111",
+					desk_id: "a1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					start_at: "2026-04-01T09:00:00.000Z",
+					end_at: "2026-04-01T18:00:00.000Z",
+					reason: "Mantenimiento",
+					created_by: "admin-1",
+					created_at: "2026-03-20T10:00:00.000Z",
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [], rowCount: 0 };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/desk-blocks",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			deskId: "a1111111-1111-4111-8111-111111111111",
+			startAt: "2026-04-01T09:00:00.000Z",
+			endAt: "2026-04-01T18:00:00.000Z",
+			reason: "Mantenimiento",
+		},
+	});
+
+	assert.equal(res.statusCode, 201);
+	const body = res.json();
+	assert.equal(body.deskId, "a1111111-1111-4111-8111-111111111111");
+	assert.equal(body.reason, "Mantenimiento");
+	await app.close();
+});
+
+test("POST /admin/desk-blocks returns 400 for invalid range payload", async () => {
+	const app = await buildTestApp(async () => ({ rows: [], rowCount: 0 }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/desk-blocks",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			deskId: "a1111111-1111-4111-8111-111111111111",
+			startAt: "2026-04-01T18:00:00.000Z",
+			endAt: "2026-04-01T09:00:00.000Z",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
 test("GET /admin/floorplan returns office config", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {

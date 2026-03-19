@@ -6,6 +6,8 @@ import type {
 	AdminDeskQrsFilters,
 	AdminDeskQrsPage,
 	AdminDeskQrsSortBy,
+	AdminDeskBlockCreateInput,
+	AdminDeskBlockRecord,
 	AdminFloorplanConfig,
 	AdminFloorplanConfigPatch,
 	AdminFloorplanOverlay,
@@ -181,6 +183,19 @@ function mapAdminDeskRecord(row: Record<string, unknown>): AdminDeskRecord {
 		rotationDeg: toNumberOrZero(row.rotation_deg),
 		displayOrder: toNumberOrZero(row.display_order),
 		archivedAt: toStringOrNull(row.archived_at),
+	};
+}
+
+function mapAdminDeskBlockRecord(row: Record<string, unknown>): AdminDeskBlockRecord {
+	return {
+		id: toStringOrEmpty(row.id),
+		deskId: toStringOrEmpty(row.desk_id),
+		officeId: toStringOrEmpty(row.office_id),
+		startAt: toStringOrEmpty(row.start_at),
+		endAt: toStringOrEmpty(row.end_at),
+		reason: toStringOrNull(row.reason),
+		createdBy: toStringOrNull(row.created_by),
+		createdAt: toStringOrEmpty(row.created_at),
 	};
 }
 
@@ -787,6 +802,32 @@ export class PgAdminRepository implements AdminRepository {
 			return null;
 		}
 		return mapAdminDeskRecord(row as Record<string, unknown>);
+	}
+
+	async createDeskBlock(
+		createdByUserId: string,
+		input: AdminDeskBlockCreateInput
+	): Promise<AdminDeskBlockRecord | null> {
+		const result = await this.db.query(
+			"insert into desk_blocks (desk_id, start_at, end_at, reason, created_by) " +
+				"values ($1::uuid, $2::timestamptz, $3::timestamptz, $4, $5::uuid) " +
+				"returning id::text as id, desk_id::text as desk_id, " +
+				"(select d.office_id::text from desks d where d.id = desk_id) as office_id, " +
+				"start_at::text as start_at, end_at::text as end_at, reason, " +
+				"created_by::text as created_by, created_at::text as created_at",
+			[
+				input.deskId,
+				input.startAt,
+				input.endAt,
+				input.reason ?? null,
+				createdByUserId,
+			]
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminDeskBlockRecord(row as Record<string, unknown>);
 	}
 
 	async listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage> {

@@ -145,6 +145,24 @@ export type AdminDeskStatusPatch = {
 	statusReason?: string | null;
 };
 
+export type AdminDeskBlockRecord = {
+	id: string;
+	deskId: string;
+	officeId: string;
+	startAt: string;
+	endAt: string;
+	reason: string | null;
+	createdBy: string | null;
+	createdAt: string;
+};
+
+export type AdminDeskBlockCreateInput = {
+	deskId: string;
+	startAt: string;
+	endAt: string;
+	reason?: string;
+};
+
 export type AdminFloorplanConfig = {
 	officeId: string;
 	floorplanImageUrl: string | null;
@@ -328,6 +346,10 @@ export interface AdminRepository {
 	updateDeskLayoutsBulk(items: AdminDeskLayoutBulkItem[]): Promise<AdminDeskRecord[]>;
 	restoreDeskLayouts(input: AdminDeskLayoutRestoreInput): Promise<AdminDeskRecord[]>;
 	updateDeskStatus(deskId: string, patch: AdminDeskStatusPatch): Promise<AdminDeskRecord | null>;
+	createDeskBlock(
+		createdByUserId: string,
+		input: AdminDeskBlockCreateInput
+	): Promise<AdminDeskBlockRecord | null>;
 	getFloorplanConfig(officeId: string): Promise<AdminFloorplanConfig | null>;
 	updateFloorplanConfig(
 		officeId: string,

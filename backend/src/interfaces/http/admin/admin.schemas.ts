@@ -86,6 +86,16 @@ export const adminDeskStatusPatchSchema = z.object({
 	statusReason: z.string().trim().min(1).nullable().optional(),
 });
 
+export const adminDeskBlockCreateSchema = z.object({
+	deskId: uuidSchema,
+	startAt: z.iso.datetime(),
+	endAt: z.iso.datetime(),
+	reason: z.string().trim().min(1).max(500).optional(),
+}).refine(value => Date.parse(value.endAt) > Date.parse(value.startAt), {
+	path: ["endAt"],
+	message: "endAt must be greater than startAt",
+});
+
 export const adminFloorplanQuerySchema = z.object({
 	officeId: uuidSchema,
 });

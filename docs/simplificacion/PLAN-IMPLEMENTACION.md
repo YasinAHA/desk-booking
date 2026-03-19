@@ -118,10 +118,10 @@
 - [x] Insertar automáticamente para nuevos usuarios
 
 #### 2.7 Auditoría
-- [ ] Registrar eventos clave en `audit_events`
+- [x] Registrar eventos clave en `audit_events`
   - [x] `reservation_created`, `reservation_cancelled`, `reservation_checked_in`, `reservation_no_show`
   - [x] `desk_status_changed`, `admin_action`
-  - [ ] `desk_block_created`
+  - [x] `desk_block_created`
 - [x] Incluir `actor_user_id`, `actor_type` (admin/user/system)
 
 ### Fase 3: Reportes / BI (2-3 días, en paralelo con Fase 2)

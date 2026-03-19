@@ -6,6 +6,7 @@ import type {
 	AdminDeskLayoutBulkItem,
 	AdminDeskLayoutRestoreInput,
 	AdminDeskStatusPatch,
+	AdminDeskBlockCreateInput,
 	AdminDesksFilters,
 	AdminDeskQrsFilters,
 	AdminFloorplanConfigPatch,
@@ -138,6 +139,34 @@ export class AdminService {
 			);
 		}
 		return updated;
+	}
+
+	async createDeskBlock(requestedByUserId: string, input: AdminDeskBlockCreateInput) {
+		await this.ensureAdmin(requestedByUserId);
+		const created = await this.deps.adminRepo.createDeskBlock(requestedByUserId, input);
+		if (created) {
+			await this.deps.auditWriter.append({
+				eventType: "desk_block_created",
+				actorType: "admin",
+				actorUserId: requestedByUserId,
+				deskId: created.deskId,
+				officeId: created.officeId,
+				reason: created.reason,
+				metadata: {
+					startAt: created.startAt,
+					endAt: created.endAt,
+				},
+			});
+			await this.appendAdminAction(
+				requestedByUserId,
+				"create_desk_block",
+				{ deskId: created.deskId, officeId: created.officeId },
+				{
+					deskBlockId: created.id,
+				}
+			);
+		}
+		return created;
 	}
 
 	async getFloorplanConfig(requestedByUserId: string, officeId: string) {

@@ -32,6 +32,7 @@ import {
 	adminReservationStatusPatchSchema,
 	adminReservationsQuerySchema,
 	adminDeskQrsQuerySchema,
+	adminDeskBlockCreateSchema,
 	adminDesksQuerySchema,
 	adminSettingsPatchSchema,
 	adminUserPatchSchema,
@@ -261,6 +262,17 @@ const adminDeskStatusPatchOpenApiSchema = z.object({
 
 const adminDeskIdParamOpenApiSchema = z.object({
 	id: uuidSchema,
+});
+
+const adminDeskBlockSchema = z.object({
+	id: uuidSchema,
+	deskId: uuidSchema,
+	officeId: uuidSchema,
+	startAt: z.iso.datetime(),
+	endAt: z.iso.datetime(),
+	reason: z.string().nullable(),
+	createdBy: uuidSchema.nullable(),
+	createdAt: z.iso.datetime(),
 });
 
 const adminFloorplanConfigSchema = z.object({
@@ -880,6 +892,24 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
 			404: err("Desk not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/admin/desk-blocks",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			body: { required: true, content: json(adminDeskBlockCreateSchema) },
+		},
+		responses: {
+			201: { description: "Desk block created", content: json(adminDeskBlockSchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			409: err("Desk block conflict"),
 			500: err("Internal error"),
 		},
 	});
