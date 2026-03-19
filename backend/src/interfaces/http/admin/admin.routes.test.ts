@@ -426,6 +426,145 @@ test("PATCH /admin/floorplan returns 404 when office does not exist", async () =
 	await app.close();
 });
 
+test("GET /admin/floorplan/overlays returns overlays for office", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("from floorplan_overlays")) {
+			return {
+				rows: [{
+					id: "f1111111-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					label: "SALA ABIERTA",
+					kind: "area",
+					x: 220,
+					y: 120,
+					w: 360,
+					h: 220,
+					rotation_deg: 0,
+					stroke_color: "#87d6d3",
+					fill_color: "rgba(135,214,211,0.15)",
+					display_order: 1,
+					created_at: "2026-05-01T08:00:00.000Z",
+					updated_at: "2026-05-01T08:00:00.000Z",
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/floorplan/overlays?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.items.length, 1);
+	assert.equal(body.items[0]?.label, "SALA ABIERTA");
+	assert.equal(body.items[0]?.kind, "area");
+	await app.close();
+});
+
+test("POST /admin/floorplan/overlays creates overlay", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("insert into floorplan_overlays")) {
+			return {
+				rows: [{
+					id: "f2222222-1111-4111-8111-111111111111",
+					office_id: "b1111111-1111-4111-8111-111111111111",
+					label: "SALA ROMA",
+					kind: "room",
+					x: 710,
+					y: 280,
+					w: 120,
+					h: 160,
+					rotation_deg: 0,
+					stroke_color: "#d6d8de",
+					fill_color: null,
+					display_order: 2,
+					created_at: "2026-05-01T08:00:00.000Z",
+					updated_at: "2026-05-01T08:00:00.000Z",
+				}],
+				rowCount: 1,
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/admin/floorplan/overlays?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			label: "SALA ROMA",
+			kind: "room",
+			x: 710,
+			y: 280,
+			w: 120,
+			h: 160,
+			displayOrder: 2,
+		},
+	});
+
+	assert.equal(res.statusCode, 201);
+	const body = res.json();
+	assert.equal(body.label, "SALA ROMA");
+	assert.equal(body.kind, "room");
+	await app.close();
+});
+
+test("PATCH /admin/floorplan/overlays/:id returns 404 when overlay does not exist", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("update floorplan_overlays set")) {
+			return { rows: [], rowCount: 0 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "PATCH",
+		url: "/admin/floorplan/overlays/f3333333-1111-4111-8111-111111111111?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			label: "SALA ENTRADA",
+		},
+	});
+
+	assert.equal(res.statusCode, 404);
+	await app.close();
+});
+
+test("DELETE /admin/floorplan/overlays/:id returns ok response", async () => {
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("delete from floorplan_overlays")) {
+			return { rows: [], rowCount: 1 };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "DELETE",
+		url: "/admin/floorplan/overlays/f4444444-1111-4111-8111-111111111111?officeId=b1111111-1111-4111-8111-111111111111",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.equal(res.json().ok, true);
+	await app.close();
+});
+
 test("GET /admin/desks/qr returns qr listing", async () => {
 	const app = await buildTestApp(async (text) => {
 		if (text.includes("select role from users where id = $1")) {

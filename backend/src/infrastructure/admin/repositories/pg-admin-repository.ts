@@ -6,6 +6,10 @@ import type {
 	AdminDeskQrsSortBy,
 	AdminFloorplanConfig,
 	AdminFloorplanConfigPatch,
+	AdminFloorplanOverlay,
+	AdminFloorplanOverlayCreate,
+	AdminFloorplanOverlayKind,
+	AdminFloorplanOverlayPatch,
 	AdminDeskRecord,
 	AdminDeskStatus,
 	AdminDeskStatusPatch,
@@ -192,6 +196,32 @@ function mapAdminFloorplanConfig(row: Record<string, unknown>): AdminFloorplanCo
 	};
 }
 
+function normalizeAdminFloorplanOverlayKind(value: unknown): AdminFloorplanOverlayKind {
+	if (value === "area" || value === "facility") {
+		return value;
+	}
+	return "room";
+}
+
+function mapAdminFloorplanOverlay(row: Record<string, unknown>): AdminFloorplanOverlay {
+	return {
+		id: toStringOrEmpty(row.id),
+		officeId: toStringOrEmpty(row.office_id),
+		label: toStringOrEmpty(row.label),
+		kind: normalizeAdminFloorplanOverlayKind(row.kind),
+		x: toNumberOrZero(row.x),
+		y: toNumberOrZero(row.y),
+		w: toNumberOrZero(row.w),
+		h: toNumberOrZero(row.h),
+		rotationDeg: toNumberOrZero(row.rotation_deg),
+		strokeColor: toStringOrNull(row.stroke_color),
+		fillColor: toStringOrNull(row.fill_color),
+		displayOrder: toNumberOrZero(row.display_order),
+		createdAt: toStringOrEmpty(row.created_at),
+		updatedAt: toStringOrEmpty(row.updated_at),
+	};
+}
+
 function mapAdminDeskQrRecord(row: Record<string, unknown>): AdminDeskQrRecord {
 	return {
 		deskId: toStringOrEmpty(row.desk_id),
@@ -349,6 +379,109 @@ export class PgAdminRepository implements AdminRepository {
 			return null;
 		}
 		return mapAdminFloorplanConfig(row as Record<string, unknown>);
+	}
+
+	async listFloorplanOverlays(officeId: string): Promise<AdminFloorplanOverlay[]> {
+		const result = await this.db.query(
+			"select id::text as id, office_id::text as office_id, label, kind, x, y, w, h, " +
+				"rotation_deg, stroke_color, fill_color, display_order, created_at::text as created_at, updated_at::text as updated_at " +
+				"from floorplan_overlays " +
+				"where office_id = $1::uuid " +
+				"order by display_order asc, label asc",
+			[officeId]
+		);
+		return result.rows.map(row => mapAdminFloorplanOverlay(row as Record<string, unknown>));
+	}
+
+	async createFloorplanOverlay(
+		officeId: string,
+		input: AdminFloorplanOverlayCreate
+	): Promise<AdminFloorplanOverlay | null> {
+		const result = await this.db.query(
+			"insert into floorplan_overlays (" +
+				"office_id, label, kind, x, y, w, h, rotation_deg, stroke_color, fill_color, display_order" +
+			") values (" +
+				"$1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11" +
+			") returning id::text as id, office_id::text as office_id, label, kind, x, y, w, h, " +
+				"rotation_deg, stroke_color, fill_color, display_order, created_at::text as created_at, updated_at::text as updated_at",
+			[
+				officeId,
+				input.label,
+				input.kind ?? "room",
+				input.x,
+				input.y,
+				input.w,
+				input.h,
+				input.rotationDeg ?? 0,
+				input.strokeColor ?? null,
+				input.fillColor ?? null,
+				input.displayOrder ?? 0,
+			]
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminFloorplanOverlay(row as Record<string, unknown>);
+	}
+
+	async updateFloorplanOverlay(
+		officeId: string,
+		overlayId: string,
+		patch: AdminFloorplanOverlayPatch
+	): Promise<AdminFloorplanOverlay | null> {
+		const updates: string[] = [];
+		const params: unknown[] = [];
+		let index = 1;
+		const columns: Array<[keyof AdminFloorplanOverlayPatch, string]> = [
+			["label", "label"],
+			["kind", "kind"],
+			["x", "x"],
+			["y", "y"],
+			["w", "w"],
+			["h", "h"],
+			["rotationDeg", "rotation_deg"],
+			["strokeColor", "stroke_color"],
+			["fillColor", "fill_color"],
+			["displayOrder", "display_order"],
+		];
+
+		for (const [key, column] of columns) {
+			const value = patch[key];
+			if (value === undefined) {
+				continue;
+			}
+			updates.push(`${column} = $${index}`);
+			params.push(value);
+			index += 1;
+		}
+
+		if (updates.length === 0) {
+			return null;
+		}
+
+		params.push(officeId, overlayId);
+		const result = await this.db.query(
+			"update floorplan_overlays set " +
+				`${updates.join(", ")}, updated_at = now() ` +
+				`where office_id = $${index}::uuid and id = $${index + 1}::uuid ` +
+				"returning id::text as id, office_id::text as office_id, label, kind, x, y, w, h, " +
+				"rotation_deg, stroke_color, fill_color, display_order, created_at::text as created_at, updated_at::text as updated_at",
+			params
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return null;
+		}
+		return mapAdminFloorplanOverlay(row as Record<string, unknown>);
+	}
+
+	async deleteFloorplanOverlay(officeId: string, overlayId: string): Promise<boolean> {
+		const result = await this.db.query(
+			"delete from floorplan_overlays where office_id = $1::uuid and id = $2::uuid",
+			[officeId, overlayId]
+		);
+		return (result.rowCount ?? 0) > 0;
 	}
 
 	async listDeskQrs(filters: AdminDeskQrsFilters): Promise<AdminDeskQrsPage> {

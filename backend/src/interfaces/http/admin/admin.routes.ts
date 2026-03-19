@@ -18,6 +18,10 @@ export const adminRoutes: FastifyPluginAsync = async app => {
 	app.post("/desks/qr/regenerate-bulk", auth, controller.regenerateDeskQrsBulk.bind(controller));
 	app.get("/floorplan", auth, controller.getFloorplanConfig.bind(controller));
 	app.patch("/floorplan", auth, controller.patchFloorplanConfig.bind(controller));
+	app.get("/floorplan/overlays", auth, controller.listFloorplanOverlays.bind(controller));
+	app.post("/floorplan/overlays", auth, controller.createFloorplanOverlay.bind(controller));
+	app.patch("/floorplan/overlays/:id", auth, controller.patchFloorplanOverlay.bind(controller));
+	app.delete("/floorplan/overlays/:id", auth, controller.deleteFloorplanOverlay.bind(controller));
 	app.get("/users", auth, controller.listUsers.bind(controller));
 	app.patch("/users/:id", auth, controller.patchUser.bind(controller));
 

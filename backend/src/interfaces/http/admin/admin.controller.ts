@@ -8,6 +8,8 @@ import type {
 	AdminDeskQrsFilters,
 	AdminDesksFilters,
 	AdminFloorplanConfigPatch,
+	AdminFloorplanOverlayCreate,
+	AdminFloorplanOverlayPatch,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminAuditLogFilters,
@@ -24,6 +26,9 @@ import {
 	adminDeskQrsQuerySchema,
 	adminDeskStatusPatchSchema,
 	adminDesksQuerySchema,
+	adminFloorplanOverlayCreateSchema,
+	adminFloorplanOverlayIdParamSchema,
+	adminFloorplanOverlayPatchSchema,
 	adminFloorplanPatchSchema,
 	adminFloorplanQuerySchema,
 	adminReportsQuerySchema,
@@ -183,6 +188,88 @@ export class AdminController {
 				throwHttpError(404, "NOT_FOUND", "Office not found");
 			}
 			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async listFloorplanOverlays(req: FastifyRequest, reply: FastifyReply) {
+		const parse = adminFloorplanQuerySchema.safeParse(req.query);
+		if (!parse.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const items = await this.adminService.listFloorplanOverlays(req.user.id, parse.data.officeId);
+			return reply.send({ items });
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async createFloorplanOverlay(req: FastifyRequest, reply: FastifyReply) {
+		const query = adminFloorplanQuerySchema.safeParse(req.query);
+		const body = adminFloorplanOverlayCreateSchema.safeParse(req.body);
+		if (!query.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const created = await this.adminService.createFloorplanOverlay(
+				req.user.id,
+				query.data.officeId,
+				removeUndefined(body.data) as AdminFloorplanOverlayCreate
+			);
+			if (!created) {
+				throwHttpError(404, "NOT_FOUND", "Office not found");
+			}
+			return reply.status(201).send(created);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchFloorplanOverlay(req: FastifyRequest, reply: FastifyReply) {
+		const query = adminFloorplanQuerySchema.safeParse(req.query);
+		const params = adminFloorplanOverlayIdParamSchema.safeParse(req.params);
+		const body = adminFloorplanOverlayPatchSchema.safeParse(req.body);
+		if (!query.success || !params.success || !body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const updated = await this.adminService.updateFloorplanOverlay(
+				req.user.id,
+				query.data.officeId,
+				params.data.id,
+				removeUndefined(body.data) as AdminFloorplanOverlayPatch
+			);
+			if (!updated) {
+				throwHttpError(404, "NOT_FOUND", "Floorplan overlay not found");
+			}
+			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async deleteFloorplanOverlay(req: FastifyRequest, reply: FastifyReply) {
+		const query = adminFloorplanQuerySchema.safeParse(req.query);
+		const params = adminFloorplanOverlayIdParamSchema.safeParse(req.params);
+		if (!query.success || !params.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid query");
+		}
+		try {
+			const removed = await this.adminService.deleteFloorplanOverlay(
+				req.user.id,
+				query.data.officeId,
+				params.data.id
+			);
+			if (!removed) {
+				throwHttpError(404, "NOT_FOUND", "Floorplan overlay not found");
+			}
+			return reply.send({ ok: true });
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

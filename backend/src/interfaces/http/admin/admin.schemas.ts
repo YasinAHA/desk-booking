@@ -57,6 +57,36 @@ export const adminFloorplanQuerySchema = z.object({
 	officeId: uuidSchema,
 });
 
+export const adminFloorplanOverlayIdParamSchema = createUuidParamSchema("id");
+
+export const adminFloorplanOverlayCreateSchema = z.object({
+	label: z.string().trim().min(1).max(120),
+	kind: z.enum(["room", "area", "facility"]).optional(),
+	x: z.number(),
+	y: z.number(),
+	w: z.number().positive(),
+	h: z.number().positive(),
+	rotationDeg: z.number().min(-360).max(360).optional(),
+	strokeColor: z.string().trim().min(1).max(32).nullable().optional(),
+	fillColor: z.string().trim().min(1).max(32).nullable().optional(),
+	displayOrder: z.number().int().optional(),
+});
+
+export const adminFloorplanOverlayPatchSchema = adminFloorplanOverlayCreateSchema.partial().refine(
+	value =>
+		value.label !== undefined ||
+		value.kind !== undefined ||
+		value.x !== undefined ||
+		value.y !== undefined ||
+		value.w !== undefined ||
+		value.h !== undefined ||
+		value.rotationDeg !== undefined ||
+		value.strokeColor !== undefined ||
+		value.fillColor !== undefined ||
+		value.displayOrder !== undefined,
+	{ message: "At least one overlay field must be provided" }
+);
+
 export const adminFloorplanPatchSchema = z.object({
 	floorplanImageUrl: z.url().nullable().optional(),
 	canvasWidth: z.number().int().positive().nullable().optional(),

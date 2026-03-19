@@ -24,10 +24,18 @@ import {
 } from "@interfaces/http/reservations/reservations.schemas.js";
 import {
 	adminAuditLogQuerySchema,
+	adminFloorplanOverlayCreateSchema,
+	adminFloorplanOverlayIdParamSchema,
+	adminFloorplanOverlayPatchSchema,
+	adminFloorplanQuerySchema,
 	adminReportsQuerySchema,
 	adminReservationStatusPatchSchema,
 	adminReservationsQuerySchema,
+	adminDeskQrsQuerySchema,
+	adminDesksQuerySchema,
 	adminSettingsPatchSchema,
+	adminUserPatchSchema,
+	adminUsersQuerySchema,
 	createAdminReservationSchema,
 } from "@interfaces/http/admin/admin.schemas.js";
 import {
@@ -215,13 +223,6 @@ const adminDesksListResponseSchema = z.object({
 	items: z.array(adminDeskSchema),
 });
 
-const adminDesksQueryOpenApiSchema = z.object({
-	officeId: uuidSchema.optional(),
-	zoneId: uuidSchema.optional(),
-	status: z.enum(["active", "maintenance", "disabled"]).optional(),
-	includeArchived: z.coerce.boolean().optional(),
-});
-
 const adminDeskLayoutPatchOpenApiSchema = z.object({
 	layoutX: z.number().nullable().optional(),
 	layoutY: z.number().nullable().optional(),
@@ -240,10 +241,6 @@ const adminDeskIdParamOpenApiSchema = z.object({
 	id: uuidSchema,
 });
 
-const adminFloorplanQueryOpenApiSchema = z.object({
-	officeId: uuidSchema,
-});
-
 const adminFloorplanConfigSchema = z.object({
 	officeId: uuidSchema,
 	floorplanImageUrl: z.string().nullable(),
@@ -258,6 +255,27 @@ const adminFloorplanPatchOpenApiSchema = z.object({
 	floorplanImageUrl: z.string().nullable().optional(),
 	canvasWidth: z.number().int().positive().nullable().optional(),
 	canvasHeight: z.number().int().positive().nullable().optional(),
+});
+
+const adminFloorplanOverlaySchema = z.object({
+	id: uuidSchema,
+	officeId: uuidSchema,
+	label: z.string(),
+	kind: z.enum(["room", "area", "facility"]),
+	x: z.number(),
+	y: z.number(),
+	w: z.number().positive(),
+	h: z.number().positive(),
+	rotationDeg: z.number().min(-360).max(360),
+	strokeColor: z.string().nullable(),
+	fillColor: z.string().nullable(),
+	displayOrder: z.number().int(),
+	createdAt: z.iso.datetime(),
+	updatedAt: z.iso.datetime(),
+});
+
+const adminFloorplanOverlaysListResponseSchema = z.object({
+	items: z.array(adminFloorplanOverlaySchema),
 });
 
 const adminDeskQrSchema = z.object({
@@ -275,17 +293,6 @@ const adminDeskQrsListResponseSchema = z.object({
 	total: z.number().int().nonnegative(),
 	page: z.number().int().positive(),
 	pageSize: z.number().int().positive(),
-});
-
-const adminDeskQrsQueryOpenApiSchema = z.object({
-	officeId: uuidSchema.optional(),
-	zoneId: uuidSchema.optional(),
-	status: z.enum(["active", "maintenance", "disabled"]).optional(),
-	q: z.string().trim().min(1).optional(),
-	page: z.coerce.number().int().min(1).optional(),
-	pageSize: z.coerce.number().int().min(1).max(100).optional(),
-	sortBy: z.enum(["deskCode", "zoneName", "status"]).optional(),
-	sortDir: z.enum(["asc", "desc"]).optional(),
 });
 
 const adminDeskQrsBulkRequestOpenApiSchema = z.object({
@@ -308,19 +315,6 @@ const adminUsersListResponseSchema = z.object({
 	total: z.number().int().nonnegative(),
 	page: z.number().int().positive(),
 	pageSize: z.number().int().positive(),
-});
-
-const adminUsersQueryOpenApiSchema = z.object({
-	q: z.string().trim().min(1).optional(),
-	role: z.enum(["user", "admin"]).optional(),
-	status: z.enum(["active", "suspended"]).optional(),
-	page: z.coerce.number().int().min(1).optional(),
-	pageSize: z.coerce.number().int().min(1).max(100).optional(),
-});
-
-const adminUserPatchOpenApiSchema = z.object({
-	role: z.enum(["user", "admin"]).optional(),
-	status: z.enum(["active", "suspended"]).optional(),
 });
 
 const adminUserIdParamOpenApiSchema = z.object({
@@ -780,7 +774,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		path: "/admin/desks",
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
-		request: { query: adminDesksQueryOpenApiSchema },
+		request: { query: adminDesksQuerySchema },
 		responses: {
 			200: { description: "Admin desks listing", content: json(adminDesksListResponseSchema) },
 			400: err("Invalid query"),
@@ -833,7 +827,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		path: "/admin/desks/qr",
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
-		request: { query: adminDeskQrsQueryOpenApiSchema },
+		request: { query: adminDeskQrsQuerySchema },
 		responses: {
 			200: { description: "Desk QR listing", content: json(adminDeskQrsListResponseSchema) },
 			400: err("Invalid query"),
@@ -866,7 +860,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		path: "/admin/floorplan",
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
-		request: { query: adminFloorplanQueryOpenApiSchema },
+		request: { query: adminFloorplanQuerySchema },
 		responses: {
 			200: { description: "Floorplan config", content: json(adminFloorplanConfigSchema) },
 			400: err("Invalid query"),
@@ -883,7 +877,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
 		request: {
-			query: adminFloorplanQueryOpenApiSchema,
+			query: adminFloorplanQuerySchema,
 			body: { required: true, content: json(adminFloorplanPatchOpenApiSchema) },
 		},
 		responses: {
@@ -898,10 +892,83 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 
 	registry.registerPath({
 		method: "get",
+		path: "/admin/floorplan/overlays",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: { query: adminFloorplanQuerySchema },
+		responses: {
+			200: { description: "Floorplan overlays", content: json(adminFloorplanOverlaysListResponseSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "post",
+		path: "/admin/floorplan/overlays",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			query: adminFloorplanQuerySchema,
+			body: { required: true, content: json(adminFloorplanOverlayCreateSchema) },
+		},
+		responses: {
+			201: { description: "Floorplan overlay created", content: json(adminFloorplanOverlaySchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Office not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/floorplan/overlays/{id}",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			query: adminFloorplanQuerySchema,
+			params: adminFloorplanOverlayIdParamSchema,
+			body: { required: true, content: json(adminFloorplanOverlayPatchSchema) },
+		},
+		responses: {
+			200: { description: "Floorplan overlay updated", content: json(adminFloorplanOverlaySchema) },
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Floorplan overlay not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "delete",
+		path: "/admin/floorplan/overlays/{id}",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			query: adminFloorplanQuerySchema,
+			params: adminFloorplanOverlayIdParamSchema,
+		},
+		responses: {
+			200: { description: "Floorplan overlay removed", content: json(okSchema) },
+			400: err("Invalid query"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
+			404: err("Floorplan overlay not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "get",
 		path: "/admin/users",
 		tags: ["admin"],
 		security: [{ bearerAuth: [] }],
-		request: { query: adminUsersQueryOpenApiSchema },
+		request: { query: adminUsersQuerySchema },
 		responses: {
 			200: { description: "Admin users listing", content: json(adminUsersListResponseSchema) },
 			400: err("Invalid query"),
@@ -918,7 +985,7 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 		security: [{ bearerAuth: [] }],
 		request: {
 			params: adminUserIdParamOpenApiSchema,
-			body: { required: true, content: json(adminUserPatchOpenApiSchema) },
+			body: { required: true, content: json(adminUserPatchSchema) },
 		},
 		responses: {
 			200: { description: "Admin user updated", content: json(adminUserSchema) },

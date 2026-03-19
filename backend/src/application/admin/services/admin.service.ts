@@ -6,6 +6,8 @@ import type {
 	AdminDesksFilters,
 	AdminDeskQrsFilters,
 	AdminFloorplanConfigPatch,
+	AdminFloorplanOverlayCreate,
+	AdminFloorplanOverlayPatch,
 	AdminUserPatch,
 	AdminUsersFilters,
 	AdminAuditLogFilters,
@@ -69,6 +71,35 @@ export class AdminService {
 	) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.updateFloorplanConfig(officeId, patch);
+	}
+
+	async listFloorplanOverlays(requestedByUserId: string, officeId: string) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.listFloorplanOverlays(officeId);
+	}
+
+	async createFloorplanOverlay(
+		requestedByUserId: string,
+		officeId: string,
+		input: AdminFloorplanOverlayCreate
+	) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.createFloorplanOverlay(officeId, input);
+	}
+
+	async updateFloorplanOverlay(
+		requestedByUserId: string,
+		officeId: string,
+		overlayId: string,
+		patch: AdminFloorplanOverlayPatch
+	) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.updateFloorplanOverlay(officeId, overlayId, patch);
+	}
+
+	async deleteFloorplanOverlay(requestedByUserId: string, officeId: string, overlayId: string) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.deleteFloorplanOverlay(officeId, overlayId);
 	}
 
 	async listDeskQrs(requestedByUserId: string, filters: AdminDeskQrsFilters) {

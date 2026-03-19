@@ -131,6 +131,40 @@ export type AdminFloorplanConfigPatch = {
 	canvasHeight?: number | null;
 };
 
+export type AdminFloorplanOverlayKind = "room" | "area" | "facility";
+
+export type AdminFloorplanOverlay = {
+	id: string;
+	officeId: string;
+	label: string;
+	kind: AdminFloorplanOverlayKind;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	rotationDeg: number;
+	strokeColor: string | null;
+	fillColor: string | null;
+	displayOrder: number;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type AdminFloorplanOverlayCreate = {
+	label: string;
+	kind?: AdminFloorplanOverlayKind;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	rotationDeg?: number;
+	strokeColor?: string | null;
+	fillColor?: string | null;
+	displayOrder?: number;
+};
+
+export type AdminFloorplanOverlayPatch = Partial<AdminFloorplanOverlayCreate>;
+
 export type AdminDeskQrRecord = {
 	deskId: string;
 	officeId: string;
@@ -267,6 +301,17 @@ export interface AdminRepository {
 		officeId: string,
 		patch: AdminFloorplanConfigPatch
 	): Promise<AdminFloorplanConfig | null>;
+	listFloorplanOverlays(officeId: string): Promise<AdminFloorplanOverlay[]>;
+	createFloorplanOverlay(
+		officeId: string,
+		input: AdminFloorplanOverlayCreate
+	): Promise<AdminFloorplanOverlay | null>;
+	updateFloorplanOverlay(
+		officeId: string,
+		overlayId: string,
+		patch: AdminFloorplanOverlayPatch
+	): Promise<AdminFloorplanOverlay | null>;
+	deleteFloorplanOverlay(officeId: string, overlayId: string): Promise<boolean>;
 	listDeskQrs(filters: AdminDeskQrsFilters): Promise<AdminDeskQrsPage>;
 	regenerateDeskQrsBulk(officeId?: string): Promise<number>;
 	listUsers(filters: AdminUsersFilters): Promise<AdminUsersPage>;
