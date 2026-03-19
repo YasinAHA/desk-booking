@@ -252,6 +252,8 @@ test("POST /auth/login returns 401 when not confirmed", async () => {
 	});
 
 	assert.equal(res.statusCode, 401);
+	const body = getJsonRecord(res);
+	assert.equal(body.code, "INVALID_CREDENTIALS");
 	await app.close();
 });
 
@@ -265,6 +267,8 @@ test("POST /auth/login returns 401 when user not found", async () => {
 	});
 
 	assert.equal(res.statusCode, 401);
+	const body = getJsonRecord(res);
+	assert.equal(body.code, "INVALID_CREDENTIALS");
 	await app.close();
 });
 

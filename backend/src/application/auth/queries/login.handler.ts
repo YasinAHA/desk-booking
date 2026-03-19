@@ -33,12 +33,8 @@ export class LoginHandler {
 			return { status: "INVALID_CREDENTIALS" };
 		}
 
-		if (!authData.user.isConfirmed()) {
-			return { status: "NOT_CONFIRMED" };
-		}
-
 		const ok = await this.deps.passwordHasher.verify(authData.passwordHash, query.password);
-		if (!ok) {
+		if (!ok || !authData.user.isConfirmed()) {
 			return { status: "INVALID_CREDENTIALS" };
 		}
 

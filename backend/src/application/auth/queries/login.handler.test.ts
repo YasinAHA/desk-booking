@@ -83,7 +83,7 @@ test("LoginHandler.execute returns null when user not found", async () => {
 	assert.deepEqual(result, { status: "INVALID_CREDENTIALS" });
 });
 
-test("LoginHandler.execute returns NOT_CONFIRMED when user not confirmed", async () => {
+test("LoginHandler.execute returns INVALID_CREDENTIALS when user is not confirmed", async () => {
 	const passwordHasher = buildPasswordHasher();
 	const hash = await passwordHasher.hash("1234");
 	const unconfirmedUser = new User(
@@ -104,7 +104,7 @@ test("LoginHandler.execute returns NOT_CONFIRMED when user not confirmed", async
 	const handler = buildLoginHandler(userRepo, { passwordHasher });
 
 	const result = await handler.execute({ email: "admin@camerfirma.com", password: "1234" });
-	assert.deepEqual(result, { status: "NOT_CONFIRMED" });
+	assert.deepEqual(result, { status: "INVALID_CREDENTIALS" });
 });
 
 test("LoginHandler.execute returns OK when credentials match", async () => {

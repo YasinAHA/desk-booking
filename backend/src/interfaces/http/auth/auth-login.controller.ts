@@ -3,7 +3,6 @@ import type { RefreshSessionHandler } from "@application/auth/commands/refresh-s
 import type { LoginHandler } from "@application/auth/queries/login.handler.js";
 import type { LoginQuery } from "@application/auth/queries/login.query.js";
 import { AuthSessionLifecycleService } from "@application/auth/services/auth-session-lifecycle.service.js";
-import type { LoginResult } from "@application/auth/types.js";
 import type { VerifyTokenHandler } from "@application/auth/queries/verify-token.handler.js";
 import { env } from "@config/env.js";
 import { throwHttpError } from "@interfaces/http/http-errors.js";
@@ -18,20 +17,10 @@ type StatusHttpError = {
 	message: string;
 };
 
-const LOGIN_STATUS_HTTP_ERRORS: Record<
-	Exclude<LoginResult["status"], "OK">,
-	StatusHttpError
-> = {
-	NOT_CONFIRMED: {
-		statusCode: 401,
-		code: "EMAIL_NOT_CONFIRMED",
-		message: "Tu email aun no esta confirmado.",
-	},
-	INVALID_CREDENTIALS: {
-		statusCode: 401,
-		code: "INVALID_CREDENTIALS",
-		message: "Credenciales invalidas.",
-	},
+const INVALID_CREDENTIALS_ERROR: StatusHttpError = {
+	statusCode: 401,
+	code: "INVALID_CREDENTIALS",
+	message: "Credenciales invalidas.",
 };
 
 const REFRESH_COOKIE_NAME = "deskbooking_refresh_token";
@@ -163,7 +152,7 @@ export class AuthLoginController {
 		};
 		const result = await this.loginHandler.execute(query);
 		if (result.status !== "OK") {
-			const error = LOGIN_STATUS_HTTP_ERRORS[result.status];
+			const error = INVALID_CREDENTIALS_ERROR;
 			throwHttpError(error.statusCode, error.code, error.message);
 		}
 

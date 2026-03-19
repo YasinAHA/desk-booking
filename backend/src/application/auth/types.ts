@@ -22,7 +22,6 @@ export type AuthUser = {
 
 export type LoginResult =
 	| { status: "OK"; user: AuthUser }
-	| { status: "NOT_CONFIRMED" }
 	| { status: "INVALID_CREDENTIALS" };
 
 export type RegisterResult =
