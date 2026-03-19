@@ -28,6 +28,7 @@ export type LoginResult =
 export type RegisterResult =
 	| { status: "OK" }
 	| { status: "ALREADY_CONFIRMED" }
+	| { status: "SELF_REGISTRATION_DISABLED" }
 	| { status: "DOMAIN_NOT_ALLOWED" }
 	| { status: "INVALID_PROFILE" };
 

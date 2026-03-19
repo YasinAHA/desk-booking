@@ -119,6 +119,12 @@ async function buildTestApp(query: DbQuery) {
 
 test("POST /auth/register returns 403 for domain not allowed", async () => {
 	const app = await buildTestApp(async text => {
+		if (text.includes("select allow_self_registration from app_settings")) {
+			return {
+				rows: [{ allow_self_registration: true }],
+				rowCount: 1,
+			};
+		}
 		if (text.includes("from app_settings s") && text.includes("allowed_email_domains")) {
 			return {
 				rows: [{ domain: "camerfirma.com" }],
@@ -143,8 +149,48 @@ test("POST /auth/register returns 403 for domain not allowed", async () => {
 	await app.close();
 });
 
+test("POST /auth/register returns 403 when self registration is disabled", async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("select allow_self_registration from app_settings")) {
+			return {
+				rows: [{ allow_self_registration: false }],
+				rowCount: 1,
+			};
+		}
+		if (text.includes("from app_settings s") && text.includes("allowed_email_domains")) {
+			return {
+				rows: [{ domain: "camerfirma.com" }],
+				rowCount: 1,
+			};
+		}
+		throw new Error("Unexpected DB query");
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/auth/register",
+		payload: {
+			email: "user@camerfirma.com",
+			password: "ValidPass123!",
+			firstName: "User",
+			lastName: "Camerfirma",
+		},
+	});
+
+	assert.equal(res.statusCode, 403);
+	const body = getJsonRecord(res);
+	assert.equal(body.code, "SELF_REGISTRATION_DISABLED");
+	await app.close();
+});
+
 test("POST /auth/register returns 200 when already confirmed", async () => {
 	const app = await buildTestApp(async text => {
+		if (text.includes("select allow_self_registration from app_settings")) {
+			return {
+				rows: [{ allow_self_registration: true }],
+				rowCount: 1,
+			};
+		}
 		if (text.includes("from app_settings s") && text.includes("allowed_email_domains")) {
 			return {
 				rows: [{ domain: "camerfirma.com" }],

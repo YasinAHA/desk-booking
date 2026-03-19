@@ -19,6 +19,11 @@ const REGISTER_STATUS_HTTP_ERRORS: Record<
 	Exclude<RegisterResult["status"], "OK" | "ALREADY_CONFIRMED">,
 	StatusHttpError
 > = {
+	SELF_REGISTRATION_DISABLED: {
+		statusCode: 403,
+		code: "SELF_REGISTRATION_DISABLED",
+		message: "Self registration is disabled",
+	},
 	DOMAIN_NOT_ALLOWED: {
 		statusCode: 403,
 		code: "DOMAIN_NOT_ALLOWED",

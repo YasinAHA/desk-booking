@@ -265,6 +265,12 @@ const SETTINGS_UPDATE_COLUMNS: Record<Exclude<keyof AdminSettingsPatch, "allowed
 	businessHoursEnd: "business_hours_end",
 };
 
+const ENSURE_GLOBAL_SETTINGS_SQL =
+	"insert into app_settings (scope_type, allow_self_registration, guest_mode_enabled, checkin_window_minutes, " +
+		"max_advance_days, max_reservations_per_user, cancellation_deadline_minutes, default_reservation_duration_minutes, " +
+		"business_hours_start, business_hours_end) " +
+		"values ('global', true, true, 15, 7, 1, 120, 480, '08:00', '20:00') on conflict do nothing";
+
 export class PgAdminRepository implements AdminRepository {
 	constructor(
 		private readonly db: DbClient,
@@ -272,6 +278,7 @@ export class PgAdminRepository implements AdminRepository {
 	) {}
 
 	private async readGlobalSettings(): Promise<AdminSettings> {
+		await this.db.query(ENSURE_GLOBAL_SETTINGS_SQL);
 		const result = await this.db.query(
 			"select s.id, s.allow_self_registration, s.guest_mode_enabled, s.checkin_window_minutes, " +
 				"s.max_advance_days, s.max_reservations_per_user, s.cancellation_deadline_minutes, " +

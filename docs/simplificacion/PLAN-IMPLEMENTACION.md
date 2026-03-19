@@ -105,8 +105,8 @@
 #### 2.5 Settings & Configuración
 - [x] Cargar `app_settings` en startup (cache en memoria)
 - [x] Endpoints `GET/PATCH /admin/settings`
-- [ ] Valores por defecto:
-  - `allow_self_registration = false`
+- [x] Valores por defecto:
+  - `allow_self_registration = true`
   - `guest_mode_enabled = true`
   - `checkin_window_minutes = 15`
   - `max_advance_days = 7`

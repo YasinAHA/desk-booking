@@ -26,6 +26,18 @@ function isAllowedDomainRow(value: unknown): value is AllowedDomainRow {
 export class PgAllowedEmailDomainRepository implements AllowedEmailDomainRepository {
 	constructor(private readonly db: DbClient) {}
 
+	async isSelfRegistrationEnabled(): Promise<boolean> {
+		const result = await this.db.query(
+			"select allow_self_registration from app_settings where scope_type = 'global' limit 1"
+		);
+		const row = result.rows[0];
+		if (!row || typeof row !== "object") {
+			return false;
+		}
+		const value = (row as Record<string, unknown>).allow_self_registration;
+		return value === true;
+	}
+
 	async listAllowedDomains(): Promise<string[]> {
 		const result = await this.db.query(
 			"select aed.domain::text as domain " +

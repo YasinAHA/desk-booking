@@ -60,7 +60,7 @@ BEGIN
   )
   SELECT
     'global',
-    false,
+    true,
     true,
     15,
     7,

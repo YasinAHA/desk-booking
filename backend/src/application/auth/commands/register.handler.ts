@@ -30,7 +30,7 @@ export class RegisterHandler {
 	constructor(private readonly deps: RegisterDependencies) {}
 
 	async execute(command: RegisterCommand): Promise<RegisterResult> {
-		let emailVO;
+		let emailVO: ReturnType<typeof createEmail>;
 		try {
 			emailVO = createEmail(command.email);
 		} catch (error) {
@@ -40,7 +40,7 @@ export class RegisterHandler {
 			return { status: "DOMAIN_NOT_ALLOWED" };
 		}
 
-		let profile;
+		let profile: ReturnType<typeof User.normalizeProfile>;
 		try {
 			profile = User.normalizeProfile({
 				firstName: command.firstName,
@@ -60,7 +60,15 @@ export class RegisterHandler {
 			const userRepo = this.deps.userRepoFactory(tx);
 			const userPreferencesRepo = this.deps.userPreferencesRepoFactory(tx);
 			const emailVerificationRepo = this.deps.emailVerificationRepoFactory(tx);
-			const allowedEmailDomainRepo = this.deps.allowedEmailDomainRepoFactory(tx);
+			const allowedEmailDomainRepo: AllowedEmailDomainRepository =
+				this.deps.allowedEmailDomainRepoFactory(tx);
+
+			const readSelfRegistrationEnabled: () => Promise<boolean> =
+				allowedEmailDomainRepo.isSelfRegistrationEnabled.bind(allowedEmailDomainRepo);
+			const selfRegistrationEnabled = (await readSelfRegistrationEnabled()) === true;
+			if (!selfRegistrationEnabled) {
+				return { status: "SELF_REGISTRATION_DISABLED" };
+			}
 
 			const emailDomain = emailToString(emailVO).split("@")[1]?.toLowerCase();
 			if (!emailDomain) {

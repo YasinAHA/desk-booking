@@ -104,7 +104,7 @@ test("GET /admin/settings returns settings for admin", async () => {
 			return {
 				rows: [{
 					id: "33333333-3333-3333-8333-333333333333",
-					allow_self_registration: false,
+					allow_self_registration: true,
 					guest_mode_enabled: true,
 					checkin_window_minutes: 15,
 					max_advance_days: 7,
@@ -129,6 +129,52 @@ test("GET /admin/settings returns settings for admin", async () => {
 	assert.equal(res.statusCode, 200);
 	const body = res.json();
 	assert.equal(body.guestModeEnabled, true);
+	await app.close();
+});
+
+test("GET /admin/settings self-heals missing global app_settings row", async () => {
+	let globalSettingsReady = false;
+	const app = await buildTestApp(async (text) => {
+		if (text.includes("select role from users where id = $1")) {
+			return { rows: [{ role: "admin" }] };
+		}
+		if (text.includes("insert into app_settings (scope_type")) {
+			globalSettingsReady = true;
+			return { rows: [], rowCount: 1 };
+		}
+		if (text.includes("from app_settings")) {
+			if (!globalSettingsReady) {
+				return { rows: [] };
+			}
+			return {
+				rows: [{
+					id: "44444444-4444-4444-8444-444444444444",
+					allow_self_registration: true,
+					guest_mode_enabled: true,
+					checkin_window_minutes: 15,
+					max_advance_days: 7,
+					max_reservations_per_user: 1,
+					cancellation_deadline_minutes: 120,
+					default_reservation_duration_minutes: 480,
+					business_hours_start: "08:00:00",
+					business_hours_end: "20:00:00",
+					allowed_email_domains: [],
+				}],
+			};
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "GET",
+		url: "/admin/settings",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+	});
+
+	assert.equal(res.statusCode, 200);
+	const body = res.json();
+	assert.equal(body.allowSelfRegistration, true);
+	assert.equal(body.checkinWindowMinutes, 15);
 	await app.close();
 });
 

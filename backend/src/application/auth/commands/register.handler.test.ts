@@ -69,6 +69,7 @@ function mockAllowedEmailDomainRepo(
 ): AllowedEmailDomainRepository {
 	return {
 		listAllowedDomains: async () => ["camerfirma.com"],
+		isSelfRegistrationEnabled: async () => true,
 		...overrides,
 	};
 }
@@ -173,6 +174,24 @@ test("RegisterHandler.execute rejects domain not present in allowed_email_domain
 		lastName: "Camerfirma",
 	});
 	assert.deepEqual(result, { status: "DOMAIN_NOT_ALLOWED" });
+});
+
+test("RegisterHandler.execute returns SELF_REGISTRATION_DISABLED when auto-registration is off", async () => {
+	const handler = buildRegisterHandler(
+		mockUserRepo(),
+		mockEmailVerificationRepo(),
+		mockEmailOutbox(),
+		mockUserPreferencesRepo(),
+		mockAllowedEmailDomainRepo({ isSelfRegistrationEnabled: async () => false })
+	);
+
+	const result = await handler.execute({
+		email: "user@camerfirma.com",
+		password: "123456",
+		firstName: "User",
+		lastName: "Camerfirma",
+	});
+	assert.deepEqual(result, { status: "SELF_REGISTRATION_DISABLED" });
 });
 
 test("RegisterHandler.execute returns INVALID_PROFILE for blank profile names", async () => {

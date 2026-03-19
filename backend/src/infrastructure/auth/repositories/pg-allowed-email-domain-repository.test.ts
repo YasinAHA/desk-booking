@@ -17,3 +17,18 @@ test("PgAllowedEmailDomainRepository.listAllowedDomains normalizes domains", asy
 	const domains = await repo.listAllowedDomains();
 	assert.deepEqual(domains, ["camerfirma.com", "internal.camerfirma.com"]);
 });
+
+test("PgAllowedEmailDomainRepository.isSelfRegistrationEnabled reads global flag", async () => {
+	const repo: Pick<PgAllowedEmailDomainRepository, "isSelfRegistrationEnabled"> =
+		new PgAllowedEmailDomainRepository({
+		query: async (text: string) => {
+			if (text.includes("select allow_self_registration from app_settings")) {
+				return { rows: [{ allow_self_registration: true }] };
+			}
+			return { rows: [] };
+		},
+	});
+
+	const enabled = await repo.isSelfRegistrationEnabled();
+	assert.equal(enabled, true);
+});
