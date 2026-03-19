@@ -1,5 +1,6 @@
 import type {
 	AdminDeskLayoutPatch,
+	AdminDeskLayoutBulkItem,
 	AdminDeskQrRecord,
 	AdminDeskQrsFilters,
 	AdminDeskQrsPage,
@@ -685,6 +686,54 @@ export class PgAdminRepository implements AdminRepository {
 			return null;
 		}
 		return mapAdminDeskRecord(row as Record<string, unknown>);
+	}
+
+	async updateDeskLayoutsBulk(items: AdminDeskLayoutBulkItem[]): Promise<AdminDeskRecord[]> {
+		if (items.length === 0) {
+			return [];
+		}
+
+		const payload = JSON.stringify(items);
+		const result = await this.db.query(
+			"with payload as (" +
+				"select " +
+					"(entry->>'id')::uuid as id, " +
+					"(entry ? 'layoutX') as has_layout_x, " +
+					"(entry->>'layoutX')::numeric as layout_x, " +
+					"(entry ? 'layoutY') as has_layout_y, " +
+					"(entry->>'layoutY')::numeric as layout_y, " +
+					"(entry ? 'layoutW') as has_layout_w, " +
+					"(entry->>'layoutW')::numeric as layout_w, " +
+					"(entry ? 'layoutH') as has_layout_h, " +
+					"(entry->>'layoutH')::numeric as layout_h, " +
+					"(entry ? 'rotationDeg') as has_rotation_deg, " +
+					"(entry->>'rotationDeg')::numeric as rotation_deg, " +
+					"(entry ? 'displayOrder') as has_display_order, " +
+					"(entry->>'displayOrder')::int as display_order " +
+				"from jsonb_array_elements($1::jsonb) as entry" +
+			"), updated as (" +
+				"update desks d set " +
+					"layout_x = case when p.has_layout_x then p.layout_x else d.layout_x end, " +
+					"layout_y = case when p.has_layout_y then p.layout_y else d.layout_y end, " +
+					"layout_w = case when p.has_layout_w then p.layout_w else d.layout_w end, " +
+					"layout_h = case when p.has_layout_h then p.layout_h else d.layout_h end, " +
+					"rotation_deg = case when p.has_rotation_deg then p.rotation_deg else d.rotation_deg end, " +
+					"display_order = case when p.has_display_order then p.display_order else d.display_order end, " +
+					"updated_at = now() " +
+				"from payload p " +
+				"where d.id = p.id " +
+				"returning d.*" +
+			") " +
+			"select u.id::text as id, u.office_id::text as office_id, u.zone_id::text as zone_id, z.name as zone_name, " +
+				"u.code, u.name, u.status, u.status_reason, u.qr_public_id, u.layout_x, u.layout_y, u.layout_w, u.layout_h, " +
+				"u.rotation_deg, u.display_order, u.archived_at::text as archived_at " +
+			"from updated u " +
+			"left join zones z on z.id = u.zone_id " +
+			"order by u.display_order asc, u.code asc",
+			[payload]
+		);
+
+		return result.rows.map(row => mapAdminDeskRecord(row as Record<string, unknown>));
 	}
 
 	async updateDeskStatus(

@@ -2,6 +2,7 @@ import type { UserAuthorizationRepository } from "@application/auth/ports/user-a
 import { AdminAuthorizationError } from "@application/desks/errors/admin-authorization-error.js";
 import type {
 	AdminDeskLayoutPatch,
+	AdminDeskLayoutBulkItem,
 	AdminDeskStatusPatch,
 	AdminDesksFilters,
 	AdminDeskQrsFilters,
@@ -52,6 +53,11 @@ export class AdminService {
 	async updateDeskLayout(requestedByUserId: string, deskId: string, patch: AdminDeskLayoutPatch) {
 		await this.ensureAdmin(requestedByUserId);
 		return this.deps.adminRepo.updateDeskLayout(deskId, patch);
+	}
+
+	async updateDeskLayoutsBulk(requestedByUserId: string, items: AdminDeskLayoutBulkItem[]) {
+		await this.ensureAdmin(requestedByUserId);
+		return this.deps.adminRepo.updateDeskLayoutsBulk(items);
 	}
 
 	async updateDeskStatus(requestedByUserId: string, deskId: string, patch: AdminDeskStatusPatch) {

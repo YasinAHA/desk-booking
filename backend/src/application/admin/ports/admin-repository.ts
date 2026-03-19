@@ -125,6 +125,16 @@ export type AdminDeskLayoutPatch = {
 	displayOrder?: number;
 };
 
+export type AdminDeskLayoutBulkItem = {
+	id: string;
+	layoutX?: number | null;
+	layoutY?: number | null;
+	layoutW?: number | null;
+	layoutH?: number | null;
+	rotationDeg?: number;
+	displayOrder?: number;
+};
+
 export type AdminDeskStatusPatch = {
 	status: AdminDeskStatus;
 	statusReason?: string | null;
@@ -310,6 +320,7 @@ export interface AdminRepository {
 	updateGlobalSettings(patch: AdminSettingsPatch): Promise<AdminSettings>;
 	listDesks(filters: AdminDesksFilters): Promise<AdminDesksPage>;
 	updateDeskLayout(deskId: string, patch: AdminDeskLayoutPatch): Promise<AdminDeskRecord | null>;
+	updateDeskLayoutsBulk(items: AdminDeskLayoutBulkItem[]): Promise<AdminDeskRecord[]>;
 	updateDeskStatus(deskId: string, patch: AdminDeskStatusPatch): Promise<AdminDeskRecord | null>;
 	getFloorplanConfig(officeId: string): Promise<AdminFloorplanConfig | null>;
 	updateFloorplanConfig(

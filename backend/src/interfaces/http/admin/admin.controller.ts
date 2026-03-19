@@ -4,6 +4,7 @@ import { throwHttpError, throwMappedHttpError, type HttpErrorMapping } from "@in
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
 	AdminDeskLayoutPatch,
+	AdminDeskLayoutBulkItem,
 	AdminDeskStatusPatch,
 	AdminDeskQrsFilters,
 	AdminDesksFilters,
@@ -22,6 +23,7 @@ import type {
 import {
 	adminAuditLogQuerySchema,
 	adminDeskLayoutPatchSchema,
+	adminDeskLayoutBulkPatchSchema,
 	adminDeskQrsBulkPatchSchema,
 	adminDeskQrsQuerySchema,
 	adminDeskStatusPatchSchema,
@@ -127,6 +129,23 @@ export class AdminController {
 				throwHttpError(404, "NOT_FOUND", "Desk not found");
 			}
 			return reply.send(updated);
+		} catch (err) {
+			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
+			throw err;
+		}
+	}
+
+	async patchDeskLayoutsBulk(req: FastifyRequest, reply: FastifyReply) {
+		const body = adminDeskLayoutBulkPatchSchema.safeParse(req.body);
+		if (!body.success) {
+			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
+		}
+		try {
+			const items = await this.adminService.updateDeskLayoutsBulk(
+				req.user.id,
+				body.data.items as AdminDeskLayoutBulkItem[]
+			);
+			return reply.send({ ok: true, updated: items.length, items });
 		} catch (err) {
 			throwMappedHttpError(err, ADMIN_ERROR_MAPPINGS);
 			throw err;

@@ -235,6 +235,20 @@ const adminDeskLayoutPatchOpenApiSchema = z.object({
 	displayOrder: z.number().int().optional(),
 });
 
+const adminDeskLayoutBulkPatchOpenApiSchema = z.object({
+	items: z.array(
+		adminDeskLayoutPatchOpenApiSchema.extend({
+			id: uuidSchema,
+		})
+	).min(1).max(500),
+});
+
+const adminDeskLayoutBulkResponseOpenApiSchema = z.object({
+	ok: z.literal(true),
+	updated: z.number().int().nonnegative(),
+	items: z.array(adminDeskSchema),
+});
+
 const adminDeskStatusPatchOpenApiSchema = z.object({
 	status: z.enum(["active", "maintenance", "disabled"]),
 	statusReason: z.string().nullable().optional(),
@@ -802,6 +816,26 @@ export function buildOpenApiDocument(options?: BuildOpenApiOptions) {
 			401: err("Unauthorized"),
 			403: err("Forbidden"),
 			404: err("Desk not found"),
+			500: err("Internal error"),
+		},
+	});
+
+	registry.registerPath({
+		method: "patch",
+		path: "/admin/desks/layout/bulk",
+		tags: ["admin"],
+		security: [{ bearerAuth: [] }],
+		request: {
+			body: { required: true, content: json(adminDeskLayoutBulkPatchOpenApiSchema) },
+		},
+		responses: {
+			200: {
+				description: "Bulk admin desk layout update",
+				content: json(adminDeskLayoutBulkResponseOpenApiSchema),
+			},
+			400: err("Invalid payload"),
+			401: err("Unauthorized"),
+			403: err("Forbidden"),
 			500: err("Internal error"),
 		},
 	});

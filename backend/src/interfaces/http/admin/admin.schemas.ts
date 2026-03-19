@@ -53,6 +53,29 @@ export const adminDeskLayoutPatchSchema = z.object({
 	{ message: "At least one layout field must be provided" }
 );
 
+const adminDeskLayoutBulkItemSchema = z.object({
+	id: uuidSchema,
+	layoutX: z.number().nullable().optional(),
+	layoutY: z.number().nullable().optional(),
+	layoutW: z.number().nullable().optional(),
+	layoutH: z.number().nullable().optional(),
+	rotationDeg: z.number().min(-360).max(360).optional(),
+	displayOrder: z.number().int().optional(),
+}).refine(
+	value =>
+		value.layoutX !== undefined ||
+		value.layoutY !== undefined ||
+		value.layoutW !== undefined ||
+		value.layoutH !== undefined ||
+		value.rotationDeg !== undefined ||
+		value.displayOrder !== undefined,
+	{ message: "At least one layout field must be provided" }
+);
+
+export const adminDeskLayoutBulkPatchSchema = z.object({
+	items: z.array(adminDeskLayoutBulkItemSchema).min(1).max(500),
+});
+
 export const adminDeskStatusPatchSchema = z.object({
 	status: z.enum(["active", "maintenance", "disabled"]),
 	statusReason: z.string().trim().min(1).nullable().optional(),
