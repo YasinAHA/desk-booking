@@ -5,6 +5,7 @@ Reglas para consumir backend desde frontend sin drift.
 ## Fuente de verdad
 - OpenAPI del backend (`/openapi.json`) y handlers HTTP backend.
 - No duplicar contratos manualmente si ya existen tipos generados.
+- Para módulo Floorplan Admin, usar además `docs/frontend/HANDOFF_FLOORPLAN.md`.
 
 ## Convenciones de payload
 - Usar `camelCase` en frontend.

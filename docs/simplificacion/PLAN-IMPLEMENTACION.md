@@ -15,12 +15,14 @@
 - [x] Contrato con `POST /reservations/{id}/check-in` actualizado
 - [x] Endpoints admin v1 alineados para front: users, desks, floorplan, qr, reports
 - [x] Reportes con `format=csv` en contrato y tests
+- [x] Contrato floorplan admin listo para front (`/admin/floorplan`, overlays, bulk save, restore)
 
 ### 0.2 Backend/DB ya ejecutado
 - [x] Migración de simplificación aplicada y estabilizada (`008_internal_simplification.sql`)
 - [x] Seed de simplificación aplicado (`db:seed -- simplificacion`)
 - [x] Refactor principal de reservas a `starts_at`/`ends_at`
 - [x] Validación de suite backend (`lint`, `lint:types`, `test`, `test:e2e:temporal`)
+- [x] Handoff frontend para módulo floorplan (`docs/frontend/HANDOFF_FLOORPLAN.md`)
 
 ---
 
@@ -73,9 +75,12 @@
 - [ ] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`
 
 #### 2.2 Desks & Layout
-- [x] `GET /admin/desks` → agregar filtros por zona/estado
+- [x] `GET /admin/desks` → filtros por zona/estado + búsqueda/paginación/orden
 - [x] `PATCH /admin/desks/{id}/layout` → guardar `layout_x`, `layout_y`, `layout_w`, `layout_h`, `rotation_deg`
+- [x] `PATCH /admin/desks/layout/bulk` → guardado por lote de posiciones (`Save positions`)
+- [x] `POST /admin/desks/layout/restore` → restaurar posiciones por `officeId` (opcional `zoneId`)
 - [x] `GET/PATCH /admin/floorplan` → configuración de canvas/plano por `officeId`
+- [x] `GET/POST/PATCH/DELETE /admin/floorplan/overlays` → overlays de salas/áreas para editor visual
 - [x] `GET /desks` (usuario) → retornar datos de layout para plano
 
 #### 2.3 Reservations
@@ -160,9 +165,9 @@
 
 #### 4.3 Admin Panel
 - [ ] Users tab → mantener sin cambios
-- [ ] Desks tab → drag & drop persistente via `PATCH /admin/desks/{id}/layout`
+- [x] Desks tab (contrato backend) → drag & drop persistente via `PATCH /admin/desks/layout/bulk` y restauración via `POST /admin/desks/layout/restore`
 - [ ] Bookings tab → crear reservas tipo `internal` e `guest`
-- [ ] Floor Plan → editor visual con persistencia
+- [x] Floor Plan (contrato backend) → editor visual con persistencia de desks y overlays
 - [x] QR Codes tab → listar QRs (nuevos endpoints `/admin/desks/qr`, `/admin/desks/qr/regenerate-bulk`)
 - [ ] Reports → tabs/módulo con gráficas de ocupación, cancelaciones, no-shows
 - [ ] Settings → interfaz para editar `app_settings`
