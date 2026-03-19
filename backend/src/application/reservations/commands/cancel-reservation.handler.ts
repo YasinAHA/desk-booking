@@ -1,5 +1,6 @@
 import type { CancelReservationCommand } from "@application/reservations/commands/cancel-reservation.command.js";
 import type { ReservationDependencies } from "@application/reservations/types.js";
+import type { AuditEventWriter } from "@application/common/ports/audit-event-writer.js";
 import {
 	ReservationCancellationWindowClosedError,
 	ReservationDateInPastError,
@@ -11,13 +12,19 @@ import {
 	createReservationDate,
 	isReservationDateInPast,
 } from "@domain/reservations/value-objects/reservation-date.js";
-import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
-import { createUserId } from "@domain/auth/value-objects/user-id.js";
+import {
+	createReservationId,
+	reservationIdToString,
+} from "@domain/reservations/value-objects/reservation-id.js";
+import { createUserId, userIdToString } from "@domain/auth/value-objects/user-id.js";
+import { deskIdToString } from "@domain/desks/value-objects/desk-id.js";
+import { officeIdToString } from "@domain/desks/value-objects/office-id.js";
 
 type CancelReservationDependencies = Pick<
 	ReservationDependencies,
 	"commandRepo" | "queryRepo"
 > & {
+	auditWriter: AuditEventWriter;
 	nowProvider?: () => Date;
 };
 
@@ -61,6 +68,17 @@ export class CancelReservationHandler {
 		}
 
 		found.reservation.cancel(new Date().toISOString());
-		return this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
+		const cancelled = await this.deps.commandRepo.cancel(reservationIdVO, userIdVO);
+		if (cancelled) {
+			await this.deps.auditWriter.append({
+				eventType: "reservation_cancelled",
+				actorType: "user",
+				actorUserId: userIdToString(userIdVO),
+				reservationId: reservationIdToString(found.reservation.id),
+				deskId: deskIdToString(found.reservation.deskId),
+				officeId: officeIdToString(found.reservation.officeId),
+			});
+		}
+		return cancelled;
 	}
 }

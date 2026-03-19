@@ -12,6 +12,7 @@ import { CheckInByQrHandler } from "@application/reservations/commands/check-in-
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import { ListUserReservationsHandler } from "@application/reservations/queries/list-user-reservations.handler.js";
 import { PgTransactionManager } from "@infrastructure/db/pg-transaction-manager.js";
+import { PgAuditEventWriter } from "@infrastructure/audit/pg-audit-event-writer.js";
 import { PgReservationCommandRepository } from "@infrastructure/reservations/repositories/pg-reservation-command-repository.js";
 import { PgReservationQueryRepository } from "@infrastructure/reservations/repositories/pg-reservation-query-repository.js";
 import { PgNoShowPolicyService } from "@infrastructure/reservations/services/pg-no-show-policy-service.js";
@@ -37,6 +38,7 @@ export function buildReservationHandlers(app: FastifyInstance): {
 	const dbApp = app as AppWithDb;
 	const errorTranslator = new PgErrorTranslator();
 	const txManager = new PgTransactionManager(dbApp.db.pool);
+	const auditWriter = new PgAuditEventWriter(dbApp.db);
 
 	const commandRepo = new PgReservationCommandRepository(
 		dbApp.db,
@@ -44,7 +46,7 @@ export function buildReservationHandlers(app: FastifyInstance): {
 		app.runtimeAppSettings
 	);
 	const queryRepo = new PgReservationQueryRepository(dbApp.db);
-	const noShowPolicyService = new PgNoShowPolicyService(dbApp.db);
+	const noShowPolicyService = new PgNoShowPolicyService(dbApp.db, auditWriter);
 
 	const commandRepoFactory = (tx: TransactionalContext) =>
 		new PgReservationCommandRepository(
@@ -55,7 +57,12 @@ export function buildReservationHandlers(app: FastifyInstance): {
 	const queryRepoFactory = (tx: TransactionalContext) =>
 		new PgReservationQueryRepository(getTransactionalDbClient(tx));
 	const noShowPolicyServiceFactory = (tx: TransactionalContext): NoShowPolicyService =>
-		new PgNoShowPolicyService(getTransactionalDbClient(tx));
+		new PgNoShowPolicyService(
+			getTransactionalDbClient(tx),
+			new PgAuditEventWriter(getTransactionalDbClient(tx))
+		);
+	const auditWriterFactory = (tx: TransactionalContext) =>
+		new PgAuditEventWriter(getTransactionalDbClient(tx));
 
 	return {
 		createReservationHandler: new CreateReservationHandler({
@@ -63,10 +70,24 @@ export function buildReservationHandlers(app: FastifyInstance): {
 			commandRepoFactory,
 			queryRepoFactory,
 			noShowPolicyServiceFactory,
+			auditWriterFactory,
 		}),
-		cancelReservationHandler: new CancelReservationHandler({ commandRepo, queryRepo }),
-		checkInReservationHandler: new CheckInReservationHandler({ commandRepo, queryRepo }),
-		checkInByQrHandler: new CheckInByQrHandler({ commandRepo, queryRepo, noShowPolicyService }),
+		cancelReservationHandler: new CancelReservationHandler({
+			commandRepo,
+			queryRepo,
+			auditWriter,
+		}),
+		checkInReservationHandler: new CheckInReservationHandler({
+			commandRepo,
+			queryRepo,
+			auditWriter,
+		}),
+		checkInByQrHandler: new CheckInByQrHandler({
+			commandRepo,
+			queryRepo,
+			noShowPolicyService,
+			auditWriter,
+		}),
 		listUserReservationsHandler: new ListUserReservationsHandler({ queryRepo }),
 	};
 }

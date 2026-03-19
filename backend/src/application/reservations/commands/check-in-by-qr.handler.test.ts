@@ -1,10 +1,12 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { AuditEventWriter } from "@application/common/ports/audit-event-writer.js";
 import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
 import { CheckInByQrHandler } from "@application/reservations/commands/check-in-by-qr.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
 import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
 import {
@@ -13,7 +15,6 @@ import {
 } from "@domain/reservations/entities/reservation.js";
 import { createReservationDate } from "@domain/reservations/value-objects/reservation-date.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
-import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
 function mockCommandRepo(
 	overrides: Partial<ReservationCommandRepository> = {}
@@ -48,6 +49,13 @@ function mockNoShowPolicyService(): NoShowPolicyService {
 	};
 }
 
+function mockAuditWriter(overrides: Partial<AuditEventWriter> = {}): AuditEventWriter {
+	return {
+		append: async () => {},
+		...overrides,
+	};
+}
+
 function buildReservation(status: ReservationStatus, reservationDate: string): Reservation {
 	return new Reservation({
 		id: createReservationId("11111111-1111-1111-8111-111111111111"),
@@ -66,6 +74,7 @@ test("CheckInByQrHandler.execute returns not_found when no candidate exists", as
 		commandRepo: mockCommandRepo(),
 		queryRepo: mockQueryRepo({ findQrCheckInCandidate: async () => null }),
 		noShowPolicyService: mockNoShowPolicyService(),
+		auditWriter: mockAuditWriter(),
 	});
 
 	const result = await handler.execute({
@@ -86,6 +95,7 @@ test("CheckInByQrHandler.execute returns already_checked_in when reservation was
 			}),
 		}),
 		noShowPolicyService: mockNoShowPolicyService(),
+		auditWriter: mockAuditWriter(),
 	});
 
 	const result = await handler.execute({
@@ -120,6 +130,7 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 		commandRepo,
 		queryRepo,
 		noShowPolicyService: mockNoShowPolicyService(),
+		auditWriter: mockAuditWriter(),
 	});
 
 	const result = await handler.execute({
@@ -129,6 +140,44 @@ test("CheckInByQrHandler.execute returns checked_in when candidate is eligible",
 	});
 
 	assert.equal(result, "checked_in");
+});
+
+test("CheckInByQrHandler.execute writes reservation_checked_in audit event", async () => {
+	const today = new Date().toISOString().slice(0, 10);
+	const auditCalls: unknown[] = [];
+	const handler = new CheckInByQrHandler({
+		commandRepo: mockCommandRepo({
+			checkInReservation: async () => "checked_in",
+		}),
+		queryRepo: mockQueryRepo({
+			findQrCheckInCandidate: async () => ({
+				reservation: buildReservation("reserved", today),
+			}),
+		}),
+		noShowPolicyService: mockNoShowPolicyService(),
+		auditWriter: mockAuditWriter({
+			append: async event => {
+				auditCalls.push(event);
+			},
+		}),
+	});
+
+	await handler.execute({
+		userId: "11111111-1111-1111-1111-111111111111",
+		date: today,
+		qrPublicId: "qr-123",
+	});
+
+	assert.equal(auditCalls.length, 1);
+	assert.deepEqual(auditCalls[0], {
+		eventType: "reservation_checked_in",
+		actorType: "user",
+		actorUserId: "11111111-1111-1111-1111-111111111111",
+		reservationId: "11111111-1111-1111-8111-111111111111",
+		deskId: "11111111-1111-1111-8111-111111111113",
+		officeId: "11111111-1111-1111-8111-111111111114",
+		metadata: { method: "qr" },
+	});
 });
 
 test("CheckInByQrHandler.execute runs no_show policy before candidate lookup", async () => {
@@ -149,6 +198,7 @@ test("CheckInByQrHandler.execute runs no_show policy before candidate lookup", a
 				receivedDateInNoShowPolicy = date;
 			},
 		},
+		auditWriter: mockAuditWriter(),
 	});
 
 	const result = await handler.execute({
@@ -159,9 +209,5 @@ test("CheckInByQrHandler.execute runs no_show policy before candidate lookup", a
 
 	assert.equal(result, "not_found");
 	assert.equal(receivedDateInNoShowPolicy, today);
-	assert.deepEqual(callOrder, [
-		"markNoShowExpiredForDate",
-		"findQrCheckInCandidate",
-	]);
+	assert.deepEqual(callOrder, ["markNoShowExpiredForDate", "findQrCheckInCandidate"]);
 });
-

@@ -1,11 +1,17 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { AuditEventWriter } from "@application/common/ports/audit-event-writer.js";
 import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
-import { createTransactionalContext, type TransactionManager } from "@application/common/ports/transaction-manager.js";
+import {
+	createTransactionalContext,
+	type TransactionManager,
+} from "@application/common/ports/transaction-manager.js";
 import { CreateReservationHandler } from "@application/reservations/commands/create-reservation.handler.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
+import { createUserId } from "@domain/auth/value-objects/user-id.js";
+import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import {
 	DeskAlreadyReservedError,
 	ReservationDateInvalidError,
@@ -14,9 +20,7 @@ import {
 	ReservationSameDayBookingClosedError,
 	UserAlreadyHasReservationError,
 } from "@domain/reservations/entities/reservation.js";
-import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
 import { createReservationId } from "@domain/reservations/value-objects/reservation-id.js";
-import { createUserId } from "@domain/auth/value-objects/user-id.js";
 
 function buildFutureDate(daysAhead = 7): string {
 	const d = new Date();
@@ -76,6 +80,13 @@ function mockNoShowPolicyService(): NoShowPolicyService {
 	};
 }
 
+function mockAuditWriter(overrides: Partial<AuditEventWriter> = {}): AuditEventWriter {
+	return {
+		append: async () => {},
+		...overrides,
+	};
+}
+
 test("CreateReservationHandler.execute throws on past date", async () => {
 	const commandRepo = mockCommandRepo({
 		create: async () => {
@@ -88,6 +99,7 @@ test("CreateReservationHandler.execute throws on past date", async () => {
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	await assert.rejects(
@@ -113,6 +125,7 @@ test("CreateReservationHandler.execute throws on invalid calendar date", async (
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	await assert.rejects(
@@ -138,6 +151,7 @@ test("CreateReservationHandler.execute throws desk conflict before user/day conf
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	await assert.rejects(
@@ -163,6 +177,7 @@ test("CreateReservationHandler.execute throws user/day conflict when desk is fre
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	await assert.rejects(
@@ -197,6 +212,7 @@ test("CreateReservationHandler.execute inserts and returns id", async () => {
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	const id = await handler.execute({
@@ -205,6 +221,51 @@ test("CreateReservationHandler.execute inserts and returns id", async () => {
 		deskId: "desk",
 	});
 	assert.equal(id, "res-1");
+});
+
+test("CreateReservationHandler.execute writes reservation_created audit event", async () => {
+	const futureDate = buildFutureDate();
+	const auditCalls: unknown[] = [];
+	const commandRepo = mockCommandRepo({
+		create: async () => createReservationId("res-1"),
+	});
+	const queryRepo = mockQueryRepo({
+		hasActiveReservationForDeskOnDate: async () => false,
+		hasActiveReservationForUserOnDate: async () => false,
+	});
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () =>
+			mockAuditWriter({
+				append: async event => {
+					auditCalls.push(event);
+				},
+			}),
+	});
+
+	await handler.execute({
+		userId: "11111111-1111-1111-8111-111111111111",
+		date: futureDate,
+		deskId: "22222222-2222-2222-8222-222222222222",
+		officeId: "33333333-3333-3333-8333-333333333333",
+	});
+
+	assert.equal(auditCalls.length, 1);
+	assert.deepEqual(auditCalls[0], {
+		eventType: "reservation_created",
+		actorType: "user",
+		actorUserId: "11111111-1111-1111-8111-111111111111",
+		reservationId: "res-1",
+		deskId: "22222222-2222-2222-8222-222222222222",
+		officeId: "33333333-3333-3333-8333-333333333333",
+		metadata: {
+			source: "user",
+			mode: "date",
+		},
+	});
 });
 
 test("CreateReservationHandler.execute inserts range reservation and returns id", async () => {
@@ -228,6 +289,7 @@ test("CreateReservationHandler.execute inserts range reservation and returns id"
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	const id = await handler.execute({
@@ -247,6 +309,7 @@ test("CreateReservationHandler.execute throws on weekend booking", async () => {
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 	});
 
 	await assert.rejects(
@@ -275,6 +338,7 @@ test("CreateReservationHandler.execute throws when same-day cutoff has passed", 
 		commandRepoFactory: () => commandRepo,
 		queryRepoFactory: () => queryRepo,
 		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+		auditWriterFactory: () => mockAuditWriter(),
 		nowProvider: () => now,
 	});
 
@@ -290,6 +354,3 @@ test("CreateReservationHandler.execute throws when same-day cutoff has passed", 
 			err instanceof ReservationOnNonWorkingDayError
 	);
 });
-
-
-

@@ -4,6 +4,7 @@ import type {
 	TransactionalContext,
 } from "@application/common/ports/transaction-manager.js";
 import type { NoShowPolicyService } from "@application/common/ports/no-show-policy-service.js";
+import type { AuditEventWriter } from "@application/common/ports/audit-event-writer.js";
 import type { ReservationCommandRepository } from "@application/reservations/ports/reservation-command-repository.js";
 import type { ReservationQueryRepository } from "@application/reservations/ports/reservation-query-repository.js";
 import {
@@ -19,8 +20,14 @@ import {
 	isSameDayBookingClosed,
 	isWorkingDayReservationDate,
 } from "@domain/reservations/policies/reservation-policy.js";
-import { createDeskId } from "@domain/desks/value-objects/desk-id.js";
-import { createOfficeId } from "@domain/desks/value-objects/office-id.js";
+import {
+	createDeskId,
+	deskIdToString,
+} from "@domain/desks/value-objects/desk-id.js";
+import {
+	createOfficeId,
+	officeIdToString,
+} from "@domain/desks/value-objects/office-id.js";
 import {
 	InvalidReservationDateError,
 	type ReservationDate,
@@ -28,13 +35,14 @@ import {
 	isReservationDateInPast,
 	reservationDateToString,
 } from "@domain/reservations/value-objects/reservation-date.js";
-import { createUserId } from "@domain/auth/value-objects/user-id.js";
+import { createUserId, userIdToString } from "@domain/auth/value-objects/user-id.js";
 
 type CreateReservationDependencies = {
 	txManager: TransactionManager;
 	commandRepoFactory: (tx: TransactionalContext) => ReservationCommandRepository;
 	queryRepoFactory: (tx: TransactionalContext) => ReservationQueryRepository;
 	noShowPolicyServiceFactory: (tx: TransactionalContext) => NoShowPolicyService;
+	auditWriterFactory: (tx: TransactionalContext) => AuditEventWriter;
 	nowProvider?: () => Date;
 };
 
@@ -77,6 +85,7 @@ export class CreateReservationHandler {
 			const queryRepo = this.deps.queryRepoFactory(tx);
 			const commandRepo = this.deps.commandRepoFactory(tx);
 			const noShowPolicyService = this.deps.noShowPolicyServiceFactory(tx);
+			const auditWriter = this.deps.auditWriterFactory(tx);
 
 			await noShowPolicyService.markNoShowExpiredForDate(reservationDateString);
 
@@ -124,7 +133,7 @@ export class CreateReservationHandler {
 				throw new UserAlreadyHasReservationError();
 			}
 
-			return commandRepo.create(
+			const reservationId = await commandRepo.create(
 				userIdVO,
 				reservationDateString,
 				deskIdVO,
@@ -133,6 +142,26 @@ export class CreateReservationHandler {
 				startsAt,
 				endsAt
 			);
+			let actorType: "user" | "admin" | "system" = "user";
+			if (reservationSource === "admin") {
+				actorType = "admin";
+			} else if (reservationSource === "system") {
+				actorType = "system";
+			}
+			await auditWriter.append({
+				eventType: "reservation_created",
+				actorType,
+				actorUserId: userIdToString(userIdVO),
+				reservationId,
+				deskId: deskIdToString(deskIdVO),
+				officeId: officeIdVO ? officeIdToString(officeIdVO) : null,
+				metadata: {
+					source: reservationSource,
+					mode: hasRange ? "range" : "date",
+				},
+			});
+
+			return reservationId;
 		});
 	}
 }

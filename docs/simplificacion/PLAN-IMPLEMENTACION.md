@@ -119,9 +119,9 @@
 
 #### 2.7 Auditoría
 - [ ] Registrar eventos clave en `audit_events`
-  - `reservation_created`, `reservation_cancelled`, `reservation_checked_in`, `reservation_no_show`
-  - `desk_status_changed`, `desk_block_created`, `admin_action`
-- [ ] Incluir `actor_user_id`, `actor_type` (admin/user/system)
+  - [x] `reservation_created`, `reservation_cancelled`, `reservation_checked_in`, `reservation_no_show`
+  - [ ] `desk_status_changed`, `desk_block_created`, `admin_action`
+- [x] Incluir `actor_user_id`, `actor_type` (admin/user/system)
 
 ### Fase 3: Reportes / BI (2-3 días, en paralelo con Fase 2)
 **Responsable:** Backend  
