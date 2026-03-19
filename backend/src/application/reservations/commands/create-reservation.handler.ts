@@ -46,10 +46,17 @@ export class CreateReservationHandler {
 		const deskIdVO = createDeskId(command.deskId);
 		const officeIdVO = command.officeId ? createOfficeId(command.officeId) : null;
 		const reservationSource: ReservationSource = command.source ?? "user";
+		const startsAt = command.startsAt;
+		const endsAt = command.endsAt;
+		const hasRange = typeof startsAt === "string" && typeof endsAt === "string";
 
 		let reservationDate: ReservationDate;
 		try {
-			reservationDate = createReservationDate(command.date);
+			const date = command.date ?? startsAt?.slice(0, 10);
+			if (!date) {
+				throw new InvalidReservationDateError("Missing date or startsAt");
+			}
+			reservationDate = createReservationDate(date);
 		} catch (err) {
 			if (err instanceof InvalidReservationDateError) {
 				throw new ReservationDateInvalidError();
@@ -89,18 +96,30 @@ export class CreateReservationHandler {
 			}
 
 			// Deterministic UX: check desk conflict first, then user/day conflict.
-			const deskAlreadyReserved = await queryRepo.hasActiveReservationForDeskOnDate(
-				deskIdVO,
-				reservationDateString
-			);
+			const deskAlreadyReserved = hasRange
+				? await queryRepo.hasActiveReservationForDeskInRange(
+						deskIdVO,
+						startsAt,
+						endsAt
+					)
+				: await queryRepo.hasActiveReservationForDeskOnDate(
+						deskIdVO,
+						reservationDateString
+					);
 			if (deskAlreadyReserved) {
 				throw new DeskAlreadyReservedError();
 			}
 
-			const userAlreadyReserved = await queryRepo.hasActiveReservationForUserOnDate(
-				userIdVO,
-				reservationDateString
-			);
+			const userAlreadyReserved = hasRange
+				? await queryRepo.hasActiveReservationForUserInRange(
+						userIdVO,
+						startsAt,
+						endsAt
+					)
+				: await queryRepo.hasActiveReservationForUserOnDate(
+						userIdVO,
+						reservationDateString
+					);
 			if (userAlreadyReserved) {
 				throw new UserAlreadyHasReservationError();
 			}
@@ -110,7 +129,9 @@ export class CreateReservationHandler {
 				reservationDateString,
 				deskIdVO,
 				reservationSource,
-				officeIdVO
+				officeIdVO,
+				startsAt,
+				endsAt
 			);
 		});
 	}

@@ -67,38 +67,61 @@ export class PgReservationCommandRepository implements ReservationCommandReposit
 		date: string,
 		deskId: DeskId,
 		source: string,
-		officeId: OfficeId | null
+		officeId: OfficeId | null,
+		startsAt?: string,
+		endsAt?: string
 	): Promise<ReservationId> {
 		try {
 			const runtime = this.runtimeSettingsStore?.get();
 			const checkinWindowMinutes = runtime?.checkinWindowMinutes ?? 15;
-			const defaultReservationDurationMinutes =
-				runtime?.defaultReservationDurationMinutes ?? 480;
-			const result = await this.db.query(
-				"insert into reservations (" +
-					"user_id, desk_id, source, office_id, starts_at, ends_at, checkin_deadline_at" +
-				") " +
-				"select " +
-					"$1, $2, $3, coalesce($5, d.office_id), " +
-					"($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')), " +
-					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
-						"make_interval(mins => $6::int)), " +
-					"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
-						"make_interval(mins => $7::int)) " +
-				"from desks d " +
-				"join offices o on o.id = d.office_id " +
-				"where d.id = $2 " +
-				"returning id",
-				[
-					userIdToString(userId),
-					deskIdToString(deskId),
-					source,
-					date,
-					officeId ? officeIdToString(officeId) : null,
-					defaultReservationDurationMinutes,
-					checkinWindowMinutes,
-				]
-			);
+			let result: DbQueryResult;
+			if (startsAt && endsAt) {
+				result = await this.db.query(
+					"insert into reservations (" +
+						"user_id, desk_id, source, office_id, starts_at, ends_at, checkin_deadline_at" +
+					") values (" +
+						"$1, $2, $3, coalesce($4, (select office_id from desks where id = $2)), " +
+						"$5::timestamptz, $6::timestamptz, ($5::timestamptz + make_interval(mins => $7::int))" +
+					") returning id",
+					[
+						userIdToString(userId),
+						deskIdToString(deskId),
+						source,
+						officeId ? officeIdToString(officeId) : null,
+						startsAt,
+						endsAt,
+						checkinWindowMinutes,
+					]
+				);
+			} else {
+				const defaultReservationDurationMinutes =
+					runtime?.defaultReservationDurationMinutes ?? 480;
+				result = await this.db.query(
+					"insert into reservations (" +
+						"user_id, desk_id, source, office_id, starts_at, ends_at, checkin_deadline_at" +
+					") " +
+					"select " +
+						"$1, $2, $3, coalesce($5, d.office_id), " +
+						"($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')), " +
+						"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
+							"make_interval(mins => $6::int)), " +
+						"(($4::date::timestamp at time zone coalesce(o.timezone, 'Europe/Madrid')) + " +
+							"make_interval(mins => $7::int)) " +
+					"from desks d " +
+					"join offices o on o.id = d.office_id " +
+					"where d.id = $2 " +
+					"returning id",
+					[
+						userIdToString(userId),
+						deskIdToString(deskId),
+						source,
+						date,
+						officeId ? officeIdToString(officeId) : null,
+						defaultReservationDurationMinutes,
+						checkinWindowMinutes,
+					]
+				);
+			}
 			const row = toReservationIdRow(result.rows[0]);
 			if (!row) {
 				throw new Error("Invalid reservation insert result");

@@ -48,6 +48,8 @@ function mockQueryRepo(
 		listForUser: async () => [],
 		hasActiveReservationForUserOnDate: async () => false,
 		hasActiveReservationForDeskOnDate: async () => false,
+		hasActiveReservationForUserInRange: async () => false,
+		hasActiveReservationForDeskInRange: async () => false,
 		getDeskBookingPolicyContext: async () => ({
 			timezone: "UTC",
 			checkinAllowedFrom: "06:00:00",
@@ -203,6 +205,38 @@ test("CreateReservationHandler.execute inserts and returns id", async () => {
 		deskId: "desk",
 	});
 	assert.equal(id, "res-1");
+});
+
+test("CreateReservationHandler.execute inserts range reservation and returns id", async () => {
+	const startsAt = "2099-02-23T09:00:00.000Z";
+	const endsAt = "2099-02-23T13:00:00.000Z";
+	const commandRepo = mockCommandRepo({
+		create: async (_userId, _date, _deskId, source, officeId, argStartsAt, argEndsAt) => {
+			assert.equal(source, "user");
+			assert.equal(officeId, null);
+			assert.equal(argStartsAt, startsAt);
+			assert.equal(argEndsAt, endsAt);
+			return createReservationId("res-2");
+		},
+	});
+	const queryRepo = mockQueryRepo({
+		hasActiveReservationForDeskInRange: async () => false,
+		hasActiveReservationForUserInRange: async () => false,
+	});
+	const handler = new CreateReservationHandler({
+		txManager: mockTxManager(),
+		commandRepoFactory: () => commandRepo,
+		queryRepoFactory: () => queryRepo,
+		noShowPolicyServiceFactory: () => mockNoShowPolicyService(),
+	});
+
+	const id = await handler.execute({
+		userId: "user",
+		startsAt,
+		endsAt,
+		deskId: "desk",
+	});
+	assert.equal(id, "res-2");
 });
 
 test("CreateReservationHandler.execute throws on weekend booking", async () => {

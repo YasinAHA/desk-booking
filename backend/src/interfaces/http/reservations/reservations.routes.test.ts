@@ -186,6 +186,71 @@ test("POST /reservations returns DATE_INVALID for invalid calendar date", async 
 	await app.close();
 });
 
+test("POST /reservations accepts startsAt/endsAt range payload", async () => {
+	const app = await buildTestApp(async (_text, params) => {
+		if (Array.isArray(params) && params.length === 1) {
+			return { rows: [{ timezone: "UTC", checkin_allowed_from: "06:00:00" }] };
+		}
+		if (
+			Array.isArray(params) &&
+			params[0] === "user-1" &&
+			params[1] === "11111111-1111-1111-8111-111111111111"
+		) {
+			return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }], rowCount: 1 };
+		}
+		if (
+			Array.isArray(params) &&
+			params[0] === "11111111-1111-1111-8111-111111111111" &&
+			typeof params[1] === "string" &&
+			typeof params[2] === "string"
+		) {
+			return { rows: [] };
+		}
+		if (
+			Array.isArray(params) &&
+			params[0] === "user-1" &&
+			typeof params[1] === "string" &&
+			typeof params[2] === "string"
+		) {
+			return { rows: [] };
+		}
+		return { rows: [] };
+	});
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			startsAt: "2099-02-23T09:00:00.000Z",
+			endsAt: "2099-02-23T13:00:00.000Z",
+			deskId: "11111111-1111-1111-8111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 200);
+	assert.equal(res.json().ok, true);
+	await app.close();
+});
+
+test("POST /reservations rejects invalid range when endsAt <= startsAt", async () => {
+	const app = await buildTestApp(async () => ({ rows: [] }));
+
+	const res = await app.inject({
+		method: "POST",
+		url: "/reservations",
+		headers: { Authorization: `Bearer ${await buildToken()}` },
+		payload: {
+			startsAt: "2099-02-23T13:00:00.000Z",
+			endsAt: "2099-02-23T09:00:00.000Z",
+			deskId: "11111111-1111-1111-8111-111111111111",
+		},
+	});
+
+	assert.equal(res.statusCode, 400);
+	await app.close();
+});
+
 test("DELETE /reservations/:id returns 404 when not found", async () => {
 	const app = await buildTestApp(async (_text, params) => {
 		if (

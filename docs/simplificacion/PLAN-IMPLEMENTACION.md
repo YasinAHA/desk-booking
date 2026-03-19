@@ -85,8 +85,8 @@
 
 #### 2.3 Reservations
 - [x] Refactorizar modelo: `reservation_date` → `starts_at`, `ends_at`
-- [ ] Validación de solapamientos con constraint de exclusión (PostgreSQL)
-- [ ] `POST /reservations` (usuario) → crear reservas por rango
+- [x] Validación de solapamientos con constraint de exclusión (PostgreSQL)
+- [x] `POST /reservations` (usuario) → crear reservas por rango
 - [x] `POST /admin/reservations` → soportar tipo `guest` con `guest_name`, `guest_email`, `guest_company`, `host_user_id`
 - [x] `PATCH /admin/reservations/{id}` → cambio de status
 - [x] Estados: `reserved`, `checked_in`, `cancelled`, `no_show`

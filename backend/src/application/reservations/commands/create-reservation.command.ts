@@ -2,7 +2,9 @@
 
 export type CreateReservationCommand = {
 	userId: string;
-	date: string;
+	date?: string;
+	startsAt?: string;
+	endsAt?: string;
 	deskId: string;
 	source?: ReservationSource;
 	officeId?: string;

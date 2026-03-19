@@ -85,6 +85,46 @@ test("PgReservationQueryRepository.hasActiveReservationForDeskOnDate returns fal
 	assert.equal(result, false);
 });
 
+test("PgReservationQueryRepository.hasActiveReservationForUserInRange returns true when row exists", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, [
+				"user-1",
+				"2026-02-20T09:00:00.000Z",
+				"2026-02-20T13:00:00.000Z",
+			]);
+			return { rows: [{ 1: 1 }] };
+		},
+	});
+
+	const result = await repo.hasActiveReservationForUserInRange(
+		createUserId("user-1"),
+		"2026-02-20T09:00:00.000Z",
+		"2026-02-20T13:00:00.000Z"
+	);
+	assert.equal(result, true);
+});
+
+test("PgReservationQueryRepository.hasActiveReservationForDeskInRange returns false when no rows", async () => {
+	const repo = new PgReservationQueryRepository({
+		query: async (_text, params) => {
+			assert.deepEqual(params, [
+				"desk-1",
+				"2026-02-20T09:00:00.000Z",
+				"2026-02-20T13:00:00.000Z",
+			]);
+			return { rows: [] };
+		},
+	});
+
+	const result = await repo.hasActiveReservationForDeskInRange(
+		createDeskId("desk-1"),
+		"2026-02-20T09:00:00.000Z",
+		"2026-02-20T13:00:00.000Z"
+	);
+	assert.equal(result, false);
+});
+
 test("PgReservationQueryRepository.getDeskBookingPolicyContext returns context when desk exists", async () => {
 	const repo = new PgReservationQueryRepository({
 		query: async (_text, params) => {

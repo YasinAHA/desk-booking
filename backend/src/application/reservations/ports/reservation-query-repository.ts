@@ -43,6 +43,16 @@ export interface ReservationQueryRepository {
 	listForUser(userId: UserId): Promise<ReservationRecord[]>;
 	hasActiveReservationForUserOnDate(userId: UserId, date: string): Promise<boolean>;
 	hasActiveReservationForDeskOnDate(deskId: DeskId, date: string): Promise<boolean>;
+	hasActiveReservationForUserInRange(
+		userId: UserId,
+		startsAt: string,
+		endsAt: string
+	): Promise<boolean>;
+	hasActiveReservationForDeskInRange(
+		deskId: DeskId,
+		startsAt: string,
+		endsAt: string
+	): Promise<boolean>;
 	getDeskBookingPolicyContext(
 		deskId: DeskId
 	): Promise<ReservationBookingPolicyContext | null>;

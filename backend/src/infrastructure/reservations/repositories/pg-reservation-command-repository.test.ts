@@ -93,6 +93,36 @@ test("PgReservationCommandRepository.create throws generic conflict on unknown u
 	);
 });
 
+test("PgReservationCommandRepository.create throws desk conflict on exclusion overlap violation", async () => {
+	const errorTranslator: ErrorTranslator = new PgErrorTranslator();
+	const repo = new PgReservationCommandRepository(
+		{
+			query: async () => {
+				const err = new Error("exclusion violation");
+				(err as { code?: string; constraint?: string }).code = "23P01";
+				(err as { code?: string; constraint?: string }).constraint =
+					"excl_reservations_active_desk_slot";
+				throw err;
+			},
+		},
+		errorTranslator
+	);
+
+	await assert.rejects(
+		() =>
+			repo.create(
+				createUserId("user-1"),
+				"2026-02-20",
+				createDeskId("desk-1"),
+				"user",
+				null,
+				"2026-02-20T09:00:00.000Z",
+				"2026-02-20T13:00:00.000Z"
+			),
+		DeskAlreadyReservedError
+	);
+});
+
 test("PgReservationCommandRepository.checkInReservation returns checked_in when update affects a row", async () => {
 	const repo = new PgReservationCommandRepository(
 		{

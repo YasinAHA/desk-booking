@@ -22,6 +22,18 @@ export const createReservationSchema = z.object({
 			message: "Provide either date or startsAt/endsAt",
 		});
 	}
+
+	if (hasRange) {
+		const starts = Date.parse(value.startsAt as string);
+		const ends = Date.parse(value.endsAt as string);
+		if (!Number.isFinite(starts) || !Number.isFinite(ends) || ends <= starts) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["endsAt"],
+				message: "endsAt must be greater than startsAt",
+			});
+		}
+	}
 });
 
 export const reservationIdParamSchema = createUuidParamSchema("id");

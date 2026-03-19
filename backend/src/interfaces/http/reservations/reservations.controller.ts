@@ -246,15 +246,17 @@ export class ReservationController {
 			source?: "user" | "admin" | "walk_in" | "system" | undefined;
 		}
 	): CreateReservationCommand {
-		const date = payload.date ?? payload.startsAt?.slice(0, 10);
-		if (!date) {
+		const hasRange = typeof payload.startsAt === "string" && typeof payload.endsAt === "string";
+		if (!payload.date && !hasRange) {
 			throwHttpError(400, "BAD_REQUEST", "Invalid payload");
 		}
 
 		return {
 			userId,
-			date,
 			deskId: payload.deskId,
+			...(payload.date ? { date: payload.date } : {}),
+			...(payload.startsAt ? { startsAt: payload.startsAt } : {}),
+			...(payload.endsAt ? { endsAt: payload.endsAt } : {}),
 			...(payload.source ? { source: payload.source } : {}),
 			...(payload.officeId ? { officeId: payload.officeId } : {}),
 		};
@@ -265,4 +267,3 @@ export class ReservationController {
 		throw err;
 	}
 }
-

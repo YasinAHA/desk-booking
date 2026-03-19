@@ -295,6 +295,38 @@ export class PgReservationQueryRepository implements ReservationQueryRepository 
 		return result.rows.length > 0;
 	}
 
+	async hasActiveReservationForUserInRange(
+		userId: UserId,
+		startsAt: string,
+		endsAt: string
+	): Promise<boolean> {
+		const result = await this.db.query(
+			"select 1 from reservations r " +
+				"where r.user_id = $1 " +
+				"and tstzrange(r.starts_at, r.ends_at, '[)') && tstzrange($2::timestamptz, $3::timestamptz, '[)') " +
+				"and r.status in ('reserved', 'checked_in') " +
+				"limit 1",
+			[userIdToString(userId), startsAt, endsAt]
+		);
+		return result.rows.length > 0;
+	}
+
+	async hasActiveReservationForDeskInRange(
+		deskId: DeskId,
+		startsAt: string,
+		endsAt: string
+	): Promise<boolean> {
+		const result = await this.db.query(
+			"select 1 from reservations r " +
+				"where r.desk_id = $1 " +
+				"and tstzrange(r.starts_at, r.ends_at, '[)') && tstzrange($2::timestamptz, $3::timestamptz, '[)') " +
+				"and r.status in ('reserved', 'checked_in') " +
+				"limit 1",
+			[deskIdToString(deskId), startsAt, endsAt]
+		);
+		return result.rows.length > 0;
+	}
+
 	async getDeskBookingPolicyContext(
 		deskId: DeskId
 	): Promise<{ timezone: string; checkinAllowedFrom: string } | null> {

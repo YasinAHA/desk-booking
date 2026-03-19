@@ -10,7 +10,9 @@ export interface ReservationCommandRepository {
 		date: string,
 		deskId: DeskId,
 		source: ReservationSource,
-		officeId: OfficeId | null
+		officeId: OfficeId | null,
+		startsAt?: string,
+		endsAt?: string
 	): Promise<ReservationId>;
 	cancel(reservationId: ReservationId, userId: UserId): Promise<boolean>;
 	checkInReservation(
