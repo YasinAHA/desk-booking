@@ -70,9 +70,9 @@
 
 #### 2.1 Autenticación & Autorización
 - [x] Endpoint `POST /auth/register` → validar contra `allowed_email_domains`
-- [ ] Endpoint `POST /auth/login` → mantener sin cambios
+- [x] Endpoint `POST /auth/login` → mantener sin cambios
 - [x] Rol/permission check: usuario normal vs admin
-- [ ] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`
+- [x] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`
 
 #### 2.2 Desks & Layout
 - [x] `GET /admin/desks` → filtros por zona/estado + búsqueda/paginación/orden
