@@ -118,8 +118,14 @@ async function buildTestApp(query: DbQuery) {
 }
 
 test("POST /auth/register returns 403 for domain not allowed", async () => {
-	const app = await buildTestApp(async () => {
-		throw new Error("DB should not be called");
+	const app = await buildTestApp(async text => {
+		if (text.includes("from app_settings s") && text.includes("allowed_email_domains")) {
+			return {
+				rows: [{ domain: "camerfirma.com" }],
+				rowCount: 1,
+			};
+		}
+		throw new Error("Unexpected DB query");
 	});
 
 	const res = await app.inject({
@@ -138,7 +144,13 @@ test("POST /auth/register returns 403 for domain not allowed", async () => {
 });
 
 test("POST /auth/register returns 200 when already confirmed", async () => {
-	const app = await buildTestApp(async () => {
+	const app = await buildTestApp(async text => {
+		if (text.includes("from app_settings s") && text.includes("allowed_email_domains")) {
+			return {
+				rows: [{ domain: "camerfirma.com" }],
+				rowCount: 1,
+			};
+		}
 		return {
 			rows: [
 				{

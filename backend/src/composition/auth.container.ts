@@ -27,6 +27,7 @@ import { PgEmailOutbox } from "@infrastructure/auth/repositories/pg-email-outbox
 import { PgEmailVerificationRepository } from "@infrastructure/auth/repositories/pg-email-verification-repository.js";
 import { PgPasswordResetRepository } from "@infrastructure/auth/repositories/pg-password-reset-repository.js";
 import { PgAuthUserPreferencesRepository } from "@infrastructure/auth/repositories/pg-auth-user-preferences-repository.js";
+import { PgAllowedEmailDomainRepository } from "@infrastructure/auth/repositories/pg-allowed-email-domain-repository.js";
 import { PgTokenRevocationRepository } from "@infrastructure/auth/repositories/pg-token-revocation-repository.js";
 import { PgUserRepository } from "@infrastructure/auth/repositories/pg-user-repository.js";
 import { PgUserSessionRepository } from "@infrastructure/auth/repositories/pg-user-session-repository.js";
@@ -77,6 +78,8 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		new PgUserRepository(getTransactionalDbClient(tx));
 	const emailVerificationRepoFactory = (tx: TransactionalContext) =>
 		new PgEmailVerificationRepository(getTransactionalDbClient(tx));
+	const allowedEmailDomainRepoFactory = (tx: TransactionalContext) =>
+		new PgAllowedEmailDomainRepository(getTransactionalDbClient(tx));
 	const passwordResetRepoFactory = (tx: TransactionalContext) =>
 		new PgPasswordResetRepository(getTransactionalDbClient(tx));
 	const userPreferencesRepoFactory = (tx: TransactionalContext) =>
@@ -91,6 +94,7 @@ export function buildAuthHandlers(app: FastifyInstance): {
 		userRepoFactory,
 		userPreferencesRepoFactory,
 		emailVerificationRepoFactory,
+		allowedEmailDomainRepoFactory,
 		passwordResetRepoFactory,
 		recoveryAttemptPolicyService,
 		emailOutbox,

@@ -69,7 +69,7 @@
 **Responsable:** Backend  
 
 #### 2.1 Autenticación & Autorización
-- [ ] Endpoint `POST /auth/register` → validar contra `allowed_email_domains`
+- [x] Endpoint `POST /auth/register` → validar contra `allowed_email_domains`
 - [ ] Endpoint `POST /auth/login` → mantener sin cambios
 - [x] Rol/permission check: usuario normal vs admin
 - [ ] Soft-delete deprecation: migrar a `status` en lugar de `deleted_at`

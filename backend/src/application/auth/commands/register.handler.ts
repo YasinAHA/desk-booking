@@ -1,10 +1,12 @@
-﻿import type { RegisterCommand } from "@application/auth/commands/register.command.js";
-import type { AuthDependencies, RegisterResult } from "@application/auth/types.js";
+import type { RegisterCommand } from "@application/auth/commands/register.command.js";
+import type { AllowedEmailDomainRepository } from "@application/auth/ports/allowed-email-domain-repository.js";
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
+import type { AuthDependencies, RegisterResult } from "@application/auth/types.js";
+import type { TransactionalContext } from "@application/common/ports/transaction-manager.js";
 import { EmailVerificationService } from "@application/auth/services/email-verification.service.js";
 import { InvalidUserProfileError, User } from "@domain/auth/entities/user.js";
 import { InvalidEmailError } from "@domain/auth/errors/auth-domain-errors.js";
-import { createEmail } from "@domain/auth/value-objects/email.js";
+import { createEmail, emailToString } from "@domain/auth/value-objects/email.js";
 import type { UserId } from "@domain/auth/value-objects/user-id.js";
 
 type RegisterDependencies = Pick<
@@ -18,16 +20,16 @@ type RegisterDependencies = Pick<
 	| "emailVerificationRepoFactory"
 	| "emailOutbox"
 	| "confirmationBaseUrl"
->;
+> & {
+	allowedEmailDomainRepoFactory: (
+		tx: TransactionalContext
+	) => AllowedEmailDomainRepository;
+};
 
 export class RegisterHandler {
 	constructor(private readonly deps: RegisterDependencies) {}
 
 	async execute(command: RegisterCommand): Promise<RegisterResult> {
-		if (!this.deps.authPolicy.isAllowedEmail(command.email)) {
-			return { status: "DOMAIN_NOT_ALLOWED" };
-		}
-
 		let emailVO;
 		try {
 			emailVO = createEmail(command.email);
@@ -58,6 +60,16 @@ export class RegisterHandler {
 			const userRepo = this.deps.userRepoFactory(tx);
 			const userPreferencesRepo = this.deps.userPreferencesRepoFactory(tx);
 			const emailVerificationRepo = this.deps.emailVerificationRepoFactory(tx);
+			const allowedEmailDomainRepo = this.deps.allowedEmailDomainRepoFactory(tx);
+
+			const emailDomain = emailToString(emailVO).split("@")[1]?.toLowerCase();
+			if (!emailDomain) {
+				return { status: "DOMAIN_NOT_ALLOWED" };
+			}
+			const allowedDomains = await allowedEmailDomainRepo.listAllowedDomains();
+			if (!allowedDomains.includes(emailDomain)) {
+				return { status: "DOMAIN_NOT_ALLOWED" };
+			}
 
 			const existing = await userRepo.findByEmail(emailVO);
 

@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { RegisterHandler } from "@application/auth/commands/register.handler.js";
 import type { AuthPolicy } from "@application/auth/ports/auth-policy.js";
+import type { AllowedEmailDomainRepository } from "@application/auth/ports/allowed-email-domain-repository.js";
 import type { EmailOutbox } from "@application/auth/ports/email-outbox.js";
 import type { EmailVerificationRepository } from "@application/auth/ports/email-verification-repository.js";
 import type { PasswordHasher } from "@application/auth/ports/password-hasher.js";
@@ -63,6 +64,15 @@ function mockUserPreferencesRepo(
 	};
 }
 
+function mockAllowedEmailDomainRepo(
+	overrides: Partial<AllowedEmailDomainRepository> = {}
+): AllowedEmailDomainRepository {
+	return {
+		listAllowedDomains: async () => ["camerfirma.com"],
+		...overrides,
+	};
+}
+
 function buildPasswordHasher(): PasswordHasher {
 	return {
 		hash: async plain => createPasswordHash(`hash:${plain}`),
@@ -94,6 +104,7 @@ function buildRegisterHandler(
 	emailVerificationRepo: EmailVerificationRepository,
 	emailOutbox: EmailOutbox,
 	userPreferencesRepo: AuthUserPreferencesRepository = mockUserPreferencesRepo(),
+	allowedEmailDomainRepo: AllowedEmailDomainRepository = mockAllowedEmailDomainRepo(),
 	overrides?: {
 		passwordHasher?: PasswordHasher;
 		tokenService?: TokenService;
@@ -124,6 +135,7 @@ function buildRegisterHandler(
 		userRepoFactory: () => userRepo,
 		userPreferencesRepoFactory: () => userPreferencesRepo,
 		emailVerificationRepoFactory: () => emailVerificationRepo,
+		allowedEmailDomainRepoFactory: () => allowedEmailDomainRepo,
 		emailOutbox,
 		confirmationBaseUrl,
 	});
@@ -141,6 +153,24 @@ test("RegisterHandler.execute rejects non-allowed domain", async () => {
 		password: "123456",
 		firstName: "User",
 		lastName: "Other",
+	});
+	assert.deepEqual(result, { status: "DOMAIN_NOT_ALLOWED" });
+});
+
+test("RegisterHandler.execute rejects domain not present in allowed_email_domains table", async () => {
+	const handler = buildRegisterHandler(
+		mockUserRepo(),
+		mockEmailVerificationRepo(),
+		mockEmailOutbox(),
+		mockUserPreferencesRepo(),
+		mockAllowedEmailDomainRepo({ listAllowedDomains: async () => [] })
+	);
+
+	const result = await handler.execute({
+		email: "user@camerfirma.com",
+		password: "123456",
+		firstName: "User",
+		lastName: "Camerfirma",
 	});
 	assert.deepEqual(result, { status: "DOMAIN_NOT_ALLOWED" });
 });
